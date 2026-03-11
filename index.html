@@ -307,23 +307,31 @@
       let isPakState = isGlobalPak;
       let currentCityContext = null;
 
-      // 提取日期的共用函數 (支援連寫省略月份，如 5/31、6/02、07、09、14)
+      // 提取日期的共用函數 (支援連寫省略月份與小數點分隔，如 13600-7/05.07.09)
       const extractDates = (text) => {
         if (!text) return [];
         const dates = [];
         let currentM = null;
         let currentY = currentYear;
 
-        const dateListRegex = /(?:\d{4}[\/\-])?\d{1,2}[\/\-]\d{1,2}(?!\s*[:月號])(?:[、，,\s\-]+(?:\d{1,2}[\/\-])?\d{1,2}(?!\s*[:月號]))*/g;
-        const matchList = text.match(dateListRegex);
+        // 升級：(?:^|[^\d]) 確保日期前沒有數字，防止 13600-7 的 00-7 被誤判為日期。
+        // 同時支援 `.` 作為分隔符號 `[、，,\.\s\-]+`
+        const dateListRegex = /(?:^|[^\d])((?:\d{4}[\/\-])?\d{1,2}[\/\-]\d{1,2}(?!\s*[:月號])(?:[、，,\.\s\-]+(?:\d{1,2}[\/\-])?\d{1,2}(?!\s*[:月號]))*)/g;
+        let match;
+        const matchList = [];
+        
+        while ((match = dateListRegex.exec(text)) !== null) {
+          matchList.push(match[1]); // 擷取不含前綴干擾的純日期字串
+        }
 
-        if (matchList) {
+        if (matchList.length > 0) {
           matchList.forEach(listStr => {
             let safeStr = listStr.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/g, '$1/$2/$3');
             safeStr = safeStr.replace(/(^|[^0-9\/])(\d{1,2})-(\d{1,2})(?=[^0-9\/]|$)/g, '$1$2/$3');
             safeStr = safeStr.replace(/\-/g, '、');
             
-            const tokens = safeStr.split(/[、，,\s]+/);
+            // 支援小數點 (.) 切割
+            const tokens = safeStr.split(/[、，,\.\s]+/);
             tokens.forEach(token => {
               if (!token) return;
               const parts = token.split('/');
@@ -766,7 +774,7 @@
           
           return `
             <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${tour.price ? tour.price : '有團'}</span>
+              <span class="whitespace-nowrap font-black">${tour.price ? tour.price : '有團'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -861,7 +869,7 @@
           
           return `
             <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${ticket.price ? ticket.price : '有票'}</span>
+              <span class="whitespace-nowrap font-black">${ticket.price ? ticket.price : '有票'}</span>
               ${extraTextHTML}
             </div>
           `;

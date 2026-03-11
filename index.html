@@ -6,13 +6,13 @@
   
   <!-- 基本 SEO 標籤 -->
   <title>艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團</title>
-  <meta name="description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta name="description" content="艾迪王 @eddie.tour 專屬統整！為您精選旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
   <meta name="keywords" content="艾迪王, 清艙機票, 晚鳥機票, 便宜機票, 優惠旅行團, 日本機票, 韓國機票, 泰國機票">
   <meta name="author" content="艾迪王">
 
   <!-- Open Graph 標籤 (給 FB, LINE 等社群軟體抓取預覽用) -->
   <meta property="og:title" content="艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團">
-  <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80">
   <meta property="og:type" content="website">
   
@@ -147,12 +147,10 @@
 
     // --- 機場與別名對照表 (Alias Dictionary) ---
     const CITY_ALIASES = [
-      // 韓國
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦'] },
       { standard: '釜山', aliases: ['釜山', '金海'] },
       { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] },
       
-      // 日本
       { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
       { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX'] },
       { standard: '北海道', aliases: ['北海道', '札幌', '新千歲', '函館', '旭川', '千歲', 'CTS'] },
@@ -161,11 +159,9 @@
       { standard: '福岡', aliases: ['福岡', 'FUK'] },
       { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] },
       
-      // 泰國
       { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] },
       { standard: '清邁', aliases: ['清邁', 'CNX'] },
       
-      // 越南
       { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
       { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
       { standard: '峴港', aliases: ['峴港', 'DAD'] }
@@ -189,7 +185,6 @@
     const normalizeForDedup = (str) => {
       if (!str) return '';
       try {
-        // 移除常見標點符號與表情，以及代表更新的字眼，讓「更新 北海道6日」與「北海道6日」被視為相同
         return str.replace(/[\s\p{P}❗️🔥✨⭐⚡️]/gu, '')
                   .replace(/更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊/g, '')
                   .toLowerCase();
@@ -256,7 +251,6 @@
       let titleScore = -1;
 
       for (let line of lines) {
-        // 過濾掉純表情符號、純標點符號，或者是常見的無意義宣傳字眼
         const fluffRegex = /^[\p{Emoji}\s❗️🔥✨⭐⚡️更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
         if (fluffRegex.test(line)) continue;
 
@@ -290,7 +284,6 @@
         }
       }
 
-      // 升級版 Title 淨化器：移除前綴「更新」、「降價」等，讓 UI 更乾淨
       if (bestTitle) {
         title = bestTitle.replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️【】\[\]()]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
         title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
@@ -316,9 +309,8 @@
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1;
 
-      let isPakState = isGlobalPak; // 紀錄當前的解析狀態是否為機+酒
+      let isPakState = isGlobalPak;
 
-      // 提取日期的共用函數
       const extractDates = (text) => {
         if (!text) return [];
         const dateRegex = /(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/g;
@@ -339,30 +331,28 @@
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
 
-        // 動態切換當前上下文狀態 (支援全形加號)
         if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) {
           isPakState = true;
         } else if (line.includes('純機票') || line.includes('單機票')) {
           isPakState = false;
         }
 
-        const priceMatch = line.match(/(?:NT\$|\$|＄)\s*([0-9,]+)/i);
+        // 升級正規表示式：支援 💵、現金價、售價 等更多抓取模式
+        const priceMatch = line.match(/(?:NT\$|\$|＄|💵|現金價|售價|價格|優惠價|機票)[:：\s]*([0-9,]{3,})/i);
 
         if (priceMatch) {
-          let price = priceMatch[1]; 
+          // 在這裡將抓到的金額中的逗號去除
+          let price = priceMatch[1].replace(/,/g, ''); 
           let dates = extractDates(line);
 
-          // 升級版：如果這行只有金額沒有日期，就往上一行找找看 (解決買一送一換行寫的問題)
           if (dates.length === 0 && i > 0) {
             dates = extractDates(lines[i-1]);
           }
-          // 如果上一行也沒有，往下一行找找看
           if (dates.length === 0 && i < lines.length - 1) {
             dates = extractDates(lines[i+1]);
           }
 
           for (let dateStr of dates) {
-            // 優先看該行有沒有明確寫出，沒有的話就跟隨上下文狀態
             let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true :
                             (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
             
@@ -397,11 +387,16 @@
           let allTickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
             let rawText = '';
             if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
-              rawText = row.c[1].v; // 自動化：B欄
+              rawText = row.c[1].v;
             } else if (row.c[5]?.v) {
-              rawText = row.c[5].v; // 舊格式：F欄
+              rawText = row.c[5].v;
             } else if (row.c[0]?.v && String(row.c[0].v).includes('\n')) {
-              rawText = row.c[0].v; // 舊格式：A欄
+              rawText = row.c[0].v;
+            }
+
+            // 將所有台灣虎航與虎航文字自動換成 🐯
+            if (rawText) {
+              rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
             }
 
             let country = row.c[0]?.v || '';
@@ -409,6 +404,7 @@
             let dateVal = row.c[2]?.f || row.c[2]?.v || '';
             let airline = row.c[3]?.v || '';
             let priceVal = row.c[4]?.v || row.c[4]?.f || '';
+            priceVal = String(priceVal).replace(/,/g, ''); // 去除原本試算表手動填寫欄位的逗號
             let link = row.c[6]?.v || '';
 
             if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
@@ -436,13 +432,10 @@
             }));
           }).filter(t => t.date);
 
-          // --- 新增：機票資料自動去重複與覆蓋邏輯 ---
           const ticketMap = new Map();
           allTickets.forEach(ticket => {
-            // 使用 日期+城市+淨化航空標題+方案+買一送一 作為唯一識別碼
             const normTitle = normalizeForDedup(ticket.airline);
             const key = `${ticket.date}_${ticket.city}_${normTitle}_${ticket.isFlightAndHotel}_${ticket.isBogo}`;
-            // Map 的特性會讓後出現的資料(最新寫入的降價)自動覆蓋舊的資料
             ticketMap.set(key, ticket);
           });
           state.tickets = Array.from(ticketMap.values());
@@ -467,11 +460,17 @@
                 rawText = row.c[0].v; 
               }
 
+              // 將所有台灣虎航與虎航文字自動換成 🐯
+              if (rawText) {
+                rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+              }
+
               let country = row.c[0]?.v || '';
               let title = row.c[1]?.v || '';
               let dateVal = row.c[2]?.f || row.c[2]?.v || '';
               let days = row.c[3]?.v || '';
               let priceVal = row.c[4]?.v || row.c[4]?.f || '';
+              priceVal = String(priceVal).replace(/,/g, ''); // 去除原本試算表手動填寫欄位的逗號
               let link = row.c[6]?.v || '';
 
               if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
@@ -503,10 +502,8 @@
               }));
             }).filter(t => t.date);
 
-            // --- 新增：旅行團資料自動去重複與覆蓋邏輯 ---
             const tourMap = new Map();
             allTours.forEach(tour => {
-              // 使用 日期+淨化標題+方案+買一送一 作為唯一識別碼
               const normTitle = normalizeForDedup(tour.title);
               const key = `${tour.date}_${normTitle}_${tour.isFlightAndHotel}_${tour.isBogo}`;
               tourMap.set(key, tour);
@@ -698,14 +695,13 @@
           if (isPak) extraTexts.push('(機+酒)');
           if (tour.isBogo) extraTexts.push('(買一送一)');
           
-          // 手機版標籤取消換行並微縮小
           const extraTextHTML = extraTexts.length > 0 
             ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
             : '';
           
           return `
             <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${tour.price ? '$'+tour.price : '有團'}</span>
+              <span class="whitespace-nowrap">${tour.price ? tour.price : '有團'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -794,14 +790,13 @@
           if (isPak) extraTexts.push('(機+酒)');
           if (ticket.isBogo) extraTexts.push('(買一送一)');
           
-          // 手機版標籤取消換行並微縮小
           const extraTextHTML = extraTexts.length > 0 
             ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
             : '';
           
           return `
             <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${ticket.price ? '$'+ticket.price : '有票'}</span>
+              <span class="whitespace-nowrap">${ticket.price ? ticket.price : '有票'}</span>
               ${extraTextHTML}
             </div>
           `;

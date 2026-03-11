@@ -576,14 +576,14 @@
         const priceText = item.price ? `$${item.price}` : '';
         
         const defaultMessage = `${orderType}訂購公版
-備註：eddie推薦`
+備註：eddie推薦
 姓名：
 張數：
-出發日期：${item.date}
-${isTours ? '行程名稱' : '航司＋航點'}：${tourOrAirline}
+日期：${item.date}
+${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
 金額：${priceText}
 聯絡電話：
-聯絡信箱：;
+聯絡信箱：`;
 
         // 將訊息轉成網址安全格式
         const encodedMessage = encodeURIComponent(defaultMessage);

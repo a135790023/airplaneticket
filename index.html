@@ -128,18 +128,44 @@
       {
         country: '泰國',
         image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=800&q=80',
-        cities: ['曼谷']
+        cities: ['曼谷', '清邁', '普吉島']
       },
       {
         country: '越南',
         image: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80',
-        cities: ['峴港']
+        cities: ['峴港', '胡志明市', '河內', '富國島']
       },
       {
         country: '其他',
         image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
         cities: ['其他航點']
       }
+    ];
+
+    // --- 機場與別名對照表 (Alias Dictionary) ---
+    // 當文字中出現 key 陣列中的詞彙時，會自動映射為對應的標準 value
+    const CITY_ALIASES = [
+      // 韓國
+      { standard: '首爾', aliases: ['首爾', '仁川', '金浦'] },
+      { standard: '釜山', aliases: ['釜山', '金海'] },
+      { standard: '濟州島', aliases: ['濟州島', '濟州'] },
+      
+      // 日本
+      { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
+      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX'] },
+      { standard: '北海道', aliases: ['北海道', '札幌', '新千歲', '函館', '旭川', '千歲', 'CTS'] },
+      { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] },
+      { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] },
+      { standard: '福岡', aliases: ['福岡', 'FUK'] },
+      
+      // 泰國
+      { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] },
+      { standard: '清邁', aliases: ['清邁', 'CNX'] },
+      
+      // 越南
+      { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
+      { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
+      { standard: '峴港', aliases: ['峴港', 'DAD'] }
     ];
 
     // --- 狀態管理 (State) ---
@@ -166,22 +192,45 @@
 
       const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
 
-      // 偵測城市與國家
-      let found = false;
-      for (let loc of LOCATION_DATA) {
-        for (let c of loc.cities) {
-          if (text.includes(c)) {
-            country = loc.country;
-            city = c;
-            found = true;
+      // 偵測城市與國家 (進階版：包含 Alias 偵測)
+      let foundCity = false;
+      
+      // 1. 先透過別名對照表找城市
+      for (let mapping of CITY_ALIASES) {
+        for (let alias of mapping.aliases) {
+          if (text.includes(alias)) {
+            city = mapping.standard;
+            foundCity = true;
             break;
           }
         }
-        if (found) break;
+        if (foundCity) break;
       }
 
-      // 如果沒找到明確城市，但有提到國家名稱
-      if (!found) {
+      // 2. 如果還是沒找到，再用 LOCATION_DATA 裡面的清單找一次 (雙重保險)
+      if (!foundCity) {
+        for (let loc of LOCATION_DATA) {
+          for (let c of loc.cities) {
+            if (text.includes(c)) {
+              city = c;
+              foundCity = true;
+              break;
+            }
+          }
+          if (foundCity) break;
+        }
+      }
+
+      // 3. 找到城市後，反推國家
+      if (foundCity) {
+        for (let loc of LOCATION_DATA) {
+          if (loc.cities.includes(city)) {
+            country = loc.country;
+            break;
+          }
+        }
+      } else {
+        // 如果連城市都沒找到，找找看有沒有國家關鍵字
         for (let loc of LOCATION_DATA) {
           if (text.includes(loc.country)) {
             country = loc.country;
@@ -200,8 +249,27 @@
         if (isFluff) continue;
 
         let score = 0;
-        // 如果這行文字包含對應的城市，它有極高的機率就是標題
+        // 如果這行文字包含對應的城市或其別名，它有極高的機率就是標題
+        let lineContainsCityRelated = false;
+        
+        // 檢查標準城市名
         if (city !== '其他航點' && line.includes(city)) {
+          lineContainsCityRelated = true;
+        }
+        // 檢查該城市的別名 (如果有的話)
+        if (!lineContainsCityRelated && city !== '其他航點') {
+          const mapping = CITY_ALIASES.find(m => m.standard === city);
+          if (mapping) {
+            for(let alias of mapping.aliases) {
+               if(line.includes(alias)) {
+                 lineContainsCityRelated = true;
+                 break;
+               }
+            }
+          }
+        }
+
+        if (lineContainsCityRelated) {
           score = 2;
         } else if (country !== '其他' && line.includes(country)) {
           score = 1;

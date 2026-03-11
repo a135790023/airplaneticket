@@ -1,0 +1,571 @@
+import React, { useState, useEffect } from 'react';
+import { Plane, Calendar as CalendarIcon, MapPin, MessageCircle, X, ChevronLeft, ChevronRight, ExternalLink, ArrowLeft, Briefcase, Facebook, Instagram } from 'lucide-react';
+
+// 填寫您的 Google Sheet ID
+// 1. 建立一個 Google 試算表
+// 2. [機票區] 第一個分頁(標題)請依序設定為：國家、城市、日期、航空公司、金額、詳細說明、報名連結(選填)
+// 3. [旅行團區] 新增第二個分頁命名為「旅行團」，標題依序設定為：國家、行程名稱、出發日期、天數、金額、詳細說明、報名連結(選填)
+// 4. 點擊右上角「共用」-> 將存取權限改為「知道連結的任何人」都可以「檢視」
+// 5. 從網址複製 ID (例如網址 https://docs.google.com/spreadsheets/d/1abc...xyz/edit，ID就是 1abc...xyz)
+const SHEET_ID = '11K6w4hIwjTdUz1nJo4nt6i0GMC7QujZD8Mky4yy0zZ8'; // 👉 已經為您設定好專屬 ID
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+// 航點資料結構 (國家與城市階層)
+const LOCATION_DATA = [
+  {
+    country: '日本',
+    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
+    cities: ['東京', '大阪', '沖繩', '北海道', '石垣島', '名古屋', '仙台', '花卷', '新潟', '秋田', '高松', '福岡', '宮古島', '高知']
+  },
+  {
+    country: '韓國',
+    image: 'https://images.unsplash.com/photo-1515091943-9d5c0ad275af?auto=format&fit=crop&w=800&q=80',
+    cities: ['首爾', '釜山', '濟州島']
+  },
+  {
+    country: '泰國',
+    image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=800&q=80',
+    cities: ['曼谷']
+  },
+  {
+    country: '越南',
+    image: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80',
+    cities: ['峴港']
+  },
+  {
+    country: '其他',
+    image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
+    cities: ['其他航點']
+  }
+];
+
+export default function App() {
+  // 狀態管理
+  const [tickets, setTickets] = useState([]);
+  const [tours, setTours] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // 前台導覽狀態
+  const [selectedCountryObj, setSelectedCountryObj] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDateTickets, setSelectedDateTickets] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // --- Google Sheets 資料讀取邏輯 ---
+  useEffect(() => {
+    const fetchSheetData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. 讀取機票資料 (預設第一個分頁)
+        const response = await fetch(SHEET_URL);
+        const text = await response.text();
+        
+        // 解析 Google 視覺化 API 回傳的 JSON 格式
+        const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+        const data = JSON.parse(jsonString);
+
+        if (data && data.table && data.table.rows) {
+          const rows = data.table.rows;
+          const fetchedTickets = rows.slice(1).map((row, index) => {
+            let dateVal = '';
+            if (row.c[2]) {
+              dateVal = row.c[2].f || row.c[2].v || ''; 
+              dateVal = String(dateVal).replace(/\//g, '-'); 
+            }
+
+            return {
+              id: `ticket-${index}`,
+              country: row.c[0]?.v || '',
+              city: row.c[1]?.v || '',
+              date: dateVal, 
+              airline: row.c[3]?.v || '',
+              price: row.c[4]?.v || row.c[4]?.f || '', 
+              details: row.c[5]?.v || '',
+              link: row.c[6]?.v || '' // 抓取 G 欄的自訂連結
+            };
+          }).filter(t => t.country && t.city && t.date);
+
+          setTickets(fetchedTickets);
+        }
+
+        // 2. 讀取旅行團資料 (指定名稱為「旅行團」的分頁)
+        try {
+          const toursResponse = await fetch(`${SHEET_URL}&sheet=旅行團`);
+          const toursText = await toursResponse.text();
+          const toursJsonString = toursText.substring(toursText.indexOf('{'), toursText.lastIndexOf('}') + 1);
+          const toursData = JSON.parse(toursJsonString);
+          
+          if (toursData && toursData.table && toursData.table.rows) {
+            const toursRows = toursData.table.rows;
+            const fetchedTours = toursRows.slice(1).map((row, index) => {
+              let dateVal = '';
+              if (row.c[2]) {
+                dateVal = row.c[2].f || row.c[2].v || ''; 
+                dateVal = String(dateVal).replace(/\//g, '-'); 
+              }
+              return {
+                id: `tour-${index}`,
+                country: row.c[0]?.v || '',
+                title: row.c[1]?.v || '',
+                date: dateVal, 
+                days: row.c[3]?.v || '',
+                price: row.c[4]?.v || row.c[4]?.f || '', 
+                details: row.c[5]?.v || '',
+                link: row.c[6]?.v || '' // 抓取 G 欄的自訂連結
+              };
+            }).filter(t => t.country && t.title);
+            
+            setTours(fetchedTours);
+          }
+        } catch (tourError) {
+          console.log('尚未建立旅行團分頁或無旅行團資料', tourError);
+        }
+
+      } catch (error) {
+        console.error('讀取 Google Sheet 錯誤:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSheetData();
+  }, []);
+
+  // --- 前台月曆邏輯 ---
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const handleNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+
+  const renderCalendar = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+
+    const blanks = Array(firstDay).fill(null);
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    // 過濾出目前選取城市的機票
+    const filteredTickets = tickets.filter(t => t.country === selectedCountryObj.country && t.city === selectedCity);
+
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-300">
+        {/* 月曆標頭 */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
+          <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
+            <ChevronLeft size={20} />
+          </button>
+          <h2 className="text-lg font-bold text-gray-800 tracking-wider">
+            {year}年 {month + 1}月
+          </h2>
+          <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        {/* 星期標頭 */}
+        <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+          {['日', '一', '二', '三', '四', '五', '六'].map(day => (
+            <div key={day} className="bg-white py-3 text-center text-xs font-bold text-gray-400">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* 日期格子 */}
+        <div className="grid grid-cols-7 gap-px bg-gray-100">
+          {blanks.map((_, i) => (
+            <div key={`blank-${i}`} className="bg-white/50 min-h-[100px] p-2"></div>
+          ))}
+          {days.map(day => {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayTickets = filteredTickets.filter(t => t.date === dateStr);
+            const hasTickets = dayTickets.length > 0;
+            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+            return (
+              <div 
+                key={day} 
+                className={`bg-white min-h-[110px] p-2 transition-all relative group
+                  ${hasTickets ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}
+                `}
+                onClick={() => {
+                  if (hasTickets) {
+                    setSelectedDateTickets({ date: dateStr, tickets: dayTickets });
+                    setIsModalOpen(true);
+                  }
+                }}
+              >
+                <div className={`text-sm font-semibold inline-flex items-center justify-center w-7 h-7 rounded-full mb-1
+                  ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}
+                `}>
+                  {day}
+                </div>
+                
+                {/* 顯示該日期的機票標籤 */}
+                <div className="flex flex-col gap-1.5">
+                  {dayTickets.map(ticket => (
+                    <div key={ticket.id} className="text-[11px] px-2 py-1.5 bg-blue-50 text-blue-700 rounded-md truncate font-medium border border-blue-100/50 shadow-sm">
+                      {ticket.airline} ${ticket.price}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // --- 前台旅行團渲染邏輯 ---
+  const renderTours = () => {
+    if (tours.length === 0) {
+      return (
+        <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm animate-in fade-in">
+          <Briefcase size={48} className="mx-auto text-gray-300 mb-4" />
+          <h3 className="text-xl font-bold text-gray-800 mb-2">目前沒有旅行團資訊</h3>
+          <p className="text-gray-500">請稍後再回來看看，或聯繫客服詢問最新行程！</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+        {tours.map((tour) => {
+          // 判斷是否為 KKday 或是其他自訂連結
+          const isKKday = tour.title?.toLowerCase().includes('kkday') || tour.link?.toLowerCase().includes('kkday');
+          const btnText = isKKday ? "前往 KKday 報名" : (tour.link ? "前往指定網頁報名" : "聯繫合作旅行社 LINE 報名");
+          const btnLink = tour.link || "https://line.me/R/ti/p/@your_line_id";
+          const btnClass = isKKday 
+            ? "bg-[#26C2CD] hover:bg-[#1db0ba] shadow-cyan-200/50" 
+            : (tour.link ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200/50" : "bg-[#06C755] hover:bg-[#05b34c] shadow-green-200/50");
+
+          return (
+            <div key={tour.id} className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg">
+                    <MapPin size={14} /> {tour.country}
+                  </span>
+                  {tour.price && (
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">優惠價</div>
+                      <div className="text-lg font-black text-red-500">${tour.price}</div>
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{tour.title}</h3>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {tour.date && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-md">
+                      <CalendarIcon size={14} /> 出發: {tour.date}
+                    </span>
+                  )}
+                  {tour.days && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-50 text-orange-700 text-xs font-bold rounded-md">
+                      <Briefcase size={14} /> {tour.days}
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 whitespace-pre-wrap leading-relaxed flex-1 mt-auto border border-gray-100">
+                  {tour.details}
+                </div>
+              </div>
+              
+              <div className="px-6 pb-6 pt-2">
+                <a 
+                  href={btnLink} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className={`w-full text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm ${btnClass}`}
+                >
+                  {isKKday || tour.link ? <ExternalLink size={20} /> : <MessageCircle size={20} />}
+                  {btnText}
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-800">
+      {/* 導覽列 */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
+            onClick={() => { setSelectedCountryObj(null); }}
+            title="返回首頁"
+          >
+            <div className="bg-gray-900 p-2 rounded-xl text-white">
+              <Plane size={20} />
+            </div>
+            {/* 防止點擊時反白文字 */}
+            <span className="text-xl font-black text-gray-900 tracking-tight select-none">
+              艾迪王 <span className="text-gray-400 font-medium text-lg">清倉快訊</span>
+            </span>
+          </div>
+          
+          {/* 原本的綠色編輯試算表按鈕已移除，確保粉絲畫面乾淨 */}
+        </div>
+      </nav>
+
+      {/* 主內容區 */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        {/* 載入中提示 */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 animate-pulse">
+            <Plane size={48} className="text-gray-300 mb-4 animate-bounce" />
+            <p className="text-gray-500 font-medium">正在同步最新資料...</p>
+          </div>
+        ) : (
+          <div>
+            {/* 視圖 1: 首頁 (國家與旅行團圖片按鈕) */}
+            {!selectedCountryObj && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="text-center max-w-2xl mx-auto mb-12">
+                  <h1 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1>
+                  <p className="text-gray-500">點擊國家探索最新晚鳥清倉機票，或查看精選旅行團</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {/* 渲染 5 個國家 */}
+                  {LOCATION_DATA.map((loc) => (
+                    <div 
+                      key={loc.country}
+                      onClick={() => {
+                        setSelectedCountryObj(loc);
+                        setSelectedCity(loc.cities[0]); // 預設選中第一個城市
+                      }}
+                      className="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+                    >
+                      {/* 背景圖片 */}
+                      <img 
+                        src={loc.image} 
+                        alt={loc.country} 
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      {/* 漸層遮罩讓文字清楚 */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent transition-opacity group-hover:opacity-90"></div>
+                      
+                      {/* 文字內容 */}
+                      <div className="absolute bottom-0 left-0 p-6">
+                        <h3 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                          <MapPin size={20} className="text-white/80" />
+                          {loc.country}
+                        </h3>
+                        <p className="text-white/70 text-sm font-medium">
+                          包含 {loc.cities.length} 個熱門航點
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 第 6 格：旅行團專區 */}
+                  <div 
+                    onClick={() => setSelectedCountryObj({ isTours: true })}
+                    className="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 ring-2 ring-transparent hover:ring-blue-500/50"
+                  >
+                    {/* 旅行團背景圖片 */}
+                    <img 
+                      src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80" 
+                      alt="優惠旅行團" 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-transparent transition-opacity group-hover:opacity-90"></div>
+                    
+                    <div className="absolute bottom-0 left-0 p-6 w-full">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="bg-blue-600 p-1.5 rounded-lg text-white">
+                          <Briefcase size={16} />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">優惠旅行團</h3>
+                      </div>
+                      <p className="text-white/80 text-sm font-medium">
+                        精選高 CP 值套裝行程
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 視圖 2: 旅行團列表 */}
+            {selectedCountryObj?.isTours && (
+              <div className="animate-in fade-in slide-in-from-right-8 duration-300">
+                <div className="flex items-center gap-4 mb-8">
+                  <button 
+                    onClick={() => setSelectedCountryObj(null)}
+                    className="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">精選優惠旅行團</h1>
+                    <p className="text-sm text-gray-500 mt-1">為您挑選最高 CP 值的套裝行程，輕鬆出遊沒煩惱</p>
+                  </div>
+                </div>
+                {renderTours()}
+              </div>
+            )}
+
+            {/* 視圖 3: 選擇城市與月曆 (機票) */}
+            {selectedCountryObj && !selectedCountryObj.isTours && (
+              <div className="animate-in fade-in slide-in-from-right-8 duration-300">
+                {/* 頂部導航 */}
+                <div className="flex items-center gap-4 mb-8">
+                  <button 
+                    onClick={() => setSelectedCountryObj(null)}
+                    className="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{selectedCountryObj.country} 清倉機票</h1>
+                    <p className="text-sm text-gray-500 mt-1">請選擇欲查詢的城市</p>
+                  </div>
+                </div>
+
+                {/* 城市按鈕 (Pills) */}
+                <div className="flex flex-wrap gap-2.5 mb-8">
+                  {selectedCountryObj.cities.map(city => (
+                    <button
+                      key={city}
+                      onClick={() => setSelectedCity(city)}
+                      className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200
+                        ${selectedCity === city 
+                          ? 'bg-gray-900 text-white shadow-md' 
+                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 月曆 */}
+                {renderCalendar()}
+              </div>
+            )}
+          </div>
+        )}
+
+      </main>
+
+      {/* 頁尾聲明 */}
+      <footer className="mt-12 py-10 px-4 border-t border-gray-200 bg-white/50 text-center text-sm text-gray-500">
+        <div className="max-w-3xl mx-auto flex flex-col items-center">
+          <p className="font-bold text-gray-700 mb-4">✈️ 艾迪王 清倉機票快訊</p>
+          
+          {/* 社群連結 */}
+          <div className="flex items-center gap-5 mb-6">
+            <a 
+              href="https://www.facebook.com/profile.php?id=61579148033952" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="p-2.5 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 hover:shadow transition-all"
+              title="艾迪王 Facebook"
+            >
+              <Facebook size={20} />
+            </a>
+            <a 
+              href="https://www.instagram.com/eddie.tour/" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="p-2.5 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-pink-600 hover:shadow transition-all"
+              title="艾迪王 Instagram"
+            >
+              <Instagram size={20} />
+            </a>
+          </div>
+
+          <p className="leading-relaxed">
+            本網站由艾迪王 @eddie.tour 維護，致力於為粉絲統整各大旅行社的超值晚鳥與清倉機票資訊。<br className="hidden sm:block" />
+            點擊「LINE 搶購」按鈕後，將會直接連結至合作旅行社的官方 LINE 帳號。<br className="hidden sm:block" />
+            後續的航班諮詢、保留機位與開票收款等作業，皆由專業合法之旅行社為您服務，保障您的交易安全。
+          </p>
+        </div>
+      </footer>
+
+      {/* 彈出視窗 (Modal) */}
+      {isModalOpen && selectedDateTickets && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal 標頭 */}
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <CalendarIcon size={20} className="text-gray-400" />
+                {selectedDateTickets.date}
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="p-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Modal 內容 */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-6 bg-gray-50/50">
+              {selectedDateTickets.tickets.map((ticket, index) => {
+                // 判斷是否為 KKday 或是其他自訂連結
+                const isKKday = ticket.airline?.toLowerCase().includes('kkday') || ticket.link?.toLowerCase().includes('kkday');
+                const btnText = isKKday ? "前往 KKday 搶購" : (ticket.link ? "前往指定網頁搶購" : "聯繫合作旅行社 LINE 搶購");
+                const btnLink = ticket.link || "https://line.me/R/ti/p/@your_line_id";
+                const btnClass = isKKday 
+                  ? "bg-[#26C2CD] hover:bg-[#1db0ba] shadow-cyan-200/50" 
+                  : (ticket.link ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200/50" : "bg-[#06C755] hover:bg-[#05b34c] shadow-green-200/50");
+
+                return (
+                  <div key={ticket.id} className={`bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${index !== 0 ? 'mt-4' : ''}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <span className="inline-block bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-md mb-2">
+                          {ticket.country} · {ticket.city}
+                        </span>
+                        <h4 className="text-lg font-black text-gray-900">{ticket.airline}</h4>
+                      </div>
+                      {ticket.price && (
+                        <div className="text-right">
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">優惠價</div>
+                          <div className="text-xl font-black text-red-500">${ticket.price}</div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                      {ticket.details}
+                    </div>
+                    
+                    {/* 動態按鈕 (依據是否有填寫連結、是否為KKday) */}
+                    <a 
+                      href={btnLink} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className={`mt-5 w-full text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm ${btnClass}`}
+                    >
+                      {isKKday || ticket.link ? <ExternalLink size={20} /> : <MessageCircle size={20} />}
+                      {btnText}
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -349,7 +349,7 @@
         const dataFlights = JSON.parse(jsonStrFlights);
 
         if (dataFlights && dataFlights.table && dataFlights.table.rows) {
-          state.tickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
+          let allTickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
             let rawText = '';
             if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
               rawText = row.c[1].v; // 自動化：B欄
@@ -389,6 +389,16 @@
               isFlightAndHotel: item.isFlightAndHotel
             }));
           }).filter(t => t.date);
+
+          // --- 新增：機票資料自動去重複與覆蓋邏輯 ---
+          const ticketMap = new Map();
+          allTickets.forEach(ticket => {
+            // 使用 日期+城市+航空(標題)+方案 作為唯一識別碼
+            const key = `${ticket.date}_${ticket.city}_${ticket.airline}_${ticket.isFlightAndHotel}`;
+            // Map 的特性會讓後出現的資料(通常是新貼上的)自動覆蓋舊的資料
+            ticketMap.set(key, ticket);
+          });
+          state.tickets = Array.from(ticketMap.values());
         }
 
         // 2. 讀取旅行團資料
@@ -400,7 +410,7 @@
           const dataTours = JSON.parse(jsonStrTours);
           
           if (dataTours && dataTours.table && dataTours.table.rows) {
-            state.tours = dataTours.table.rows.slice(1).flatMap((row, index) => {
+            let allTours = dataTours.table.rows.slice(1).flatMap((row, index) => {
               let rawText = '';
               if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
                 rawText = row.c[1].v; 
@@ -444,6 +454,15 @@
                 isFlightAndHotel: item.isFlightAndHotel
               }));
             }).filter(t => t.date);
+
+            // --- 新增：旅行團資料自動去重複與覆蓋邏輯 ---
+            const tourMap = new Map();
+            allTours.forEach(tour => {
+              // 使用 日期+標題+方案 作為唯一識別碼
+              const key = `${tour.date}_${tour.title}_${tour.isFlightAndHotel}`;
+              tourMap.set(key, tour);
+            });
+            state.tours = Array.from(tourMap.values());
           }
         } catch (e) {
           console.error('旅行團資料讀取失敗:', e);
@@ -621,13 +640,11 @@
         const isToday = todayStr === dateStr;
 
         let toursHTML = dayTours.map(tour => {
-          // 若為機+酒，顯示紫色；否則顯示橘色
           const isPak = tour.isFlightAndHotel;
           const bgClass = isPak ? 'bg-purple-50' : 'bg-orange-50';
           const textClass = isPak ? 'text-purple-700' : 'text-orange-700';
           const borderClass = isPak ? 'border-purple-100/50' : 'border-orange-100/50';
           
-          // 將機+酒標籤移至第二行，避免擠壓金額空間
           const extraText = isPak ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">(機+酒)</div>` : '';
           
           return `
@@ -712,13 +729,11 @@
         const isToday = todayStr === dateStr;
 
         let ticketsHTML = dayTickets.map(ticket => {
-          // 若為機+酒，顯示紫色；否則顯示藍色
           const isPak = ticket.isFlightAndHotel;
           const bgClass = isPak ? 'bg-purple-50' : 'bg-blue-50';
           const textClass = isPak ? 'text-purple-700' : 'text-blue-700';
           const borderClass = isPak ? 'border-purple-100/50' : 'border-blue-100/50';
           
-          // 將機+酒標籤移至第二行，避免擠壓金額空間
           const extraText = isPak ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">(機+酒)</div>` : '';
           
           return `

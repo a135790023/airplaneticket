@@ -379,12 +379,8 @@
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDay = new Date(year, month, 1).getDay();
 
-      const availableCountries = [...new Set(state.tours.map(t => t.country).filter(Boolean))];
-      const tourCountries = ['全部', ...availableCountries];
-
-      const filteredTours = state.selectedTourCountry === '全部' 
-        ? state.tours 
-        : state.tours.filter(t => t.country === state.selectedTourCountry);
+      // 直接使用所有的旅行團資料，不進行國家篩選
+      const filteredTours = state.tours;
 
       let blanksHTML = '';
       for (let i = 0; i < firstDay; i++) {
@@ -401,7 +397,8 @@
         const isToday = todayStr === dateStr;
 
         let toursHTML = dayTours.map(tour => {
-          const prefix = (tour.country && state.selectedTourCountry === '全部') ? `[${tour.country}] ` : '';
+          // 在綜合月曆上顯示國家前綴，讓使用者知道是哪裡的團
+          const prefix = tour.country ? `[${tour.country}] ` : '';
           return `
             <div class="text-[10px] sm:text-[11px] px-0.5 sm:px-2 py-1 sm:py-1.5 bg-orange-50 text-orange-700 rounded sm:rounded-md truncate font-medium border border-orange-100/50 shadow-sm text-center sm:text-left leading-tight">
               <span class="hidden sm:inline">${prefix}${tour.title} ${tour.price ? '$'+tour.price : ''}</span>
@@ -423,15 +420,6 @@
         `;
       }
 
-      const pillsHTML = tourCountries.map(country => `
-        <button
-          onclick="selectTourCountry('${country}')"
-          class="px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${state.selectedTourCountry === country ? 'bg-gray-900 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'}"
-        >
-          ${country}
-        </button>
-      `).join('');
-
       return `
         <div class="${state.animateTransition ? 'slide-in-from-right-8' : ''}">
           <div class="flex items-center gap-4 mb-8">
@@ -440,15 +428,9 @@
             </button>
             <div>
               <h1 class="text-2xl font-bold text-gray-900">精選優惠旅行團</h1>
-              <p class="text-sm text-gray-500 mt-1">請選擇欲查詢的出發國家</p>
+              <p class="text-sm text-gray-500 mt-1">為您挑選最高 CP 值的套裝行程，輕鬆出遊沒煩惱</p>
             </div>
           </div>
-
-          ${availableCountries.length > 0 ? `
-            <div class="flex flex-wrap gap-2.5 mb-8">
-              ${pillsHTML}
-            </div>
-          ` : ''}
 
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${state.animateTransition ? 'fade-in' : ''}">
             <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
@@ -594,14 +576,14 @@
         const priceText = item.price ? `$${item.price}` : '';
         
         const defaultMessage = `${orderType}訂購公版
+備註：eddie推薦`
 姓名：
 張數：
 出發日期：${item.date}
 ${isTours ? '行程名稱' : '航司＋航點'}：${tourOrAirline}
 金額：${priceText}
 聯絡電話：
-聯絡信箱：
-備註：eddie推薦`;
+聯絡信箱：;
 
         // 將訊息轉成網址安全格式
         const encodedMessage = encodeURIComponent(defaultMessage);

@@ -3,9 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>艾迪王 清倉快訊</title>
+  
+  <!-- 基本 SEO 標籤 -->
+  <title>艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團</title>
+  <meta name="description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta name="keywords" content="艾迪王, 清艙機票, 晚鳥機票, 便宜機票, 優惠旅行團, 日本機票, 韓國機票, 泰國機票">
+  <meta name="author" content="艾迪王">
+
+  <!-- Open Graph 標籤 (給 FB, LINE 等社群軟體抓取預覽用) -->
+  <meta property="og:title" content="艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團">
+  <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80">
+  <meta property="og:type" content="website">
+  
   <!-- 飛機網頁圖示 (Favicon) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+  
   <!-- 引入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- 引入 Phosphor Icons 取代原先的 Lucide Icons -->
@@ -43,7 +56,7 @@
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
           <span class="text-xl font-black text-gray-900 tracking-tight select-none">
-            艾迪王 <span class="text-gray-400 font-medium text-lg">清倉快訊</span>
+            艾迪王 <span class="text-gray-400 font-medium text-lg">清艙快訊</span>
           </span>
         </div>
       </div>
@@ -57,7 +70,7 @@
     <!-- 頁尾聲明 -->
     <footer class="mt-12 py-10 px-4 border-t border-gray-200 bg-white/50 text-center text-sm text-gray-500">
       <div class="max-w-3xl mx-auto flex flex-col items-center">
-        <p class="font-bold text-gray-700 mb-4">✈️ 艾迪王 清倉機票快訊</p>
+        <p class="font-bold text-gray-700 mb-4">✈️ 艾迪王 清艙機票快訊</p>
         
         <!-- 社群連結 -->
         <div class="flex items-center gap-5 mb-6">
@@ -82,7 +95,7 @@
         </div>
 
         <p class="leading-relaxed">
-          本網站由艾迪王 @eddie.tour 維護，致力於為粉絲統整各大旅行社的超值晚鳥與清倉機票資訊。<br class="hidden sm:block" />
+          本網站由艾迪王 @eddie.tour 維護，致力於為粉絲統整各大旅行社的超值晚鳥與清艙機票資訊。<br class="hidden sm:block" />
           點擊「LINE 搶購」按鈕後，將會直接連結至合作旅行社的官方 LINE 帳號。<br class="hidden sm:block" />
           後續的航班諮詢、保留機位與開票收款等作業，皆由專業合法之旅行社為您服務，保障您的交易安全。
         </p>
@@ -106,7 +119,7 @@
       },
       {
         country: '韓國',
-        image: 'https://images.unsplash.com/photo-1515091943-9d5c0ad275af?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1546874177-9e664107314e?auto=format&fit=crop&w=800&q=80',
         cities: ['首爾', '釜山', '濟州島']
       },
       {
@@ -322,7 +335,7 @@
         <div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}">
           <div class="text-center max-w-2xl mx-auto mb-12">
             <h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1>
-            <p class="text-gray-500">點擊國家探索最新晚鳥清倉機票，或查看精選旅行團</p>
+            <p class="text-gray-500">點擊國家探索最新晚鳥清艙機票，或查看精選旅行團</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             ${cardsHTML}
@@ -470,7 +483,7 @@
               <i class="ph-bold ph-arrow-left text-xl"></i>
             </button>
             <div>
-              <h1 class="text-2xl font-bold text-gray-900">${state.selectedCountryObj.country} 清倉機票</h1>
+              <h1 class="text-2xl font-bold text-gray-900">${state.selectedCountryObj.country} 清艙機票</h1>
               <p class="text-sm text-gray-500 mt-1">請選擇欲查詢的城市</p>
             </div>
           </div>

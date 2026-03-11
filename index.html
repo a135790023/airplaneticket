@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <!-- 基本 SEO 標籤 -->
   <title>艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團</title>
@@ -38,6 +38,9 @@
     /* 隱藏捲軸但保留捲動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 停用手機雙擊放大功能 */
+    body { touch-action: manipulation; }
   </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans text-gray-800">
@@ -650,7 +653,7 @@
 
       let blanksHTML = '';
       for (let i = 0; i < firstDay; i++) {
-        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-1 sm:p-2"></div>`;
+        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-0.5 sm:p-2"></div>`;
       }
 
       let daysHTML = '';
@@ -672,13 +675,14 @@
           if (isPak) extraTexts.push('(機+酒)');
           if (tour.isBogo) extraTexts.push('(買一送一)');
           
+          // 手機版標籤取消換行並微縮小
           const extraTextHTML = extraTexts.length > 0 
-            ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">${extraTexts.join(' ')}</div>` 
+            ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
             : '';
           
           return `
-            <div class="text-[10px] sm:text-[12px] px-0.5 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tight border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="truncate w-full">${tour.price ? '$'+tour.price : '有團'}</span>
+            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
+              <span class="whitespace-nowrap">${tour.price ? '$'+tour.price : '有團'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -686,13 +690,13 @@
 
         daysHTML += `
           <div 
-            class="bg-white min-h-[80px] sm:min-h-[110px] p-1 sm:p-2 transition-all relative group ${hasTours ? 'cursor-pointer hover:bg-gray-50/50' : 'text-gray-400'}"
+            class="bg-white min-h-[80px] sm:min-h-[110px] p-0.5 sm:p-2 transition-all relative group ${hasTours ? 'cursor-pointer hover:bg-orange-50/50' : 'text-gray-400'}"
             ${hasTours ? `onclick="openModal('${dateStr}')"` : ''}
           >
-            <div class="text-xs sm:text-sm font-semibold inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full mb-1 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
+            <div class="text-[10px] sm:text-sm font-semibold inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full mb-0.5 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
               ${d}
             </div>
-            <div class="flex flex-col gap-1 sm:gap-1.5">${toursHTML}</div>
+            <div class="flex flex-col gap-1 sm:gap-1.5 w-full">${toursHTML}</div>
           </div>
         `;
       }
@@ -745,7 +749,7 @@
 
       let blanksHTML = '';
       for (let i = 0; i < firstDay; i++) {
-        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-1 sm:p-2"></div>`;
+        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-0.5 sm:p-2"></div>`;
       }
 
       let daysHTML = '';
@@ -767,13 +771,14 @@
           if (isPak) extraTexts.push('(機+酒)');
           if (ticket.isBogo) extraTexts.push('(買一送一)');
           
+          // 手機版標籤取消換行並微縮小
           const extraTextHTML = extraTexts.length > 0 
-            ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">${extraTexts.join(' ')}</div>` 
+            ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
             : '';
           
           return `
-            <div class="text-[10px] sm:text-[12px] px-0.5 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tight border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="truncate w-full">${ticket.price ? '$'+ticket.price : '有票'}</span>
+            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
+              <span class="whitespace-nowrap">${ticket.price ? '$'+ticket.price : '有票'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -781,13 +786,13 @@
 
         daysHTML += `
           <div 
-            class="bg-white min-h-[80px] sm:min-h-[110px] p-1 sm:p-2 transition-all relative group ${hasTickets ? 'cursor-pointer hover:bg-gray-50/50' : 'text-gray-400'}"
+            class="bg-white min-h-[80px] sm:min-h-[110px] p-0.5 sm:p-2 transition-all relative group ${hasTickets ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}"
             ${hasTickets ? `onclick="openModal('${dateStr}')"` : ''}
           >
-            <div class="text-xs sm:text-sm font-semibold inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full mb-1 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
+            <div class="text-[10px] sm:text-sm font-semibold inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full mb-0.5 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
               ${d}
             </div>
-            <div class="flex flex-col gap-1 sm:gap-1.5">${ticketsHTML}</div>
+            <div class="flex flex-col gap-1 sm:gap-1.5 w-full">${ticketsHTML}</div>
           </div>
         `;
       }

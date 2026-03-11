@@ -156,6 +156,86 @@
       animateTransition: true
     };
 
+    // --- 智慧文字解析邏輯 (自動推導國家、城市與標題) ---
+    function inferInfoFromText(text) {
+      let title = '未命名行程';
+      let country = '其他';
+      let city = '其他航點';
+      
+      if (!text) return { title, country, city };
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+      if (lines.length > 0) {
+        title = lines[0]; // 第一行當作航空公司或行程名稱
+      }
+
+      // 偵測城市與國家
+      let found = false;
+      for (let loc of LOCATION_DATA) {
+        for (let c of loc.cities) {
+          if (text.includes(c)) {
+            country = loc.country;
+            city = c;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+
+      // 如果沒找到明確城市，但有提到國家名稱
+      if (!found) {
+        for (let loc of LOCATION_DATA) {
+          if (text.includes(loc.country)) {
+            country = loc.country;
+            break;
+          }
+        }
+      }
+
+      return { title, country, city };
+    }
+
+    // --- 智慧文字解析邏輯 (將多筆日期/金額從整段文字中拆分) ---
+    function parseRawDetails(details, fallbackDate, fallbackPrice) {
+      if (!details) return [{ date: fallbackDate, price: fallbackPrice }];
+
+      const lines = details.split('\n');
+      const items = [];
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      for (let line of lines) {
+        // 尋找價格 (尋找包含 $ 或 ＄ 的金額，例如 $ 11,800)
+        const priceMatch = line.match(/(?:NT\$|\$|＄)\s*([0-9,]+)/i);
+        // 尋找日期 (例如 3/23, 03/23, 2026/3/23)
+        const dateMatch = line.match(/(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/);
+
+        if (priceMatch && dateMatch) {
+          let year = dateMatch[1] ? parseInt(dateMatch[1], 10) : currentYear;
+          let month = parseInt(dateMatch[2], 10);
+          let day = parseInt(dateMatch[3], 10);
+          
+          // 如果沒有給年份，且月份已經過了很久(例如現在8月，文字寫1月)，就推測是明年的機票
+          if (!dateMatch[1] && month < currentMonth - 2) {
+            year = currentYear + 1;
+          }
+          
+          let dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          let price = priceMatch[1]; // 保留逗號格式
+          items.push({ date: dateStr, price: price });
+        }
+      }
+
+      // 如果有解析到任何「同時包含日期與價格」的行，就回傳解析結果 (一拆多)
+      if (items.length > 0) {
+        return items;
+      } else {
+        // 如果沒有，就回傳原本表格欄位填寫的單筆日期與價格
+        return [{ date: fallbackDate, price: fallbackPrice }];
+      }
+    }
+
     // --- 資料串接邏輯 (Google Sheets) ---
     async function fetchSheetData() {
       state.isLoading = true;
@@ -170,23 +250,44 @@
         const dataFlights = JSON.parse(jsonStrFlights);
 
         if (dataFlights && dataFlights.table && dataFlights.table.rows) {
-          state.tickets = dataFlights.table.rows.slice(1).map((row, index) => {
-            let dateVal = '';
-            if (row.c[2]) {
-              dateVal = row.c[2].f || row.c[2].v || ''; 
-              dateVal = String(dateVal).replace(/\//g, '-'); 
+          state.tickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
+            // 防呆：支援貼在F欄(詳細說明)或是直接整坨貼在A欄
+            let rawText = row.c[5]?.v || '';
+            if (!rawText && row.c[0]?.v && String(row.c[0].v).includes('\n')) {
+              rawText = row.c[0].v;
             }
-            return {
-              id: `ticket-${index}`,
-              country: row.c[0]?.v || '',
-              city: row.c[1]?.v || '',
-              date: dateVal, 
-              airline: row.c[3]?.v || '',
-              price: row.c[4]?.v || row.c[4]?.f || '', 
-              details: row.c[5]?.v || '',
-              link: row.c[6]?.v || ''
-            };
-          }).filter(t => t.country && t.city && t.date);
+
+            let country = row.c[0]?.v || '';
+            let city = row.c[1]?.v || '';
+            let dateVal = row.c[2]?.f || row.c[2]?.v || '';
+            let airline = row.c[3]?.v || '';
+            let priceVal = row.c[4]?.v || row.c[4]?.f || '';
+            let link = row.c[6]?.v || '';
+
+            // 如果是把整坨貼在 A 欄，清空其他錯誤對應的欄位以便重新推導
+            if (rawText === row.c[0]?.v) {
+              country = ''; city = ''; dateVal = ''; airline = ''; priceVal = '';
+            }
+
+            // 智慧推導：如果沒填國家城市，從內文自動抓
+            const inferred = inferInfoFromText(rawText);
+            if (!country) country = inferred.country;
+            if (!city) city = inferred.city;
+            if (!airline) airline = inferred.title;
+
+            const parsedItems = parseRawDetails(rawText, String(dateVal).replace(/\//g, '-'), priceVal);
+
+            return parsedItems.map((item, subIndex) => ({
+              id: `ticket-${index}-${subIndex}`,
+              country: country,
+              city: city,
+              date: item.date,
+              airline: airline,
+              price: item.price,
+              details: rawText, // 保留完整原始文字
+              link: link
+            }));
+          }).filter(t => t.date); // 必須要有日期才顯示在月曆
         }
 
         // 2. 讀取旅行團資料
@@ -198,23 +299,49 @@
           const dataTours = JSON.parse(jsonStrTours);
           
           if (dataTours && dataTours.table && dataTours.table.rows) {
-            state.tours = dataTours.table.rows.slice(1).map((row, index) => {
-              let dateVal = '';
-              if (row.c[2]) {
-                dateVal = row.c[2].f || row.c[2].v || ''; 
-                dateVal = String(dateVal).replace(/\//g, '-'); 
+            state.tours = dataTours.table.rows.slice(1).flatMap((row, index) => {
+              // 防呆：支援貼在F欄(詳細說明)或是直接整坨貼在A欄
+              let rawText = row.c[5]?.v || '';
+              if (!rawText && row.c[0]?.v && String(row.c[0].v).includes('\n')) {
+                rawText = row.c[0].v;
               }
-              return {
-                id: `tour-${index}`,
-                country: row.c[0]?.v || '',
-                title: row.c[1]?.v || '',
-                date: dateVal, 
-                days: row.c[3]?.v || '',
-                price: row.c[4]?.v || row.c[4]?.f || '', 
-                details: row.c[5]?.v || '',
-                link: row.c[6]?.v || ''
-              };
-            }).filter(t => t.country && t.title);
+
+              let country = row.c[0]?.v || '';
+              let title = row.c[1]?.v || '';
+              let dateVal = row.c[2]?.f || row.c[2]?.v || '';
+              let days = row.c[3]?.v || '';
+              let priceVal = row.c[4]?.v || row.c[4]?.f || '';
+              let link = row.c[6]?.v || '';
+
+              // 如果是把整坨貼在 A 欄，清空其他錯誤對應的欄位以便重新推導
+              if (rawText === row.c[0]?.v) {
+                country = ''; title = ''; dateVal = ''; days = ''; priceVal = '';
+              }
+
+              // 智慧推導：如果沒填國家城市，從內文自動抓
+              const inferred = inferInfoFromText(rawText);
+              if (!country) country = inferred.country;
+              if (!title) title = inferred.title;
+
+              // 若內文包含 "X天" 或 "X日"，順便自動推導天數標籤
+              if (!days) {
+                const daysMatch = rawText.match(/(\d+)[天日]/);
+                if (daysMatch) days = daysMatch[0]; // 例如 "6日"
+              }
+
+              const parsedItems = parseRawDetails(rawText, String(dateVal).replace(/\//g, '-'), priceVal);
+
+              return parsedItems.map((item, subIndex) => ({
+                id: `tour-${index}-${subIndex}`,
+                country: country,
+                title: title,
+                date: item.date,
+                days: days,
+                price: item.price,
+                details: rawText,
+                link: link
+              }));
+            }).filter(t => t.date);
           }
         } catch (e) {
           console.error('旅行團資料讀取失敗:', e);

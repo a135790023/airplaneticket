@@ -185,6 +185,21 @@
       animateTransition: true
     };
 
+    // --- 輔助函式：用來產生去重複用的標準化文字 ---
+    const normalizeForDedup = (str) => {
+      if (!str) return '';
+      try {
+        // 移除常見標點符號與表情，以及代表更新的字眼，讓「更新 北海道6日」與「北海道6日」被視為相同
+        return str.replace(/[\s\p{P}❗️🔥✨⭐⚡️]/gu, '')
+                  .replace(/更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊/g, '')
+                  .toLowerCase();
+      } catch(e) {
+        return str.replace(/[\s.,/#!$%^&*;:{}=\-_`~()[\]【】❗️🔥✨⭐⚡️]/g, '')
+                  .replace(/更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊/g, '')
+                  .toLowerCase();
+      }
+    };
+
     // --- 智慧文字解析邏輯 (自動推導國家、城市與精準標題) ---
     function inferInfoFromText(text) {
       let title = '未命名行程';
@@ -241,8 +256,9 @@
       let titleScore = -1;
 
       for (let line of lines) {
-        const isFluff = /^[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/u.test(line) || line.includes('最後機會') || line.includes('清艙促銷') || line.includes('預估');
-        if (isFluff) continue;
+        // 過濾掉純表情符號、純標點符號，或者是常見的無意義宣傳字眼
+        const fluffRegex = /^[\p{Emoji}\s❗️🔥✨⭐⚡️更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
+        if (fluffRegex.test(line)) continue;
 
         let score = 0;
         let lineContainsCityRelated = false;
@@ -274,10 +290,15 @@
         }
       }
 
+      // 升級版 Title 淨化器：移除前綴「更新」、「降價」等，讓 UI 更乾淨
       if (bestTitle) {
-        title = bestTitle.replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
+        title = bestTitle.replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️【】\[\]()]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
+        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
+        title = title.trim();
       } else if (lines.length > 0) {
-        title = lines[0]; 
+        title = lines[0].replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️【】\[\]()]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
+        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
+        title = title.trim();
       }
 
       return { title, country, city };
@@ -418,9 +439,10 @@
           // --- 新增：機票資料自動去重複與覆蓋邏輯 ---
           const ticketMap = new Map();
           allTickets.forEach(ticket => {
-            // 使用 日期+城市+航空(標題)+方案+買一送一 作為唯一識別碼
-            const key = `${ticket.date}_${ticket.city}_${ticket.airline}_${ticket.isFlightAndHotel}_${ticket.isBogo}`;
-            // Map 的特性會讓後出現的資料(通常是新貼上的)自動覆蓋舊的資料
+            // 使用 日期+城市+淨化航空標題+方案+買一送一 作為唯一識別碼
+            const normTitle = normalizeForDedup(ticket.airline);
+            const key = `${ticket.date}_${ticket.city}_${normTitle}_${ticket.isFlightAndHotel}_${ticket.isBogo}`;
+            // Map 的特性會讓後出現的資料(最新寫入的降價)自動覆蓋舊的資料
             ticketMap.set(key, ticket);
           });
           state.tickets = Array.from(ticketMap.values());
@@ -484,8 +506,9 @@
             // --- 新增：旅行團資料自動去重複與覆蓋邏輯 ---
             const tourMap = new Map();
             allTours.forEach(tour => {
-              // 使用 日期+標題+方案+買一送一 作為唯一識別碼
-              const key = `${tour.date}_${tour.title}_${tour.isFlightAndHotel}_${tour.isBogo}`;
+              // 使用 日期+淨化標題+方案+買一送一 作為唯一識別碼
+              const normTitle = normalizeForDedup(tour.title);
+              const key = `${tour.date}_${normTitle}_${tour.isFlightAndHotel}_${tour.isBogo}`;
               tourMap.set(key, tour);
             });
             state.tours = Array.from(tourMap.values());

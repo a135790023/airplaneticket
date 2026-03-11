@@ -6,13 +6,13 @@
   
   <!-- 基本 SEO 標籤 -->
   <title>艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團</title>
-  <meta name="description" content="艾迪王 @eddie.tour 專屬統整！為您精選旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta name="description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
   <meta name="keywords" content="艾迪王, 清艙機票, 晚鳥機票, 便宜機票, 優惠旅行團, 日本機票, 韓國機票, 泰國機票">
   <meta name="author" content="艾迪王">
 
   <!-- Open Graph 標籤 (給 FB, LINE 等社群軟體抓取預覽用) -->
   <meta property="og:title" content="艾迪王 清艙快訊 | 超值晚鳥機票與優惠旅行團">
-  <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
+  <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票、清艙機票與高 CP 值優惠旅行團。隨時掌握最新促銷，點擊直接搶購！">
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80">
   <meta property="og:type" content="website">
   
@@ -147,10 +147,12 @@
 
     // --- 機場與別名對照表 (Alias Dictionary) ---
     const CITY_ALIASES = [
+      // 韓國
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦'] },
       { standard: '釜山', aliases: ['釜山', '金海'] },
       { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] },
       
+      // 日本
       { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
       { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX'] },
       { standard: '北海道', aliases: ['北海道', '札幌', '新千歲', '函館', '旭川', '千歲', 'CTS'] },
@@ -159,9 +161,11 @@
       { standard: '福岡', aliases: ['福岡', 'FUK'] },
       { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] },
       
+      // 泰國
       { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] },
       { standard: '清邁', aliases: ['清邁', 'CNX'] },
       
+      // 越南
       { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
       { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
       { standard: '峴港', aliases: ['峴港', 'DAD'] }
@@ -311,19 +315,62 @@
 
       let isPakState = isGlobalPak;
 
+      // 提取日期的共用函數 (支援連寫省略月份，如 5/31、6/02、07、09)
       const extractDates = (text) => {
         if (!text) return [];
-        const dateRegex = /(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/g;
-        let match;
-        let dates = [];
-        while ((match = dateRegex.exec(text)) !== null) {
-          let year = match[1] ? parseInt(match[1], 10) : currentYear;
-          let month = parseInt(match[2], 10);
-          let day = parseInt(match[3], 10);
-          if (!match[1] && month < currentMonth - 2) {
-            year = currentYear + 1;
-          }
-          dates.push(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+        const dates = [];
+        let currentM = null;
+        let currentY = currentYear;
+
+        // 特殊正則：防止匹配到時間 (如 16:00) 或月份範圍 (如 5-6 月)
+        const dateListRegex = /(?:\d{4}[\/\-])?\d{1,2}[\/\-]\d{1,2}(?!\s*[:月號])(?:[、，,\s\-]+(?:\d{1,2}[\/\-])?\d{1,2}(?!\s*[:月號]))*/g;
+        const matchList = text.match(dateListRegex);
+
+        if (matchList) {
+          matchList.forEach(listStr => {
+            let safeStr = listStr.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/g, '$1/$2/$3');
+            safeStr = safeStr.replace(/(^|[^0-9\/])(\d{1,2})-(\d{1,2})(?=[^0-9\/]|$)/g, '$1$2/$3');
+            safeStr = safeStr.replace(/\-/g, '、'); // 統一分隔符號
+            
+            const tokens = safeStr.split(/[、，,\s]+/);
+            tokens.forEach(token => {
+              if (!token) return;
+              const parts = token.split('/');
+              let y, m, d;
+              if (parts.length === 3) {
+                y = parseInt(parts[0], 10);
+                m = parseInt(parts[1], 10);
+                d = parseInt(parts[2], 10);
+                currentY = y;
+                currentM = m;
+              } else if (parts.length === 2) {
+                m = parseInt(parts[0], 10);
+                d = parseInt(parts[1], 10);
+                currentM = m;
+                if (currentM < currentMonth - 2) {
+                  y = currentYear + 1;
+                } else {
+                  y = currentYear;
+                }
+                currentY = y;
+              } else if (parts.length === 1) {
+                // 處理省略月份的日期 (例如 07, 09, 14)
+                d = parseInt(parts[0], 10);
+                if (currentM !== null) {
+                  y = currentY;
+                  m = currentM;
+                } else {
+                  return;
+                }
+              } else {
+                return;
+              }
+              
+              if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                 dates.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+              }
+            });
+          });
         }
         return dates;
       };
@@ -337,14 +384,14 @@
           isPakState = false;
         }
 
-        // 升級正規表示式：支援 💵、現金價、售價 等更多抓取模式
-        const priceMatch = line.match(/(?:NT\$|\$|＄|💵|現金價|售價|價格|優惠價|機票)[:：\s]*([0-9,]{3,})/i);
+        // 升級：支援 💵、💰、現金價、售價 等多種價格關鍵字
+        const priceMatch = line.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
 
         if (priceMatch) {
-          // 在這裡將抓到的金額中的逗號去除
-          let price = priceMatch[1].replace(/,/g, ''); 
+          let price = priceMatch[1].replace(/,/g, ''); // 強制去除逗號
           let dates = extractDates(line);
 
+          // 若該行只有價格沒寫日期，智慧跨行尋找
           if (dates.length === 0 && i > 0) {
             dates = extractDates(lines[i-1]);
           }
@@ -366,7 +413,7 @@
       if (items.length > 0) {
         return items;
       } else {
-        return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo }];
+        return [{ date: fallbackDate, price: fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo }];
       }
     }
 
@@ -394,7 +441,7 @@
               rawText = row.c[0].v;
             }
 
-            // 將所有台灣虎航與虎航文字自動換成 🐯
+            // 虎航文字自動替換
             if (rawText) {
               rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
             }
@@ -404,7 +451,6 @@
             let dateVal = row.c[2]?.f || row.c[2]?.v || '';
             let airline = row.c[3]?.v || '';
             let priceVal = row.c[4]?.v || row.c[4]?.f || '';
-            priceVal = String(priceVal).replace(/,/g, ''); // 去除原本試算表手動填寫欄位的逗號
             let link = row.c[6]?.v || '';
 
             if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
@@ -460,7 +506,7 @@
                 rawText = row.c[0].v; 
               }
 
-              // 將所有台灣虎航與虎航文字自動換成 🐯
+              // 虎航文字自動替換
               if (rawText) {
                 rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
               }
@@ -470,7 +516,6 @@
               let dateVal = row.c[2]?.f || row.c[2]?.v || '';
               let days = row.c[3]?.v || '';
               let priceVal = row.c[4]?.v || row.c[4]?.f || '';
-              priceVal = String(priceVal).replace(/,/g, ''); // 去除原本試算表手動填寫欄位的逗號
               let link = row.c[6]?.v || '';
 
               if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
@@ -700,8 +745,8 @@
             : '';
           
           return `
-            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${tour.price ? tour.price : '有團'}</span>
+            <div class="text-[10px] sm:text-[13px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
+              <span class="whitespace-nowrap font-black">${tour.price ? tour.price : '有團'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -795,8 +840,8 @@
             : '';
           
           return `
-            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap">${ticket.price ? ticket.price : '有票'}</span>
+            <div class="text-[10px] sm:text-[13px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
+              <span class="whitespace-nowrap font-black">${ticket.price ? ticket.price : '有票'}</span>
               ${extraTextHTML}
             </div>
           `;
@@ -990,3 +1035,5 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
   </script>
 </body>
 </html>
+
+

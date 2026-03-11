@@ -355,10 +355,14 @@
 
         if (dataFlights && dataFlights.table && dataFlights.table.rows) {
           state.tickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
-            // 防呆：支援貼在F欄(詳細說明)或是直接整坨貼在A欄
-            let rawText = row.c[5]?.v || '';
-            if (!rawText && row.c[0]?.v && String(row.c[0].v).includes('\n')) {
-              rawText = row.c[0].v;
+            // 支援 App Scripts 自動化格式 (第二欄 B 欄為訊息內容)，或相容舊的手動貼法
+            let rawText = '';
+            if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
+              rawText = row.c[1].v; // 自動化：B欄
+            } else if (row.c[5]?.v) {
+              rawText = row.c[5].v; // 舊格式：F欄
+            } else if (row.c[0]?.v && String(row.c[0].v).includes('\n')) {
+              rawText = row.c[0].v; // 舊格式：A欄
             }
 
             let country = row.c[0]?.v || '';
@@ -368,8 +372,8 @@
             let priceVal = row.c[4]?.v || row.c[4]?.f || '';
             let link = row.c[6]?.v || '';
 
-            // 如果是把整坨貼在 A 欄，清空其他錯誤對應的欄位以便重新推導
-            if (rawText === row.c[0]?.v) {
+            // 如果內容來自 A 欄或 B 欄 (自動化)，清空其他錯誤對應的欄位以便重新推導
+            if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
               country = ''; city = ''; dateVal = ''; airline = ''; priceVal = '';
             }
 
@@ -404,10 +408,14 @@
           
           if (dataTours && dataTours.table && dataTours.table.rows) {
             state.tours = dataTours.table.rows.slice(1).flatMap((row, index) => {
-              // 防呆：支援貼在F欄(詳細說明)或是直接整坨貼在A欄
-              let rawText = row.c[5]?.v || '';
-              if (!rawText && row.c[0]?.v && String(row.c[0].v).includes('\n')) {
-                rawText = row.c[0].v;
+              // 支援 App Scripts 自動化格式 (第二欄 B 欄為訊息內容)，或相容舊的手動貼法
+              let rawText = '';
+              if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
+                rawText = row.c[1].v; // 自動化：B欄
+              } else if (row.c[5]?.v) {
+                rawText = row.c[5].v; // 舊格式：F欄
+              } else if (row.c[0]?.v && String(row.c[0].v).includes('\n')) {
+                rawText = row.c[0].v; // 舊格式：A欄
               }
 
               let country = row.c[0]?.v || '';
@@ -417,8 +425,8 @@
               let priceVal = row.c[4]?.v || row.c[4]?.f || '';
               let link = row.c[6]?.v || '';
 
-              // 如果是把整坨貼在 A 欄，清空其他錯誤對應的欄位以便重新推導
-              if (rawText === row.c[0]?.v) {
+              // 如果內容來自 A 欄或 B 欄 (自動化)，清空其他錯誤對應的欄位以便重新推導
+              if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
                 country = ''; title = ''; dateVal = ''; days = ''; priceVal = '';
               }
 

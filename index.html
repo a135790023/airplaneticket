@@ -148,7 +148,7 @@
       // 韓國
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦'] },
       { standard: '釜山', aliases: ['釜山', '金海'] },
-      { standard: '濟州島', aliases: ['濟州島', '濟州'] },
+      { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] },
       
       // 日本
       { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
@@ -245,7 +245,7 @@
 
       for (let line of lines) {
         // 過濾掉純表情符號、純標點符號，或者是常見的無意義宣傳字眼
-        const isFluff = /^[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/u.test(line) || line.includes('最後機會') || line.includes('清艙促銷');
+        const isFluff = /^[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/u.test(line) || line.includes('最後機會') || line.includes('清艙促銷') || line.includes('預估');
         if (isFluff) continue;
 
         let score = 0;
@@ -303,22 +303,30 @@
       for (let line of lines) {
         // 尋找價格 (尋找包含 $ 或 ＄ 的金額，例如 $ 11,800)
         const priceMatch = line.match(/(?:NT\$|\$|＄)\s*([0-9,]+)/i);
-        // 尋找日期 (例如 3/23, 03/23, 2026/3/23)
-        const dateMatch = line.match(/(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/);
 
-        if (priceMatch && dateMatch) {
-          let year = dateMatch[1] ? parseInt(dateMatch[1], 10) : currentYear;
-          let month = parseInt(dateMatch[2], 10);
-          let day = parseInt(dateMatch[3], 10);
-          
-          // 如果沒有給年份，且月份已經過了很久(例如現在8月，文字寫1月)，就推測是明年的機票
-          if (!dateMatch[1] && month < currentMonth - 2) {
-            year = currentYear + 1;
-          }
-          
-          let dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (priceMatch) {
           let price = priceMatch[1]; // 保留逗號格式
-          items.push({ date: dateStr, price: price });
+          
+          // 升級版：尋找該行裡「所有的」日期 (例如解決 3/16、3/20、3/21 同在一行的情況)
+          const dateRegex = /(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/g;
+          let match;
+          let foundDateInLine = false;
+
+          // 使用 while 迴圈把該行出現過的所有符合的日期都抓出來
+          while ((match = dateRegex.exec(line)) !== null) {
+            foundDateInLine = true;
+            let year = match[1] ? parseInt(match[1], 10) : currentYear;
+            let month = parseInt(match[2], 10);
+            let day = parseInt(match[3], 10);
+            
+            // 如果沒有給年份，且月份已經過了很久(例如現在8月，文字寫1月)，就推測是明年的機票
+            if (!match[1] && month < currentMonth - 2) {
+              year = currentYear + 1;
+            }
+            
+            let dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            items.push({ date: dateStr, price: price });
+          }
         }
       }
 

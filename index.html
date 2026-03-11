@@ -282,18 +282,41 @@
 
     // --- 智慧文字解析邏輯 (將多筆日期/金額從整段文字中拆分) ---
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
-      if (!details) return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: false }];
+      const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
+      const isGlobalBogo = details && details.includes('買一送一');
+
+      if (!details) return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: false, isBogo: false }];
 
       const lines = details.split('\n');
       const items = [];
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1;
 
-      let isPakState = false; // 紀錄當前的解析狀態是否為機+酒
+      let isPakState = isGlobalPak; // 紀錄當前的解析狀態是否為機+酒
 
-      for (let line of lines) {
-        // 動態切換當前上下文狀態
-        if (line.includes('機+酒') || line.includes('機加酒') || line.includes('自由行')) {
+      // 提取日期的共用函數
+      const extractDates = (text) => {
+        if (!text) return [];
+        const dateRegex = /(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/g;
+        let match;
+        let dates = [];
+        while ((match = dateRegex.exec(text)) !== null) {
+          let year = match[1] ? parseInt(match[1], 10) : currentYear;
+          let month = parseInt(match[2], 10);
+          let day = parseInt(match[3], 10);
+          if (!match[1] && month < currentMonth - 2) {
+            year = currentYear + 1;
+          }
+          dates.push(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+        }
+        return dates;
+      };
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // 動態切換當前上下文狀態 (支援全形加號)
+        if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) {
           isPakState = true;
         } else if (line.includes('純機票') || line.includes('單機票')) {
           isPakState = false;
@@ -303,26 +326,25 @@
 
         if (priceMatch) {
           let price = priceMatch[1]; 
-          
-          const dateRegex = /(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/g;
-          let match;
+          let dates = extractDates(line);
 
-          while ((match = dateRegex.exec(line)) !== null) {
-            let year = match[1] ? parseInt(match[1], 10) : currentYear;
-            let month = parseInt(match[2], 10);
-            let day = parseInt(match[3], 10);
-            
-            if (!match[1] && month < currentMonth - 2) {
-              year = currentYear + 1;
-            }
-            
-            let dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
+          // 升級版：如果這行只有金額沒有日期，就往上一行找找看 (解決買一送一換行寫的問題)
+          if (dates.length === 0 && i > 0) {
+            dates = extractDates(lines[i-1]);
+          }
+          // 如果上一行也沒有，往下一行找找看
+          if (dates.length === 0 && i < lines.length - 1) {
+            dates = extractDates(lines[i+1]);
+          }
+
+          for (let dateStr of dates) {
             // 優先看該行有沒有明確寫出，沒有的話就跟隨上下文狀態
-            let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('自由行')) ? true :
+            let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true :
                             (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
+            
+            let lineIsBogo = isGlobalBogo || line.includes('買一送一');
 
-            items.push({ date: dateStr, price: price, isFlightAndHotel: lineIsPak });
+            items.push({ date: dateStr, price: price, isFlightAndHotel: lineIsPak, isBogo: lineIsBogo });
           }
         }
       }
@@ -330,8 +352,7 @@
       if (items.length > 0) {
         return items;
       } else {
-        const wholeTextIsPak = details.includes('機+酒') || details.includes('機加酒') || details.includes('自由行');
-        return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: wholeTextIsPak }];
+        return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo }];
       }
     }
 
@@ -386,15 +407,16 @@
               price: item.price,
               details: rawText, 
               link: link,
-              isFlightAndHotel: item.isFlightAndHotel
+              isFlightAndHotel: item.isFlightAndHotel,
+              isBogo: item.isBogo
             }));
           }).filter(t => t.date);
 
           // --- 新增：機票資料自動去重複與覆蓋邏輯 ---
           const ticketMap = new Map();
           allTickets.forEach(ticket => {
-            // 使用 日期+城市+航空(標題)+方案 作為唯一識別碼
-            const key = `${ticket.date}_${ticket.city}_${ticket.airline}_${ticket.isFlightAndHotel}`;
+            // 使用 日期+城市+航空(標題)+方案+買一送一 作為唯一識別碼
+            const key = `${ticket.date}_${ticket.city}_${ticket.airline}_${ticket.isFlightAndHotel}_${ticket.isBogo}`;
             // Map 的特性會讓後出現的資料(通常是新貼上的)自動覆蓋舊的資料
             ticketMap.set(key, ticket);
           });
@@ -451,15 +473,16 @@
                 price: item.price,
                 details: rawText,
                 link: link,
-                isFlightAndHotel: item.isFlightAndHotel
+                isFlightAndHotel: item.isFlightAndHotel,
+                isBogo: item.isBogo
               }));
             }).filter(t => t.date);
 
             // --- 新增：旅行團資料自動去重複與覆蓋邏輯 ---
             const tourMap = new Map();
             allTours.forEach(tour => {
-              // 使用 日期+標題+方案 作為唯一識別碼
-              const key = `${tour.date}_${tour.title}_${tour.isFlightAndHotel}`;
+              // 使用 日期+標題+方案+買一送一 作為唯一識別碼
+              const key = `${tour.date}_${tour.title}_${tour.isFlightAndHotel}_${tour.isBogo}`;
               tourMap.set(key, tour);
             });
             state.tours = Array.from(tourMap.values());
@@ -645,12 +668,18 @@
           const textClass = isPak ? 'text-purple-700' : 'text-orange-700';
           const borderClass = isPak ? 'border-purple-100/50' : 'border-orange-100/50';
           
-          const extraText = isPak ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">(機+酒)</div>` : '';
+          const extraTexts = [];
+          if (isPak) extraTexts.push('(機+酒)');
+          if (tour.isBogo) extraTexts.push('(買一送一)');
+          
+          const extraTextHTML = extraTexts.length > 0 
+            ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">${extraTexts.join(' ')}</div>` 
+            : '';
           
           return `
             <div class="text-[10px] sm:text-[12px] px-0.5 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tight border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
               <span class="truncate w-full">${tour.price ? '$'+tour.price : '有團'}</span>
-              ${extraText}
+              ${extraTextHTML}
             </div>
           `;
         }).join('');
@@ -734,12 +763,18 @@
           const textClass = isPak ? 'text-purple-700' : 'text-blue-700';
           const borderClass = isPak ? 'border-purple-100/50' : 'border-blue-100/50';
           
-          const extraText = isPak ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">(機+酒)</div>` : '';
+          const extraTexts = [];
+          if (isPak) extraTexts.push('(機+酒)');
+          if (ticket.isBogo) extraTexts.push('(買一送一)');
+          
+          const extraTextHTML = extraTexts.length > 0 
+            ? `<div class="text-[8px] sm:text-[9px] mt-[2px] font-medium tracking-normal opacity-90">${extraTexts.join(' ')}</div>` 
+            : '';
           
           return `
             <div class="text-[10px] sm:text-[12px] px-0.5 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tight border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
               <span class="truncate w-full">${ticket.price ? '$'+ticket.price : '有票'}</span>
-              ${extraText}
+              ${extraTextHTML}
             </div>
           `;
         }).join('');
@@ -819,10 +854,12 @@
 
       const contentHTML = state.selectedDateTickets.tickets.map((item, index) => {
         const title = isTours ? item.title : item.airline;
-        const extraLabel = item.isFlightAndHotel ? ' · 機+酒' : '';
+        const extraLabelPak = item.isFlightAndHotel ? ' · 機+酒' : '';
+        const extraLabelBogo = item.isBogo ? ' · 買一送一' : '';
+        
         const subtitle = isTours 
-          ? `<i class="ph-bold ph-map-pin"></i> ${item.country} ${item.days ? '· ' + item.days : ''}${extraLabel}` 
-          : `${item.country} · ${item.city}${extraLabel}`;
+          ? `<i class="ph-bold ph-map-pin"></i> ${item.country} ${item.days ? '· ' + item.days : ''}${extraLabelPak}${extraLabelBogo}` 
+          : `${item.country} · ${item.city}${extraLabelPak}${extraLabelBogo}`;
         
         const isKKday = (title && title.toLowerCase().includes('kkday')) || (item.link && item.link.toLowerCase().includes('kkday'));
         
@@ -832,7 +869,7 @@
         }
 
         const tourOrAirline = isTours ? item.title : `${item.airline} ${item.country}${item.city}`;
-        const priceText = item.price ? `$${item.price}` : '';
+        const priceText = item.price ? `$${item.price}${item.isBogo ? ' (買一送一)' : ''}` : '';
         
         const defaultMessage = `${orderType}訂購公版
 備註：eddie推薦(不可刪)

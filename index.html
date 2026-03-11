@@ -188,7 +188,9 @@
 
         // 2. 讀取旅行團資料
         try {
-          const resTours = await fetch(`${SHEET_URL}&sheet=旅行團${cacheBuster}`);
+          // 使用 encodeURIComponent 確保中文分頁名稱「旅行團」能被正確解析
+          const sheetName = encodeURIComponent('旅行團');
+          const resTours = await fetch(`${SHEET_URL}&sheet=${sheetName}${cacheBuster}`);
           const textTours = await resTours.text();
           const jsonStrTours = textTours.substring(textTours.indexOf('{'), textTours.lastIndexOf('}') + 1);
           const dataTours = JSON.parse(jsonStrTours);
@@ -213,7 +215,7 @@
             }).filter(t => t.country && t.title);
           }
         } catch (e) {
-          console.log('尚未建立旅行團分頁或無旅行團資料');
+          console.error('旅行團資料讀取失敗 (請確認分頁名稱為「旅行團」):', e);
         }
 
       } catch (error) {

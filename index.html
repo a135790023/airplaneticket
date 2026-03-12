@@ -16,7 +16,7 @@
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80">
   <meta property="og:type" content="website">
   
-  <!-- 飛機網頁圖示 (Favicon) - 更新為高質感黑色飛機 SVG -->
+  <!-- 飛機網頁圖示 (Favicon) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M242.06,94.49,150.36,15.69A16,16,0,0,0,128,19.34L114.73,43.2a8,8,0,0,0,1.3,9.58l41.42,45.86L64.21,123.8l-37-25.59a8,8,0,0,0-10.09,1.15L5.75,110.8A8,8,0,0,0,5,122.25L42.54,166.7,29.58,190.17a8,8,0,0,0-.71,5.65l10.36,36.27A8,8,0,0,0,46.9,238a8.21,8.21,0,0,0,2.2-.31l36.26-10.36a8,8,0,0,0,5.65-.71L114.49,213.6l44.45,37.54a8,8,0,0,0,11.45-.7l11.45-11.44a8,8,0,0,0,1.14-10.09L157.4,191.9l25.15-93.26,45.86,41.43a8,8,0,0,0,9.58,1.29l23.86-13.26A16,16,0,0,0,242.06,94.49Z' fill='%23111827'/%3E%3C/svg%3E">
   
   <!-- 引入 Tailwind CSS -->
@@ -64,18 +64,38 @@
     <!-- 導覽列 -->
     <nav class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        <!-- Logo 區塊 -->
         <div 
-          class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
+          class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity shrink-0" 
           onclick="goHome()"
           title="返回首頁"
         >
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
-          <span class="text-xl font-black text-gray-900 tracking-tight select-none">
-            艾迪王 <span class="text-gray-400 font-medium text-lg">清艙快訊</span>
+          <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none hidden sm:block">
+            艾迪王 <span class="text-gray-400 font-medium">清艙快訊</span>
           </span>
         </div>
+
+        <!-- 搜尋列與更新按鈕 -->
+        <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end ml-4 sm:ml-0">
+          <div class="relative w-full max-w-[200px] sm:max-w-xs">
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input 
+              type="text" 
+              id="searchInput" 
+              onkeyup="if(event.key === 'Enter') executeSearch(this.value)" 
+              placeholder="搜尋目的地、航空..." 
+              class="w-full pl-9 pr-4 py-2 bg-gray-100 border-transparent rounded-full text-sm focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all outline-none" 
+            />
+          </div>
+          <button onclick="forceRefresh()" class="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full transition-colors shrink-0" title="強制更新最新資料">
+            <i class="ph-bold ph-arrows-clockwise text-lg"></i>
+          </button>
+        </div>
+
       </div>
     </nav>
 
@@ -91,22 +111,10 @@
         
         <!-- 社群連結 -->
         <div class="flex items-center gap-6 mb-6">
-          <a 
-            href="https://www.facebook.com/profile.php?id=61579148033952" 
-            target="_blank" 
-            rel="noreferrer" 
-            class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110"
-            title="艾迪王 Facebook"
-          >
+          <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110">
             <i class="ph-fill ph-facebook-logo text-4xl"></i>
           </a>
-          <a 
-            href="https://www.instagram.com/eddie.tour/" 
-            target="_blank" 
-            rel="noreferrer" 
-            class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110"
-            title="艾迪王 Instagram"
-          >
+          <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110">
             <i class="ph-fill ph-instagram-logo text-4xl"></i>
           </a>
         </div>
@@ -116,7 +124,7 @@
           點擊「LINE 搶購」按鈕後，將會直接連結至合作旅行社的官方 LINE 帳號。
         </p>
 
-        <!-- 信任徽章 (Trust Badge) -->
+        <!-- 信任徽章 -->
         <div class="inline-block bg-gray-100/80 px-4 py-2.5 rounded-xl border border-gray-200">
           <p class="text-xs text-gray-600 font-medium flex items-center justify-center gap-1.5 flex-wrap">
             <i class="ph-fill ph-shield-check text-green-600 text-sm"></i>
@@ -134,7 +142,6 @@
     // --- 基礎防護：阻擋右鍵與 F12 開發者工具 ---
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.addEventListener('keydown', event => {
-      // 阻擋 F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
       if (event.keyCode === 123 || 
          (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
          (event.ctrlKey && event.keyCode === 85)) {
@@ -143,12 +150,9 @@
     });
 
     // ==========================================
-    // 🔒 終極防護：改用 Apps Script API 讀取資料
+    // 🔒 API 網址設定
     // ==========================================
-    // 已經替換為您專屬的 API 網址
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2CErSj-zj7aM2zVvJCSax0gOFaMwp1ZQbxoZtYenlszYFnCCgpVJI1mLaC0iemzJj/exec'; 
-    
-    // 👉 請在這裡填寫旅行社的 LINE 官方帳號 ID (記得包含 @)
     const LINE_OFFICIAL_ID = '@616fwicf'; 
 
     // --- 全新架構：區域分類與城市對應 ---
@@ -203,32 +207,22 @@
       }
     ];
 
-    // --- 機場與別名對照表 (Alias Dictionary) ---
     const CITY_ALIASES = [
-      // 韓國
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] },
       { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] },
       { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] },
-      
-      // 日本 - 關東
       { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
       { standard: '茨城', aliases: ['茨城', 'IBR'] },
-      
-      // 日本 - 關西
       { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM'] },
       { standard: '神戶', aliases: ['神戶', 'UKB'] },
       { standard: '京都', aliases: ['京都'] },
-      
-      // 日本 - 北海道
-      { standard: '北海道', aliases: ['北海道'] }, // 作為泛稱
+      { standard: '北海道', aliases: ['北海道'] }, 
       { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, 
       { standard: '函館', aliases: ['函館', 'HKD'] },
       { standard: '旭川', aliases: ['旭川', 'AKJ'] },
       { standard: '帶廣', aliases: ['帶廣', 'OBO'] },
       { standard: '釧路', aliases: ['釧路', 'KUH'] },
       { standard: '女滿別', aliases: ['女滿別', 'MMB'] },
-      
-      // 日本 - 東北
       { standard: '仙台', aliases: ['仙台', 'SDJ'] },
       { standard: '花卷', aliases: ['花卷', 'HNA'] },
       { standard: '新潟', aliases: ['新潟', 'KIJ'] },
@@ -236,8 +230,6 @@
       { standard: '青森', aliases: ['青森', 'AOJ'] },
       { standard: '山形', aliases: ['山形', 'GAJ'] },
       { standard: '福島', aliases: ['福島', 'FKS'] },
-      
-      // 日本 - 九州與四國
       { standard: '福岡', aliases: ['福岡', 'FUK'] },
       { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] },
       { standard: '高松', aliases: ['高松', 'TAK'] },
@@ -249,45 +241,50 @@
       { standard: '松山', aliases: ['松山', 'MYJ'] },
       { standard: '大分', aliases: ['大分', 'OIT'] },
       { standard: '北九州', aliases: ['北九州', 'KKJ'] },
-      
-      // 日本 - 中部與北陸
       { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] },
       { standard: '靜岡', aliases: ['靜岡', 'FSZ'] },
       { standard: '小松', aliases: ['小松', 'KMQ'] },
       { standard: '富山', aliases: ['富山', 'TOY'] },
-      
-      // 日本 - 沖繩
       { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] },
       { standard: '石垣島', aliases: ['石垣島', 'ISG'] },
       { standard: '宮古島', aliases: ['宮古島', 'MMY'] },
-      
-      // 泰國
       { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] },
       { standard: '清邁', aliases: ['清邁', 'CNX'] },
       { standard: '普吉島', aliases: ['普吉島', 'HKT'] },
-      
-      // 越南
       { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
       { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
       { standard: '峴港', aliases: ['峴港', 'DAD'] },
       { standard: '富國島', aliases: ['富國島', 'PQC'] }
     ];
 
-    // --- 狀態管理 (State) ---
+    // --- 狀態管理 ---
     const state = {
       tickets: [],
       tours: [],
       isLoading: true,
       selectedCountryObj: null,
-      selectedTab: null, // 用來追蹤目前選擇的 UI 區域標籤 (例如：關東)
+      selectedTab: null, 
       selectedTourCountry: '全部', 
       currentDate: new Date(),
       selectedDateTickets: null,
       isModalOpen: false,
-      animateTransition: true
+      animateTransition: true,
+      viewMode: 'calendar', // 支援 'calendar' 或 'list'
+      searchQuery: ''       // 全局搜尋關鍵字
     };
 
-    // --- 輔助函式：從單行文字中抓取最先出現的城市 ---
+    // --- 輔助函式 ---
+    
+    // 安全地更新 URL (避免在預覽或受限環境中觸發 SecurityError)
+    function safeUpdateURL(url) {
+      try {
+        window.history.pushState({}, '', url);
+      } catch (e) {
+        // 在 iframe 或 blob 等受限環境中忽略推播 URL 的錯誤
+        console.warn('URL 更新被環境限制忽略:', e);
+      }
+    }
+
     function getCityFromText(text) {
       if (!text) return null;
       let earliestIndex = -1;
@@ -316,7 +313,6 @@
       return foundCity;
     }
 
-    // --- 輔助函式：從城市反推國家 ---
     function getCountryByCity(cityName) {
       for (let loc of LOCATION_DATA) {
         for (let tab of loc.tabs) {
@@ -326,7 +322,6 @@
       return '其他';
     }
 
-    // --- 輔助函式：用來產生去重複用的標準化文字 ---
     const normalizeForDedup = (str) => {
       if (!str) return '';
       try {
@@ -340,16 +335,13 @@
       }
     };
 
-    // --- 智慧文字解析邏輯 (自動推導預設國家、城市與標題) ---
+    // 智慧文字解析引擎
     function inferInfoFromText(text) {
       let title = '未命名行程';
       let country = '其他';
       let city = '其他航點';
-      
       if (!text) return { title, country, city };
-
       const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
-
       let inferredCity = getCityFromText(text);
       if (inferredCity) {
         city = inferredCity;
@@ -365,14 +357,11 @@
 
       let bestTitle = '';
       let titleScore = -1;
-
       for (let line of lines) {
         const fluffRegex = /^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
         if (fluffRegex.test(line)) continue;
-
         let score = 0;
         let lineContainsCityRelated = false;
-        
         if (city !== '其他航點' && line.includes(city)) {
           lineContainsCityRelated = true;
         }
@@ -380,19 +369,12 @@
           const mapping = CITY_ALIASES.find(m => m.standard === city);
           if (mapping) {
             for(let alias of mapping.aliases) {
-               if(line.includes(alias)) {
-                 lineContainsCityRelated = true;
-                 break;
-               }
+               if(line.includes(alias)) { lineContainsCityRelated = true; break; }
             }
           }
         }
-
-        if (lineContainsCityRelated) {
-          score = 2;
-        } else if (country !== '其他' && line.includes(country)) {
-          score = 1;
-        }
+        if (lineContainsCityRelated) { score = 2; } 
+        else if (country !== '其他' && line.includes(country)) { score = 1; }
 
         if (score > titleScore) {
           bestTitle = line;
@@ -402,18 +384,14 @@
 
       if (bestTitle) {
         title = bestTitle.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
-        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
-        title = title.trim();
+        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
       } else if (lines.length > 0) {
         title = lines[0].replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
-        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
-        title = title.trim();
+        title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
       }
-
       return { title, country, city };
     }
 
-    // --- 智慧文字解析邏輯 (精準拆分每一行，追蹤上下文城市與獨立標題) ---
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
       const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
       const isGlobalBogo = details && details.includes('買一送一');
@@ -428,60 +406,38 @@
       let isPakState = isGlobalPak;
       let currentCityContext = null;
       let currentTitleContext = null;
-      
-      // 加入記憶掃描器：記住從上到下掃描過程中最新讀取到的價格
       let runningPrice = fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : null;
 
-      // 提取日期的共用函數
       const extractDates = (text) => {
         if (!text) return [];
         const dates = [];
         let currentM = null;
         let currentY = currentYear;
-
         const dateListRegex = /(?:^|[^\d])((?:\d{4}[\/\-])?\d{1,2}[\/\-]\d{1,2}(?!\s*[:月號])(?:[、，,\.\s\-]+(?:\d{1,2}[\/\-])?\d{1,2}(?!\s*[:月號]))*)/g;
         let match;
         const matchList = [];
-        
-        while ((match = dateListRegex.exec(text)) !== null) {
-          matchList.push(match[1]); 
-        }
+        while ((match = dateListRegex.exec(text)) !== null) { matchList.push(match[1]); }
 
         if (matchList.length > 0) {
           matchList.forEach(listStr => {
             let safeStr = listStr.replace(/(\d{4})-(\d{1,2})-(\d{1,2})/g, '$1/$2/$3');
             safeStr = safeStr.replace(/(^|[^0-9\/])(\d{1,2})-(\d{1,2})(?=[^0-9\/]|$)/g, '$1$2/$3');
             safeStr = safeStr.replace(/\-/g, '、');
-            
             const tokens = safeStr.split(/[、，,\.\s]+/);
             tokens.forEach(token => {
               if (!token) return;
               const parts = token.split('/');
               let y, m, d;
               if (parts.length === 3) {
-                y = parseInt(parts[0], 10);
-                m = parseInt(parts[1], 10);
-                d = parseInt(parts[2], 10);
-                currentY = y;
-                currentM = m;
+                y = parseInt(parts[0], 10); m = parseInt(parts[1], 10); d = parseInt(parts[2], 10);
+                currentY = y; currentM = m;
               } else if (parts.length === 2) {
-                m = parseInt(parts[0], 10);
-                d = parseInt(parts[1], 10);
-                currentM = m;
-                y = (currentM < currentMonth - 2) ? currentYear + 1 : currentYear;
-                currentY = y;
+                m = parseInt(parts[0], 10); d = parseInt(parts[1], 10); currentM = m;
+                y = (currentM < currentMonth - 2) ? currentYear + 1 : currentYear; currentY = y;
               } else if (parts.length === 1) {
                 d = parseInt(parts[0], 10);
-                if (currentM !== null) {
-                  y = currentY;
-                  m = currentM;
-                } else {
-                  return;
-                }
-              } else {
-                return;
-              }
-              
+                if (currentM !== null) { y = currentY; m = currentM; } else { return; }
+              } else { return; }
               if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
                  dates.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
               }
@@ -493,126 +449,92 @@
 
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-
-        // 追蹤當前的城市上下文與提取專屬這段的標題
         let foundCityInLine = getCityFromText(line);
         if (foundCityInLine) {
             currentCityContext = foundCityInLine;
-            // 清理這行文字，將其設為接下來的上下文標題
             let cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
             cleanLine = cleanLine.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
-            if (cleanLine.length > 2) {
-                currentTitleContext = cleanLine;
-            }
+            if (cleanLine.length > 2) currentTitleContext = cleanLine;
         }
 
-        if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) {
-          isPakState = true;
-        } else if (line.includes('純機票') || line.includes('單機票')) {
-          isPakState = false;
-        }
+        if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) isPakState = true;
+        else if (line.includes('純機票') || line.includes('單機票')) isPakState = false;
 
-        // 偵測這行有沒有價格，有的話就更新「記憶掃描器」
         const priceMatch = line.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
-        if (priceMatch) {
-            runningPrice = priceMatch[1].replace(/,/g, ''); 
-        }
+        if (priceMatch) runningPrice = priceMatch[1].replace(/,/g, ''); 
 
         let dates = extractDates(line);
-
-        // 只要這行有出現日期，就進行處理
         if (dates.length > 0) {
             let priceForTheseDates = runningPrice;
-
-            // 跨行尋找邏輯 (解決日期寫在上面、價格寫在下面的罕見情況)
             if (!priceMatch && i < lines.length - 1) {
                 const nextLine = lines[i+1];
                 const nextPriceMatch = nextLine.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
-                // 確保下一行是純價格沒有夾帶其他日期
                 if (nextPriceMatch && extractDates(nextLine).length === 0) {
                     priceForTheseDates = nextPriceMatch[1].replace(/,/g, '');
-                    runningPrice = priceForTheseDates; // 同步更新記憶
+                    runningPrice = priceForTheseDates; 
                 }
             }
-
-            // Fallback 全文掃描 (如果真的上面下面都找不到，從頭掃一次找全局預設)
             if (!priceForTheseDates) {
                 for (let j = 0; j < lines.length; j++) {
                     const pm = lines[j].match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
-                    if (pm) {
-                        priceForTheseDates = pm[1].replace(/,/g, '');
-                        runningPrice = priceForTheseDates; // 同步更新記憶
-                        break;
-                    }
+                    if (pm) { priceForTheseDates = pm[1].replace(/,/g, ''); runningPrice = priceForTheseDates; break; }
                 }
             }
 
             for (let dateStr of dates) {
                 let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true :
                                 (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
-                
                 let lineIsBogo = isGlobalBogo || line.includes('買一送一');
-
                 items.push({ 
-                  date: dateStr, 
-                  price: priceForTheseDates || '', 
-                  isFlightAndHotel: lineIsPak, 
-                  isBogo: lineIsBogo,
-                  cityContext: currentCityContext,
-                  titleContext: currentTitleContext
+                  date: dateStr, price: priceForTheseDates || '', isFlightAndHotel: lineIsPak, 
+                  isBogo: lineIsBogo, cityContext: currentCityContext, titleContext: currentTitleContext
                 });
             }
         }
       }
 
-      if (items.length > 0) {
-        return items;
-      } else {
-        return [{ 
-          date: fallbackDate, 
-          price: runningPrice || '', 
-          isFlightAndHotel: isGlobalPak, 
-          isBogo: isGlobalBogo,
-          cityContext: currentCityContext,
-          titleContext: currentTitleContext
-        }];
-      }
+      if (items.length > 0) return items;
+      return [{ date: fallbackDate, price: runningPrice || '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, cityContext: currentCityContext, titleContext: currentTitleContext }];
     }
 
-    // --- 資料串接邏輯 (從 Apps Script API 讀取) ---
-    async function fetchSheetData() {
+    // --- 資料串接與快取邏輯 ---
+    async function fetchSheetData(force = false) {
       state.isLoading = true;
       renderMain();
       
-      // 如果還沒設定 API_URL，暫時不執行，避免報錯
-      if (API_URL === '請貼上您的_Google_Apps_Script_URL') {
-         console.warn("請先設定 API_URL");
-         state.isLoading = false;
-         renderMain();
-         return;
+      // 實作：前端資料快取 (秒開體驗)
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v1';
+      const CACHE_KEY_TOURS = 'eddie_tours_v1';
+      const CACHE_TIME = 'eddie_cache_time_v1';
+      const now = new Date().getTime();
+      
+      if (!force) {
+        const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS);
+        const cachedTours = sessionStorage.getItem(CACHE_KEY_TOURS);
+        const cacheTime = sessionStorage.getItem(CACHE_TIME);
+        
+        // 快取有效期 5 分鐘
+        if (cachedTickets && cachedTours && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) {
+           state.tickets = JSON.parse(cachedTickets);
+           state.tours = JSON.parse(cachedTours);
+           state.isLoading = false;
+           renderMain();
+           return;
+        }
       }
 
       try {
-        // 加上時間戳記防止快取
-        const res = await fetch(`${API_URL}?cache=${new Date().getTime()}`);
+        const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
         
-        // 處理機票資料 (結合智慧文字解析引擎)
         if (data && data.tickets) {
           let allTickets = data.tickets.flatMap((row, index) => {
             let rawText = row.details || '';
-
-            // 虎航文字自動替換
-            if (rawText) {
-              rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
-            }
-
-            let globalCountry = row.country || '';
-            let globalCity = row.city || '';
-            let dateVal = row.date || '';
-            let airline = row.airline || '';
-            let priceVal = row.price || '';
-            let link = row.link || '';
+            if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+            
+            let globalCountry = row.country || ''; let globalCity = row.city || '';
+            let dateVal = row.date || ''; let airline = row.airline || '';
+            let priceVal = row.price || ''; let link = row.link || '';
 
             const inferred = inferInfoFromText(rawText);
             if (!globalCountry) globalCountry = inferred.country;
@@ -624,27 +546,15 @@
             return parsedItems.map((item, subIndex) => {
               let finalCity = item.cityContext || globalCity;
               let finalCountry = globalCountry;
-              if (item.cityContext) {
-                finalCountry = getCountryByCity(item.cityContext) || globalCountry;
-              }
-              let finalAirline = item.titleContext || airline;
-
+              if (item.cityContext) finalCountry = getCountryByCity(item.cityContext) || globalCountry;
               return {
-                id: `ticket-${index}-${subIndex}`,
-                country: finalCountry,
-                city: finalCity,
-                date: item.date,
-                airline: finalAirline,
-                price: item.price,
-                details: rawText, 
-                link: link,
-                isFlightAndHotel: item.isFlightAndHotel,
-                isBogo: item.isBogo
+                id: `ticket-${index}-${subIndex}`, country: finalCountry, city: finalCity,
+                date: item.date, airline: item.titleContext || airline, price: item.price,
+                details: rawText, link: link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo
               };
             });
           }).filter(t => t.date);
 
-          // 去重複邏輯
           const ticketMap = new Map();
           allTickets.forEach(ticket => {
             const normTitle = normalizeForDedup(ticket.airline);
@@ -654,51 +564,29 @@
           state.tickets = Array.from(ticketMap.values());
         }
 
-        // 處理旅行團資料
         if (data && data.tours) {
             let allTours = data.tours.flatMap((row, index) => {
               let rawText = row.details || ''; 
+              if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
 
-              if (rawText) {
-                rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
-              }
-
-              let globalCountry = row.country || '';
-              let title = row.title || '';
-              let dateVal = row.date || '';
-              let days = row.days || '';
-              let priceVal = row.price || '';
-              let link = row.link || '';
+              let globalCountry = row.country || ''; let title = row.title || '';
+              let dateVal = row.date || ''; let days = row.days || '';
+              let priceVal = row.price || ''; let link = row.link || '';
 
               const inferred = inferInfoFromText(rawText);
               if (!globalCountry) globalCountry = inferred.country;
               if (!title) title = inferred.title;
-
-              if (!days) {
-                const daysMatch = rawText.match(/(\d+)[天日]/);
-                if (daysMatch) days = daysMatch[0]; 
-              }
+              if (!days) { const daysMatch = rawText.match(/(\d+)[天日]/); if (daysMatch) days = daysMatch[0]; }
 
               const parsedItems = parseRawDetails(rawText, dateVal, priceVal);
 
               return parsedItems.map((item, subIndex) => {
                 let finalCountry = globalCountry;
-                if (item.cityContext) {
-                  finalCountry = getCountryByCity(item.cityContext) || globalCountry;
-                }
-                let finalTitle = item.titleContext || title;
-
+                if (item.cityContext) finalCountry = getCountryByCity(item.cityContext) || globalCountry;
                 return {
-                  id: `tour-${index}-${subIndex}`,
-                  country: finalCountry,
-                  title: finalTitle,
-                  date: item.date,
-                  days: days,
-                  price: item.price,
-                  details: rawText,
-                  link: link,
-                  isFlightAndHotel: item.isFlightAndHotel,
-                  isBogo: item.isBogo
+                  id: `tour-${index}-${subIndex}`, country: finalCountry, title: item.titleContext || title,
+                  date: item.date, days: days, price: item.price, details: rawText, link: link,
+                  isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo
                 };
               });
             }).filter(t => t.date);
@@ -711,6 +599,11 @@
             });
             state.tours = Array.from(tourMap.values());
         }
+        
+        // 寫入快取
+        sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets));
+        sessionStorage.setItem(CACHE_KEY_TOURS, JSON.stringify(state.tours));
+        sessionStorage.setItem(CACHE_TIME, now.toString());
 
       } catch (error) {
         console.error('讀取 API 錯誤:', error);
@@ -723,11 +616,32 @@
     }
 
     // --- 事件處理函式 ---
+    window.forceRefresh = () => {
+      fetchSheetData(true);
+    };
+
+    window.executeSearch = (query) => {
+      const q = query.trim().toLowerCase();
+      state.searchQuery = q;
+      if (q) {
+         state.selectedCountryObj = { isSearch: true };
+         safeUpdateURL(`?q=${encodeURIComponent(q)}`);
+      } else {
+         goHome();
+      }
+      state.animateTransition = true;
+      renderMain();
+      state.animateTransition = false;
+    };
+
     window.goHome = () => {
+      document.getElementById('searchInput').value = '';
+      state.searchQuery = '';
       state.selectedCountryObj = null;
       state.selectedTab = null;
       state.currentDate = new Date();
       state.animateTransition = true;
+      safeUpdateURL(window.location.pathname || '/');
       renderMain();
       state.animateTransition = false;
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -737,10 +651,11 @@
       if (index === 'tours') {
         state.selectedCountryObj = { isTours: true };
         state.selectedTourCountry = '全部';
+        safeUpdateURL(`?tours=true`);
       } else {
         state.selectedCountryObj = LOCATION_DATA[index];
-        // 進入國家頁面時，預設選中第一個區域(Tab)
         state.selectedTab = LOCATION_DATA[index].tabs[0].label;
+        safeUpdateURL(`?country=${encodeURIComponent(LOCATION_DATA[index].country)}&tab=${encodeURIComponent(state.selectedTab)}`);
       }
       state.currentDate = new Date();
       state.animateTransition = true;
@@ -749,18 +664,17 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 原本的 selectCity 改為 selectTab
     window.selectTab = (tabLabel) => {
       state.selectedTab = tabLabel;
       state.currentDate = new Date();
       state.animateTransition = false;
+      const country = state.selectedCountryObj.country;
+      safeUpdateURL(`?country=${encodeURIComponent(country)}&tab=${encodeURIComponent(tabLabel)}`);
       renderMain();
     };
 
-    window.selectTourCountry = (country) => {
-      state.selectedTourCountry = country;
-      state.currentDate = new Date();
-      state.animateTransition = false;
+    window.setViewMode = (mode) => {
+      state.viewMode = mode;
       renderMain();
     };
 
@@ -776,24 +690,27 @@
       renderMain();
     };
 
+    window.openModalFromItem = (itemData) => {
+      // 提供給列表模式直接開啟單一項目
+      const item = JSON.parse(decodeURIComponent(itemData));
+      state.selectedDateTickets = { date: item.date, tickets: [item], isTours: !!item.title };
+      state.isModalOpen = true;
+      renderModal();
+    };
+
     window.openModal = (dateStr) => {
       if (state.selectedCountryObj.isTours) {
-        const filteredTours = state.selectedTourCountry === '全部' 
-          ? state.tours 
-          : state.tours.filter(t => t.country === state.selectedTourCountry);
+        const filteredTours = state.tours;
         const dayTours = filteredTours.filter(t => t.date === dateStr);
-        
         if (dayTours.length > 0) {
           state.selectedDateTickets = { date: dateStr, tickets: dayTours, isTours: true };
           state.isModalOpen = true;
           renderModal();
         }
       } else {
-        // UI 點擊月曆時，找出屬於該區域內，且日期吻合的機票
         const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
         const allowedCities = activeTabObj ? activeTabObj.cities : [];
         const dayTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city) && t.date === dateStr);
-        
         if (dayTickets.length > 0) {
           state.selectedDateTickets = { date: dateStr, tickets: dayTickets, isTours: false };
           state.isModalOpen = true;
@@ -809,18 +726,105 @@
 
     // --- 渲染邏輯 (UI 產生器) ---
     
+    // 實作：高質感骨架屏載入動畫
     function getLoadingHTML() {
+      const cards = Array(8).fill('<div class="bg-gray-200/60 h-64 rounded-3xl w-full"></div>').join('');
       return `
-        <div class="flex flex-col items-center justify-center py-32 fade-in">
-          <i class="ph-bold ph-airplane-tilt text-5xl text-gray-300 mb-4 animate-bounce"></i>
-          <p class="text-gray-500 font-medium">正在同步最新資料...</p>
+        <div class="animate-pulse fade-in">
+          <div class="text-center max-w-2xl mx-auto mb-12 flex flex-col items-center">
+            <div class="h-8 bg-gray-200/80 rounded-full w-64 mb-4"></div>
+            <div class="h-4 bg-gray-200/60 rounded-full w-48"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            ${cards}
+          </div>
         </div>
       `;
     }
 
+    // 實作：全局搜尋結果頁面
+    function getSearchHTML() {
+       const q = state.searchQuery;
+       const matchedTickets = state.tickets.filter(t => 
+          (t.country && t.country.toLowerCase().includes(q)) || 
+          (t.city && t.city.toLowerCase().includes(q)) || 
+          (t.airline && t.airline.toLowerCase().includes(q)) ||
+          (t.details && t.details.toLowerCase().includes(q))
+       );
+       const matchedTours = state.tours.filter(t => 
+          (t.country && t.country.toLowerCase().includes(q)) || 
+          (t.title && t.title.toLowerCase().includes(q)) || 
+          (t.details && t.details.toLowerCase().includes(q))
+       );
+
+       const allMatches = [...matchedTickets, ...matchedTours].sort((a, b) => {
+          let pa = parseInt((a.price||'').replace(/\D/g, '')) || 999999;
+          let pb = parseInt((b.price||'').replace(/\D/g, '')) || 999999;
+          return pa - pb;
+       });
+
+       if (allMatches.length === 0) {
+           return `
+            <div class="fade-in">
+              <div class="flex items-center gap-4 mb-8">
+                <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
+                  <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h1 class="text-2xl font-bold text-gray-900">搜尋結果: "${state.searchQuery}"</h1>
+              </div>
+              <div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3>
+                <p class="text-gray-500">試試看輸入其他國家、城市或航空名稱吧！</p>
+              </div>
+            </div>
+           `;
+       }
+
+       const listHTML = allMatches.map(t => {
+            const isTours = !!t.title;
+            const name = isTours ? t.title : t.airline;
+            const location = isTours ? t.country : t.city;
+            const isPak = t.isFlightAndHotel;
+            const extra = isPak ? ' · 機+酒' : '';
+            const bogo = t.isBogo ? ' · 買一送一' : '';
+            
+            const encodedItem = encodeURIComponent(JSON.stringify(t));
+
+            return `
+            <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
+                <div>
+                    <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5">
+                      <i class="ph-bold ${isTours ? 'ph-briefcase' : 'ph-airplane-tilt'} text-gray-400"></i> ${t.date}
+                    </div>
+                    <div class="font-black text-gray-900 text-lg sm:text-xl line-clamp-1">${name}</div>
+                    <div class="text-xs font-medium text-gray-600 mt-1.5 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${location}${extra}${bogo}</div>
+                </div>
+                <div class="text-right shrink-0 ml-4">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
+                    <div class="text-xl sm:text-2xl font-black text-red-500">$${t.price || '--'}</div>
+                </div>
+            </div>
+            `;
+       }).join('');
+
+       return `
+        <div class="fade-in slide-in-from-right-8">
+          <div class="flex items-center gap-4 mb-8">
+            <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
+              <i class="ph-bold ph-arrow-left text-xl"></i>
+            </button>
+            <h1 class="text-2xl font-bold text-gray-900">搜尋結果: "${state.searchQuery}"</h1>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${listHTML}
+          </div>
+        </div>
+       `;
+    }
+
     function getHomeHTML() {
       let cardsHTML = LOCATION_DATA.map((loc, index) => {
-        // 計算該國家底下所有的航點數量
         let totalCities = loc.tabs.reduce((sum, tab) => sum + tab.cities.length, 0);
         return `
           <div 
@@ -872,60 +876,36 @@
     }
 
     function getToursHTML() {
-      const year = state.currentDate.getFullYear();
-      const month = state.currentDate.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const firstDay = new Date(year, month, 1).getDay();
-
-      const filteredTours = state.tours;
-
-      let blanksHTML = '';
-      for (let i = 0; i < firstDay; i++) {
-        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-0.5 sm:p-2"></div>`;
-      }
-
-      let daysHTML = '';
+      // 旅行團維持獨立頁面邏輯
       const todayStr = new Date().toISOString().split('T')[0];
+      const upcomingTours = state.tours.filter(t => t.date >= todayStr).sort((a,b) => {
+          let pa = parseInt((a.price||'').replace(/\D/g, '')) || 999999;
+          let pb = parseInt((b.price||'').replace(/\D/g, '')) || 999999;
+          return pa - pb;
+      });
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayTours = filteredTours.filter(t => t.date === dateStr);
-        const hasTours = dayTours.length > 0;
-        const isToday = todayStr === dateStr;
-
-        let toursHTML = dayTours.map(tour => {
-          const isPak = tour.isFlightAndHotel;
-          const bgClass = isPak ? 'bg-purple-50' : 'bg-orange-50';
-          const textClass = isPak ? 'text-purple-700' : 'text-orange-700';
-          const borderClass = isPak ? 'border-purple-100/50' : 'border-orange-100/50';
-          
-          const extraTexts = [];
-          if (isPak) extraTexts.push('(機+酒)');
-          if (tour.isBogo) extraTexts.push('(買一送一)');
-          
-          const extraTextHTML = extraTexts.length > 0 
-            ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
-            : '';
-          
-          return `
-            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap font-black">${tour.price ? tour.price : '有團'}</span>
-              ${extraTextHTML}
+      let listHTML = '';
+      if (upcomingTours.length === 0) {
+          listHTML = `<div class="col-span-full py-16 text-center text-gray-500 font-medium flex flex-col items-center bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-briefcase text-4xl text-gray-300 mb-3"></i>目前暫無旅行團資訊，請稍後再回來看看！</div>`;
+      } else {
+          listHTML = upcomingTours.map(t => {
+            const extra = t.isFlightAndHotel ? ' · 機+酒' : '';
+            const bogo = t.isBogo ? ' · 買一送一' : '';
+            const encodedItem = encodeURIComponent(JSON.stringify(t));
+            return `
+            <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
+                <div>
+                    <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
+                    <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title}</div>
+                    <div class="text-xs font-medium text-gray-600 mt-1.5 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.country}${t.days ? ' · ' + t.days : ''}${extra}${bogo}</div>
+                </div>
+                <div class="text-right shrink-0 ml-4">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
+                    <div class="text-xl font-black text-red-500">$${t.price || '--'}</div>
+                </div>
             </div>
-          `;
-        }).join('');
-
-        daysHTML += `
-          <div 
-            class="bg-white min-h-[80px] sm:min-h-[110px] p-0.5 sm:p-2 transition-all relative group ${hasTours ? 'cursor-pointer hover:bg-orange-50/50' : 'text-gray-400'}"
-            ${hasTours ? `onclick="openModal('${dateStr}')"` : ''}
-          >
-            <div class="text-[10px] sm:text-sm font-semibold inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full mb-0.5 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
-              ${d}
-            </div>
-            <div class="flex flex-col gap-1 sm:gap-1.5 w-full">${toursHTML}</div>
-          </div>
-        `;
+            `;
+          }).join('');
       }
 
       return `
@@ -939,28 +919,8 @@
               <p class="text-sm text-gray-500 mt-1">為您挑選最高 CP 值的套裝行程，輕鬆出遊沒煩惱</p>
             </div>
           </div>
-
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${state.animateTransition ? 'fade-in' : ''}">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
-              <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center">
-                <i class="ph-bold ph-caret-left text-xl"></i>
-              </button>
-              <h2 class="text-lg font-bold text-gray-800 tracking-wider">
-                ${year}年 ${month + 1}月
-              </h2>
-              <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center">
-                <i class="ph-bold ph-caret-right text-xl"></i>
-              </button>
-            </div>
-            
-            <div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
-              ${['日', '一', '二', '三', '四', '五', '六'].map(day => `<div class="bg-white py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold text-gray-400">${day}</div>`).join('')}
-            </div>
-
-            <div class="grid grid-cols-7 gap-px bg-gray-100">
-              ${blanksHTML}
-              ${daysHTML}
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${listHTML}
           </div>
         </div>
       `;
@@ -972,68 +932,14 @@
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDay = new Date(year, month, 1).getDay();
 
-      // 過濾出屬於目前 UI 區域(Tab) 的所有底層城市機票
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
-      
       const filteredTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city));
 
-      let blanksHTML = '';
-      for (let i = 0; i < firstDay; i++) {
-        blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-0.5 sm:p-2"></div>`;
-      }
-
-      let daysHTML = '';
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayTickets = filteredTickets.filter(t => t.date === dateStr);
-        const hasTickets = dayTickets.length > 0;
-        const isToday = todayStr === dateStr;
-
-        let ticketsHTML = dayTickets.map(ticket => {
-          const isPak = ticket.isFlightAndHotel;
-          const bgClass = isPak ? 'bg-purple-50' : 'bg-blue-50';
-          const textClass = isPak ? 'text-purple-700' : 'text-blue-700';
-          const borderClass = isPak ? 'border-purple-100/50' : 'border-blue-100/50';
-          
-          const extraTexts = [];
-          if (isPak) extraTexts.push('(機+酒)');
-          if (ticket.isBogo) extraTexts.push('(買一送一)');
-          
-          const extraTextHTML = extraTexts.length > 0 
-            ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` 
-            : '';
-          
-          return `
-            <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
-              <span class="whitespace-nowrap font-black">${ticket.price ? ticket.price : '有票'}</span>
-              ${extraTextHTML}
-            </div>
-          `;
-        }).join('');
-
-        daysHTML += `
-          <div 
-            class="bg-white min-h-[80px] sm:min-h-[110px] p-0.5 sm:p-2 transition-all relative group ${hasTickets ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}"
-            ${hasTickets ? `onclick="openModal('${dateStr}')"` : ''}
-          >
-            <div class="text-[10px] sm:text-sm font-semibold inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full mb-0.5 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">
-              ${d}
-            </div>
-            <div class="flex flex-col gap-1 sm:gap-1.5 w-full">${ticketsHTML}</div>
-          </div>
-        `;
-      }
-
-      // 產生區域(Tab)按鈕 (極簡優化版：拿掉...，只留兩個代表城市)
+      // UI 區域(Tab)按鈕
       const pillsHTML = state.selectedCountryObj.tabs.map(tab => {
-        // 過濾掉和標籤重複的字眼
         let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點');
         if (displayCities.length === 0) displayCities = tab.cities; 
-        
-        // 優化：只取前 2 個城市，且移除 "..."，並在中間加上空白讓視覺有呼吸感
         const subText = displayCities.slice(0, 2).join(' · ');
         const isSelected = state.selectedTab === tab.label;
 
@@ -1047,15 +953,131 @@
         </button>
       `}).join('');
 
+      let contentHTML = '';
+
+      // 實作：列表 / 月曆 雙模式切換
+      if (state.viewMode === 'list') {
+         const todayStr = new Date().toISOString().split('T')[0];
+         const upcoming = filteredTickets.filter(t => t.date >= todayStr).sort((a,b) => {
+            let pa = parseInt((a.price||'').replace(/\D/g, '')) || 999999;
+            let pb = parseInt((b.price||'').replace(/\D/g, '')) || 999999;
+            return pa - pb;
+         });
+
+         if (upcoming.length === 0) {
+            contentHTML = `<div class="py-20 text-center text-gray-500 font-medium flex flex-col items-center bg-white rounded-3xl shadow-sm border border-gray-100 fade-in"><i class="ph-bold ph-airplane-tilt text-4xl text-gray-300 mb-3"></i>目前此區域未來暫無機票，換個地方看看吧！</div>`;
+         } else {
+            contentHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">` + upcoming.map(t => {
+                const isPak = t.isFlightAndHotel;
+                const extra = isPak ? ' · 機+酒' : '';
+                const bogo = t.isBogo ? ' · 買一送一' : '';
+                const encodedItem = encodeURIComponent(JSON.stringify(t));
+                return `
+                <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
+                        <div class="font-black text-gray-900 text-lg line-clamp-1">${t.airline}</div>
+                        <div class="text-xs font-medium text-gray-600 mt-1.5 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city}${extra}${bogo}</div>
+                    </div>
+                    <div class="text-right shrink-0 ml-4">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
+                        <div class="text-xl font-black text-red-500">$${t.price || '--'}</div>
+                    </div>
+                </div>
+                `;
+            }).join('') + `</div>`;
+         }
+      } else {
+        // 月曆模式
+        // 實作：空資料的友善提示
+        const currentMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const monthHasTickets = filteredTickets.some(t => t.date.startsWith(currentMonthPrefix));
+
+        let daysHTML = '';
+        if (!monthHasTickets) {
+            daysHTML = `
+              <div class="col-span-7 py-24 text-center text-gray-500 flex flex-col items-center fade-in">
+                <i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i>
+                <p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有清艙機票唷！</p>
+                <p class="text-sm">您可以點擊上方箭頭看看下個月，或切換成「列表模式」查看所有未來機票 ✈️</p>
+              </div>
+            `;
+        } else {
+            let blanksHTML = '';
+            for (let i = 0; i < firstDay; i++) {
+              blanksHTML += `<div class="bg-white/50 min-h-[80px] sm:min-h-[100px] p-0.5 sm:p-2"></div>`;
+            }
+            daysHTML += blanksHTML;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            for (let d = 1; d <= daysInMonth; d++) {
+              const dateStr = `${currentMonthPrefix}-${String(d).padStart(2, '0')}`;
+              const dayTickets = filteredTickets.filter(t => t.date === dateStr);
+              const hasTickets = dayTickets.length > 0;
+              const isToday = todayStr === dateStr;
+
+              let ticketsHTML = dayTickets.map(ticket => {
+                const isPak = ticket.isFlightAndHotel;
+                const bgClass = isPak ? 'bg-purple-50' : 'bg-blue-50';
+                const textClass = isPak ? 'text-purple-700' : 'text-blue-700';
+                const borderClass = isPak ? 'border-purple-100/50' : 'border-blue-100/50';
+                
+                const extraTexts = [];
+                if (isPak) extraTexts.push('(機+酒)');
+                if (ticket.isBogo) extraTexts.push('(買一送一)');
+                const extraTextHTML = extraTexts.length > 0 ? `<div class="text-[7px] sm:text-[9px] mt-0.5 font-medium tracking-tighter opacity-90 whitespace-nowrap transform scale-90 sm:scale-100 origin-top">${extraTexts.join('')}</div>` : '';
+                
+                return `
+                  <div class="text-[9px] sm:text-[12px] px-0 sm:px-1 py-1 ${bgClass} ${textClass} rounded sm:rounded-md font-bold tracking-tighter border ${borderClass} shadow-sm text-center leading-none flex flex-col items-center justify-center overflow-hidden w-full">
+                    <span class="whitespace-nowrap font-black">${ticket.price ? ticket.price : '有票'}</span>
+                    ${extraTextHTML}
+                  </div>
+                `;
+              }).join('');
+
+              daysHTML += `
+                <div class="bg-white min-h-[80px] sm:min-h-[110px] p-0.5 sm:p-2 transition-all relative group ${hasTickets ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}" ${hasTickets ? `onclick="openModal('${dateStr}')"` : ''}>
+                  <div class="text-[10px] sm:text-sm font-semibold inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full mb-0.5 ${isToday ? 'bg-gray-900 text-white' : 'text-gray-700'}">${d}</div>
+                  <div class="flex flex-col gap-1 sm:gap-1.5 w-full">${ticketsHTML}</div>
+                </div>
+              `;
+            }
+        }
+
+        contentHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-in">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-5 border-b border-gray-100 bg-white">
+              <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center"><i class="ph-bold ph-caret-left text-xl"></i></button>
+              <h2 class="text-base sm:text-lg font-bold text-gray-800 tracking-wider">${year}年 ${month + 1}月</h2>
+              <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center"><i class="ph-bold ph-caret-right text-xl"></i></button>
+            </div>
+            ${monthHasTickets ? `
+            <div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+              ${['日', '一', '二', '三', '四', '五', '六'].map(day => `<div class="bg-white py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold text-gray-400">${day}</div>`).join('')}
+            </div>` : ''}
+            <div class="grid grid-cols-7 gap-px bg-gray-100">
+              ${daysHTML}
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <div class="${state.animateTransition ? 'slide-in-from-right-8' : ''}">
-          <div class="flex items-center gap-4 mb-8">
-            <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
-              <i class="ph-bold ph-arrow-left text-xl"></i>
-            </button>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-900">${state.selectedCountryObj.country} 清艙機票</h1>
-              <p class="text-sm text-gray-500 mt-1">請選擇欲查詢的區域</p>
+          <div class="flex items-center justify-between gap-4 mb-8 flex-wrap">
+            <div class="flex items-center gap-4">
+              <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
+                <i class="ph-bold ph-arrow-left text-xl"></i>
+              </button>
+              <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">${state.selectedCountryObj.country} 清艙機票</h1>
+              </div>
+            </div>
+
+            <!-- 切換檢視模式按鈕 -->
+            <div class="flex items-center bg-gray-100 p-1 rounded-xl w-full sm:w-auto mt-2 sm:mt-0">
+               <button onclick="setViewMode('calendar')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${state.viewMode==='calendar' ? 'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}"><i class="ph-bold ph-calendar-blank text-lg"></i> 月曆</button>
+               <button onclick="setViewMode('list')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${state.viewMode==='list' ? 'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}"><i class="ph-bold ph-list-dashes text-lg"></i> 列表</button>
             </div>
           </div>
 
@@ -1063,28 +1085,7 @@
             ${pillsHTML}
           </div>
 
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${state.animateTransition ? 'fade-in' : ''}">
-            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
-              <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center">
-                <i class="ph-bold ph-caret-left text-xl"></i>
-              </button>
-              <h2 class="text-lg font-bold text-gray-800 tracking-wider">
-                ${year}年 ${month + 1}月
-              </h2>
-              <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600 flex items-center justify-center">
-                <i class="ph-bold ph-caret-right text-xl"></i>
-              </button>
-            </div>
-            
-            <div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
-              ${['日', '一', '二', '三', '四', '五', '六'].map(day => `<div class="bg-white py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold text-gray-400">${day}</div>`).join('')}
-            </div>
-
-            <div class="grid grid-cols-7 gap-px bg-gray-100">
-              ${blanksHTML}
-              ${daysHTML}
-            </div>
-          </div>
+          ${contentHTML}
         </div>
       `;
     }
@@ -1103,7 +1104,6 @@
         const extraLabelPak = item.isFlightAndHotel ? ' · 機+酒' : '';
         const extraLabelBogo = item.isBogo ? ' · 買一送一' : '';
         
-        // 在彈出視窗中，保留顯示「底層真實城市」
         const subtitle = isTours 
           ? `<i class="ph-bold ph-map-pin"></i> ${item.country} ${item.days ? '· ' + item.days : ''}${extraLabelPak}${extraLabelBogo}` 
           : `${item.country} · ${item.city}${extraLabelPak}${extraLabelBogo}`;
@@ -1129,18 +1129,9 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
 聯絡信箱：`;
 
         const encodedMessage = encodeURIComponent(defaultMessage);
-        
         const lineOaUrl = `https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?${encodedMessage}`;
 
-        let btnText = '';
-        if (isKKday) {
-          btnText = isTours ? "前往 KKday 報名" : "前往 KKday 搶購";
-        } else if (item.link) {
-          btnText = isTours ? "前往指定網頁報名" : "前往指定網頁搶購";
-        } else {
-          btnText = isTours ? "聯繫合作旅行社 LINE 報名" : "聯繫合作旅行社 LINE 搶購";
-        }
-
+        let btnText = isKKday ? "前往 KKday 搶購" : (item.link ? "前往指定網頁搶購" : "聯繫合作旅行社 LINE 搶購");
         const btnLink = item.link || lineOaUrl;
         
         const btnClass = isKKday 
@@ -1175,9 +1166,9 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
       }).join('');
 
       modalRoot.innerHTML = `
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in">
-          <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95">
-            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(event.target===this) closeModal()">
+          <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col max-h-[85vh]">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <i class="ph-bold ph-calendar-blank text-gray-400"></i> ${state.selectedDateTickets.date}
               </h3>
@@ -1185,8 +1176,7 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
                 <i class="ph-bold ph-x text-xl"></i>
               </button>
             </div>
-            
-            <div class="p-6 max-h-[60vh] overflow-y-auto space-y-6 bg-gray-50/50 no-scrollbar">
+            <div class="p-6 overflow-y-auto bg-gray-50/50 flex-1">
               ${contentHTML}
             </div>
           </div>
@@ -1198,6 +1188,8 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
       const mainEl = document.getElementById('main-content');
       if (state.isLoading) {
         mainEl.innerHTML = getLoadingHTML();
+      } else if (state.searchQuery || state.selectedCountryObj?.isSearch) {
+        mainEl.innerHTML = getSearchHTML();
       } else if (!state.selectedCountryObj) {
         mainEl.innerHTML = getHomeHTML();
       } else if (state.selectedCountryObj.isTours) {
@@ -1207,7 +1199,29 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
       }
     }
 
+    // --- 啟動邏輯 (結合深層網址解析) ---
     window.addEventListener('DOMContentLoaded', () => {
+      // 解析網址參數
+      const urlParams = new URLSearchParams(window.location.search);
+      const countryParam = urlParams.get('country');
+      const tabParam = urlParams.get('tab');
+      const toursParam = urlParams.get('tours');
+      const qParam = urlParams.get('q');
+
+      if (qParam) {
+        state.searchQuery = qParam;
+        state.selectedCountryObj = { isSearch: true };
+        document.getElementById('searchInput').value = qParam;
+      } else if (toursParam) {
+        state.selectedCountryObj = { isTours: true };
+      } else if (countryParam) {
+        const cIdx = LOCATION_DATA.findIndex(c => c.country === countryParam);
+        if (cIdx !== -1) {
+          state.selectedCountryObj = LOCATION_DATA[cIdx];
+          state.selectedTab = tabParam || LOCATION_DATA[cIdx].tabs[0].label;
+        }
+      }
+      
       fetchSheetData();
     });
 

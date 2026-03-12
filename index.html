@@ -16,8 +16,8 @@
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80">
   <meta property="og:type" content="website">
   
-  <!-- 飛機網頁圖示 (Favicon) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+  <!-- 飛機網頁圖示 (Favicon) - 更新為高質感黑色飛機 SVG -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M242.06,94.49,150.36,15.69A16,16,0,0,0,128,19.34L114.73,43.2a8,8,0,0,0,1.3,9.58l41.42,45.86L64.21,123.8l-37-25.59a8,8,0,0,0-10.09,1.15L5.75,110.8A8,8,0,0,0,5,122.25L42.54,166.7,29.58,190.17a8,8,0,0,0-.71,5.65l10.36,36.27A8,8,0,0,0,46.9,238a8.21,8.21,0,0,0,2.2-.31l36.26-10.36a8,8,0,0,0,5.65-.71L114.49,213.6l44.45,37.54a8,8,0,0,0,11.45-.7l11.45-11.44a8,8,0,0,0,1.14-10.09L157.4,191.9l25.15-93.26,45.86,41.43a8,8,0,0,0,9.58,1.29l23.86-13.26A16,16,0,0,0,242.06,94.49Z' fill='%23111827'/%3E%3C/svg%3E">
   
   <!-- 引入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -117,54 +117,126 @@
     // 👉 請在這裡填寫旅行社的 LINE 官方帳號 ID (記得包含 @)
     const LINE_OFFICIAL_ID = '@616fwicf'; 
 
+    // --- 全新架構：區域分類與城市對應 ---
     const LOCATION_DATA = [
       {
         country: '日本',
         image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
-        cities: ['東京', '大阪', '沖繩', '北海道', '石垣島', '名古屋', '仙台', '花卷', '新潟', '秋田', '高松', '福岡', '宮古島', '高知', '熊本']
+        tabs: [
+          { label: '關東', cities: ['東京', '茨城'] },
+          { label: '關西', cities: ['大阪', '神戶', '京都'] },
+          { label: '北海道', cities: ['北海道', '札幌', '函館', '旭川', '帶廣', '釧路', '女滿別'] },
+          { label: '東北', cities: ['仙台', '花卷', '秋田', '青森', '山形', '福島'] },
+          { label: '九州·四國', cities: ['福岡', '高松', '熊本', '高知', '佐賀', '長崎', '宮崎', '鹿兒島', '松山', '大分', '北九州'] },
+          { label: '中部·北陸', cities: ['名古屋', '新潟', '靜岡', '小松', '富山'] },
+          { label: '沖繩', cities: ['沖繩', '石垣島', '宮古島'] }
+        ]
       },
       {
         country: '韓國',
         image: 'https://images.unsplash.com/photo-1546874177-9e664107314e?auto=format&fit=crop&w=800&q=80',
-        cities: ['首爾', '釜山', '濟州島']
+        tabs: [
+          { label: '首爾', cities: ['首爾'] },
+          { label: '釜山', cities: ['釜山'] },
+          { label: '濟州島', cities: ['濟州島'] }
+        ]
       },
       {
         country: '泰國',
         image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=800&q=80',
-        cities: ['曼谷', '清邁', '普吉島']
+        tabs: [
+          { label: '曼谷', cities: ['曼谷'] },
+          { label: '清邁', cities: ['清邁'] },
+          { label: '普吉島', cities: ['普吉島'] }
+        ]
       },
       {
         country: '越南',
         image: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80',
-        cities: ['峴港', '胡志明市', '河內', '富國島']
+        tabs: [
+          { label: '峴港', cities: ['峴港'] },
+          { label: '胡志明市', cities: ['胡志明市'] },
+          { label: '河內', cities: ['河內'] },
+          { label: '富國島', cities: ['富國島'] }
+        ]
       },
       {
         country: '其他',
         image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
-        cities: ['其他航點']
+        tabs: [
+          { label: '其他航點', cities: ['其他航點'] }
+        ]
       }
     ];
 
     // --- 機場與別名對照表 (Alias Dictionary) ---
     const CITY_ALIASES = [
-      { standard: '首爾', aliases: ['首爾', '仁川', '金浦'] },
-      { standard: '釜山', aliases: ['釜山', '金海'] },
+      // 韓國
+      { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] },
+      { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] },
       { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] },
       
+      // 日本 - 關東
       { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] },
-      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX'] },
-      { standard: '北海道', aliases: ['北海道', '札幌', '新千歲', '函館', '旭川', '千歲', 'CTS'] },
-      { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] },
-      { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] },
+      { standard: '茨城', aliases: ['茨城', 'IBR'] },
+      
+      // 日本 - 關西
+      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM'] },
+      { standard: '神戶', aliases: ['神戶', 'UKB'] },
+      { standard: '京都', aliases: ['京都'] },
+      
+      // 日本 - 北海道
+      { standard: '北海道', aliases: ['北海道'] }, // 作為泛稱
+      { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, 
+      { standard: '函館', aliases: ['函館', 'HKD'] },
+      { standard: '旭川', aliases: ['旭川', 'AKJ'] },
+      { standard: '帶廣', aliases: ['帶廣', 'OBO'] },
+      { standard: '釧路', aliases: ['釧路', 'KUH'] },
+      { standard: '女滿別', aliases: ['女滿別', 'MMB'] },
+      
+      // 日本 - 東北
+      { standard: '仙台', aliases: ['仙台', 'SDJ'] },
+      { standard: '花卷', aliases: ['花卷', 'HNA'] },
+      { standard: '新潟', aliases: ['新潟', 'KIJ'] },
+      { standard: '秋田', aliases: ['秋田', 'AXT'] },
+      { standard: '青森', aliases: ['青森', 'AOJ'] },
+      { standard: '山形', aliases: ['山形', 'GAJ'] },
+      { standard: '福島', aliases: ['福島', 'FKS'] },
+      
+      // 日本 - 九州與四國
       { standard: '福岡', aliases: ['福岡', 'FUK'] },
       { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] },
+      { standard: '高松', aliases: ['高松', 'TAK'] },
+      { standard: '高知', aliases: ['高知', 'KCZ'] },
+      { standard: '佐賀', aliases: ['佐賀', 'HSG'] },
+      { standard: '長崎', aliases: ['長崎', 'NGS'] },
+      { standard: '宮崎', aliases: ['宮崎', 'KMI'] },
+      { standard: '鹿兒島', aliases: ['鹿兒島', 'KOJ'] },
+      { standard: '松山', aliases: ['松山', 'MYJ'] },
+      { standard: '大分', aliases: ['大分', 'OIT'] },
+      { standard: '北九州', aliases: ['北九州', 'KKJ'] },
       
+      // 日本 - 中部與北陸
+      { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] },
+      { standard: '靜岡', aliases: ['靜岡', 'FSZ'] },
+      { standard: '小松', aliases: ['小松', 'KMQ'] },
+      { standard: '富山', aliases: ['富山', 'TOY'] },
+      
+      // 日本 - 沖繩
+      { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] },
+      { standard: '石垣島', aliases: ['石垣島', 'ISG'] },
+      { standard: '宮古島', aliases: ['宮古島', 'MMY'] },
+      
+      // 泰國
       { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] },
       { standard: '清邁', aliases: ['清邁', 'CNX'] },
+      { standard: '普吉島', aliases: ['普吉島', 'HKT'] },
       
+      // 越南
       { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
       { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
-      { standard: '峴港', aliases: ['峴港', 'DAD'] }
+      { standard: '峴港', aliases: ['峴港', 'DAD'] },
+      { standard: '富國島', aliases: ['富國島', 'PQC'] }
     ];
 
     // --- 狀態管理 (State) ---
@@ -173,7 +245,7 @@
       tours: [],
       isLoading: true,
       selectedCountryObj: null,
-      selectedCity: null,
+      selectedTab: null, // 用來追蹤目前選擇的 UI 區域標籤 (例如：關東)
       selectedTourCountry: '全部', 
       currentDate: new Date(),
       selectedDateTickets: null,
@@ -181,26 +253,41 @@
       animateTransition: true
     };
 
-    // --- 輔助函式：從單行文字中抓取城市 ---
+    // --- 輔助函式：從單行文字中抓取最先出現的城市 ---
     function getCityFromText(text) {
       if (!text) return null;
+      let earliestIndex = -1;
+      let foundCity = null;
+
+      const checkMatch = (city, matchStr) => {
+        let idx = text.indexOf(matchStr);
+        if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) {
+          earliestIndex = idx;
+          foundCity = city;
+        }
+      };
+
       for (let mapping of CITY_ALIASES) {
         for (let alias of mapping.aliases) {
-          if (text.includes(alias)) return mapping.standard;
+          checkMatch(mapping.standard, alias);
         }
       }
       for (let loc of LOCATION_DATA) {
-        for (let c of loc.cities) {
-          if (text.includes(c)) return c;
+        for (let tab of loc.tabs) {
+          for (let c of tab.cities) {
+            checkMatch(c, c);
+          }
         }
       }
-      return null;
+      return foundCity;
     }
 
     // --- 輔助函式：從城市反推國家 ---
     function getCountryByCity(cityName) {
       for (let loc of LOCATION_DATA) {
-        if (loc.cities.includes(cityName)) return loc.country;
+        for (let tab of loc.tabs) {
+          if (tab.cities.includes(cityName)) return loc.country;
+        }
       }
       return '其他';
     }
@@ -209,7 +296,7 @@
     const normalizeForDedup = (str) => {
       if (!str) return '';
       try {
-        return str.replace(/[\s\p{P}❗️🔥✨⭐⚡️]/gu, '')
+        return str.replace(/[\s\p{P}\p{Extended_Pictographic}❗️🔥✨⭐⚡️]/gu, '')
                   .replace(/更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊/g, '')
                   .toLowerCase();
       } catch(e) {
@@ -246,7 +333,7 @@
       let titleScore = -1;
 
       for (let line of lines) {
-        const fluffRegex = /^[\p{Emoji}\s❗️🔥✨⭐⚡️更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
+        const fluffRegex = /^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
         if (fluffRegex.test(line)) continue;
 
         let score = 0;
@@ -280,11 +367,11 @@
       }
 
       if (bestTitle) {
-        title = bestTitle.replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️【】\[\]()]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
+        title = bestTitle.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
         title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
         title = title.trim();
       } else if (lines.length > 0) {
-        title = lines[0].replace(/^[\p{Emoji}\s❗️🔥✨⭐⚡️【】\[\]()]+|[\p{Emoji}\s❗️🔥✨⭐⚡️]+$/gu, '');
+        title = lines[0].replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
         title = title.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '');
         title = title.trim();
       }
@@ -292,12 +379,12 @@
       return { title, country, city };
     }
 
-    // --- 智慧文字解析邏輯 (精準拆分每一行，追蹤上下文城市) ---
+    // --- 智慧文字解析邏輯 (精準拆分每一行，追蹤上下文城市與獨立標題) ---
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
       const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
       const isGlobalBogo = details && details.includes('買一送一');
 
-      if (!details) return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: false, isBogo: false, cityContext: null }];
+      if (!details) return [{ date: fallbackDate, price: fallbackPrice, isFlightAndHotel: false, isBogo: false, cityContext: null, titleContext: null }];
 
       const lines = details.split('\n');
       const items = [];
@@ -306,22 +393,21 @@
 
       let isPakState = isGlobalPak;
       let currentCityContext = null;
+      let currentTitleContext = null;
 
-      // 提取日期的共用函數 (支援連寫省略月份與小數點分隔，如 13600-7/05.07.09)
+      // 提取日期的共用函數
       const extractDates = (text) => {
         if (!text) return [];
         const dates = [];
         let currentM = null;
         let currentY = currentYear;
 
-        // 升級：(?:^|[^\d]) 確保日期前沒有數字，防止 13600-7 的 00-7 被誤判為日期。
-        // 同時支援 `.` 作為分隔符號 `[、，,\.\s\-]+`
         const dateListRegex = /(?:^|[^\d])((?:\d{4}[\/\-])?\d{1,2}[\/\-]\d{1,2}(?!\s*[:月號])(?:[、，,\.\s\-]+(?:\d{1,2}[\/\-])?\d{1,2}(?!\s*[:月號]))*)/g;
         let match;
         const matchList = [];
         
         while ((match = dateListRegex.exec(text)) !== null) {
-          matchList.push(match[1]); // 擷取不含前綴干擾的純日期字串
+          matchList.push(match[1]); 
         }
 
         if (matchList.length > 0) {
@@ -330,7 +416,6 @@
             safeStr = safeStr.replace(/(^|[^0-9\/])(\d{1,2})-(\d{1,2})(?=[^0-9\/]|$)/g, '$1$2/$3');
             safeStr = safeStr.replace(/\-/g, '、');
             
-            // 支援小數點 (.) 切割
             const tokens = safeStr.split(/[、，,\.\s]+/);
             tokens.forEach(token => {
               if (!token) return;
@@ -372,10 +457,16 @@
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
 
-        // 追蹤當前的城市上下文 (解決多城市在同一筆資料的問題)
+        // 追蹤當前的城市上下文與提取專屬這段的標題
         let foundCityInLine = getCityFromText(line);
         if (foundCityInLine) {
             currentCityContext = foundCityInLine;
+            // 清理這行文字，將其設為接下來的上下文標題
+            let cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '');
+            cleanLine = cleanLine.replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
+            if (cleanLine.length > 2) {
+                currentTitleContext = cleanLine;
+            }
         }
 
         if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) {
@@ -384,14 +475,13 @@
           isPakState = false;
         }
 
-        // 支援多種金額關鍵字
         const priceMatch = line.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
 
         if (priceMatch) {
           let price = priceMatch[1].replace(/,/g, ''); 
           let dates = extractDates(line);
 
-          // 跨行尋找日期 (解決金額跟日期換行寫的問題)
+          // 跨行尋找日期
           if (dates.length === 0 && i > 0) {
             dates = extractDates(lines[i-1]);
           }
@@ -410,7 +500,8 @@
               price: price, 
               isFlightAndHotel: lineIsPak, 
               isBogo: lineIsBogo,
-              cityContext: currentCityContext
+              cityContext: currentCityContext,
+              titleContext: currentTitleContext
             });
           }
         }
@@ -424,7 +515,8 @@
           price: fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : '', 
           isFlightAndHotel: isGlobalPak, 
           isBogo: isGlobalBogo,
-          cityContext: currentCityContext
+          cityContext: currentCityContext,
+          titleContext: currentTitleContext
         }];
       }
     }
@@ -477,19 +569,20 @@
             const parsedItems = parseRawDetails(rawText, String(dateVal).replace(/\//g, '-'), priceVal);
 
             return parsedItems.map((item, subIndex) => {
-              // 若解析器有找到該行的專屬城市，則優先使用，並重新匹配國家
+              // 優先使用項目自帶的上下文城市與標題 (底層精準紀錄)
               let finalCity = item.cityContext || globalCity;
               let finalCountry = globalCountry;
               if (item.cityContext) {
                 finalCountry = getCountryByCity(item.cityContext) || globalCountry;
               }
+              let finalAirline = item.titleContext || airline;
 
               return {
                 id: `ticket-${index}-${subIndex}`,
                 country: finalCountry,
                 city: finalCity,
                 date: item.date,
-                airline: airline,
+                airline: finalAirline,
                 price: item.price,
                 details: rawText, 
                 link: link,
@@ -527,7 +620,6 @@
                 rawText = row.c[0].v; 
               }
 
-              // 虎航文字自動替換
               if (rawText) {
                 rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
               }
@@ -559,11 +651,12 @@
                 if (item.cityContext) {
                   finalCountry = getCountryByCity(item.cityContext) || globalCountry;
                 }
+                let finalTitle = item.titleContext || title;
 
                 return {
                   id: `tour-${index}-${subIndex}`,
                   country: finalCountry,
-                  title: title,
+                  title: finalTitle,
                   date: item.date,
                   days: days,
                   price: item.price,
@@ -600,7 +693,7 @@
     // --- 事件處理函式 ---
     window.goHome = () => {
       state.selectedCountryObj = null;
-      state.selectedCity = null;
+      state.selectedTab = null;
       state.currentDate = new Date();
       state.animateTransition = true;
       renderMain();
@@ -614,7 +707,8 @@
         state.selectedTourCountry = '全部';
       } else {
         state.selectedCountryObj = LOCATION_DATA[index];
-        state.selectedCity = LOCATION_DATA[index].cities[0];
+        // 進入國家頁面時，預設選中第一個區域(Tab)
+        state.selectedTab = LOCATION_DATA[index].tabs[0].label;
       }
       state.currentDate = new Date();
       state.animateTransition = true;
@@ -623,8 +717,9 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.selectCity = (city) => {
-      state.selectedCity = city;
+    // 原本的 selectCity 改為 selectTab
+    window.selectTab = (tabLabel) => {
+      state.selectedTab = tabLabel;
       state.currentDate = new Date();
       state.animateTransition = false;
       renderMain();
@@ -662,7 +757,11 @@
           renderModal();
         }
       } else {
-        const dayTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && t.city === state.selectedCity && t.date === dateStr);
+        // UI 點擊月曆時，找出屬於該區域內，且日期吻合的機票
+        const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
+        const allowedCities = activeTabObj ? activeTabObj.cities : [];
+        const dayTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city) && t.date === dateStr);
+        
         if (dayTickets.length > 0) {
           state.selectedDateTickets = { date: dateStr, tickets: dayTickets, isTours: false };
           state.isModalOpen = true;
@@ -688,21 +787,25 @@
     }
 
     function getHomeHTML() {
-      let cardsHTML = LOCATION_DATA.map((loc, index) => `
-        <div 
-          onclick="selectCountry(${index})"
-          class="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
-        >
-          <img src="${loc.image}" alt="${loc.country}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-          <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent transition-opacity group-hover:opacity-90"></div>
-          <div class="absolute bottom-0 left-0 p-6">
-            <h3 class="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-              <i class="ph-bold ph-map-pin text-white/80"></i> ${loc.country}
-            </h3>
-            <p class="text-white/70 text-sm font-medium">包含 ${loc.cities.length} 個熱門航點</p>
+      let cardsHTML = LOCATION_DATA.map((loc, index) => {
+        // 計算該國家底下所有的航點數量
+        let totalCities = loc.tabs.reduce((sum, tab) => sum + tab.cities.length, 0);
+        return `
+          <div 
+            onclick="selectCountry(${index})"
+            class="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+          >
+            <img src="${loc.image}" alt="${loc.country}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent transition-opacity group-hover:opacity-90"></div>
+            <div class="absolute bottom-0 left-0 p-6">
+              <h3 class="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                <i class="ph-bold ph-map-pin text-white/80"></i> ${loc.country}
+              </h3>
+              <p class="text-white/70 text-sm font-medium">包含 ${totalCities} 個熱門航點</p>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       cardsHTML += `
         <div 
@@ -837,7 +940,11 @@
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const firstDay = new Date(year, month, 1).getDay();
 
-      const filteredTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && t.city === state.selectedCity);
+      // 過濾出屬於目前 UI 區域(Tab) 的所有底層城市機票
+      const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
+      const allowedCities = activeTabObj ? activeTabObj.cities : [];
+      
+      const filteredTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city));
 
       let blanksHTML = '';
       for (let i = 0; i < firstDay; i++) {
@@ -888,14 +995,25 @@
         `;
       }
 
-      const pillsHTML = state.selectedCountryObj.cities.map(city => `
+      // 產生區域(Tab)按鈕 (極簡優化版：拿掉...，只留兩個代表城市)
+      const pillsHTML = state.selectedCountryObj.tabs.map(tab => {
+        // 過濾掉和標籤重複的字眼
+        let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點');
+        if (displayCities.length === 0) displayCities = tab.cities; 
+        
+        // 優化：只取前 2 個城市，且移除 "..."，並在中間加上空白讓視覺有呼吸感
+        const subText = displayCities.slice(0, 2).join(' · ');
+        const isSelected = state.selectedTab === tab.label;
+
+        return `
         <button
-          onclick="selectCity('${city}')"
-          class="px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${state.selectedCity === city ? 'bg-gray-900 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'}"
+          onclick="selectTab('${tab.label}')"
+          class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl transition-all duration-200 border ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}"
         >
-          ${city}
+          <span class="text-sm font-bold whitespace-nowrap">${tab.label}</span>
+          <span class="text-[10px] mt-0.5 font-medium tracking-wide whitespace-nowrap ${isSelected ? 'text-gray-300' : 'text-gray-400'}">${subText}</span>
         </button>
-      `).join('');
+      `}).join('');
 
       return `
         <div class="${state.animateTransition ? 'slide-in-from-right-8' : ''}">
@@ -905,7 +1023,7 @@
             </button>
             <div>
               <h1 class="text-2xl font-bold text-gray-900">${state.selectedCountryObj.country} 清艙機票</h1>
-              <p class="text-sm text-gray-500 mt-1">請選擇欲查詢的城市</p>
+              <p class="text-sm text-gray-500 mt-1">請選擇欲查詢的區域</p>
             </div>
           </div>
 
@@ -953,6 +1071,7 @@
         const extraLabelPak = item.isFlightAndHotel ? ' · 機+酒' : '';
         const extraLabelBogo = item.isBogo ? ' · 買一送一' : '';
         
+        // 在彈出視窗中，保留顯示「底層真實城市」
         const subtitle = isTours 
           ? `<i class="ph-bold ph-map-pin"></i> ${item.country} ${item.days ? '· ' + item.days : ''}${extraLabelPak}${extraLabelBogo}` 
           : `${item.country} · ${item.city}${extraLabelPak}${extraLabelBogo}`;
@@ -1063,5 +1182,3 @@ ${isTours ? '行程名稱' : '航空航點'}：${tourOrAirline}
   </script>
 </body>
 </html>
-
-

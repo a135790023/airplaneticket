@@ -39,8 +39,22 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 停用手機雙擊放大功能 */
-    body { touch-action: manipulation; }
+    /* 停用手機雙擊放大功能與文字選取(增加複製難度) */
+    body { 
+      touch-action: manipulation; 
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    /* 允許彈出視窗內的文字可以被選取複製(避免影響粉絲正常使用) */
+    #modal-root {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
   </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans text-gray-800">
@@ -117,9 +131,22 @@
   </div>
 
   <script>
-    // --- 參數設定 ---
-    const SHEET_ID = '11K6w4hIwjTdUz1nJo4nt6i0GMC7QujZD8Mky4yy0zZ8';
-    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    // --- 基礎防護：阻擋右鍵與 F12 開發者工具 ---
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', event => {
+      // 阻擋 F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+      if (event.keyCode === 123 || 
+         (event.ctrlKey && event.shiftKey && (event.keyCode === 73 || event.keyCode === 74)) || 
+         (event.ctrlKey && event.keyCode === 85)) {
+        event.preventDefault();
+      }
+    });
+
+    // ==========================================
+    // 🔒 終極防護：改用 Apps Script API 讀取資料
+    // ==========================================
+    // 已經替換為您專屬的 API 網址
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz2CErSj-zj7aM2zVvJCSax0gOFaMwp1ZQbxoZtYenlszYFnCCgpVJI1mLaC0iemzJj/exec'; 
     
     // 👉 請在這裡填寫旅行社的 LINE 官方帳號 ID (記得包含 @)
     const LINE_OFFICIAL_ID = '@616fwicf'; 
@@ -552,55 +579,49 @@
       }
     }
 
-    // --- 資料串接邏輯 (Google Sheets) ---
+    // --- 資料串接邏輯 (從 Apps Script API 讀取) ---
     async function fetchSheetData() {
       state.isLoading = true;
       renderMain();
-      try {
-        const cacheBuster = `&cache=${new Date().getTime()}`;
-        
-        // 1. 讀取機票資料
-        const resFlights = await fetch(SHEET_URL + cacheBuster);
-        const textFlights = await resFlights.text();
-        const jsonStrFlights = textFlights.substring(textFlights.indexOf('{'), textFlights.lastIndexOf('}') + 1);
-        const dataFlights = JSON.parse(jsonStrFlights);
+      
+      // 如果還沒設定 API_URL，暫時不執行，避免報錯
+      if (API_URL === '請貼上您的_Google_Apps_Script_URL') {
+         console.warn("請先設定 API_URL");
+         state.isLoading = false;
+         renderMain();
+         return;
+      }
 
-        if (dataFlights && dataFlights.table && dataFlights.table.rows) {
-          let allTickets = dataFlights.table.rows.slice(1).flatMap((row, index) => {
-            let rawText = '';
-            if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
-              rawText = row.c[1].v;
-            } else if (row.c[5]?.v) {
-              rawText = row.c[5].v;
-            } else if (row.c[0]?.v && String(row.c[0].v).includes('\n')) {
-              rawText = row.c[0].v;
-            }
+      try {
+        // 加上時間戳記防止快取
+        const res = await fetch(`${API_URL}?cache=${new Date().getTime()}`);
+        const data = await res.json();
+        
+        // 處理機票資料 (結合智慧文字解析引擎)
+        if (data && data.tickets) {
+          let allTickets = data.tickets.flatMap((row, index) => {
+            let rawText = row.details || '';
 
             // 虎航文字自動替換
             if (rawText) {
               rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
             }
 
-            let globalCountry = row.c[0]?.v || '';
-            let globalCity = row.c[1]?.v || '';
-            let dateVal = row.c[2]?.f || row.c[2]?.v || '';
-            let airline = row.c[3]?.v || '';
-            let priceVal = row.c[4]?.v || row.c[4]?.f || '';
-            let link = row.c[6]?.v || '';
-
-            if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
-              globalCountry = ''; globalCity = ''; dateVal = ''; airline = ''; priceVal = '';
-            }
+            let globalCountry = row.country || '';
+            let globalCity = row.city || '';
+            let dateVal = row.date || '';
+            let airline = row.airline || '';
+            let priceVal = row.price || '';
+            let link = row.link || '';
 
             const inferred = inferInfoFromText(rawText);
             if (!globalCountry) globalCountry = inferred.country;
             if (!globalCity) globalCity = inferred.city;
             if (!airline) airline = inferred.title;
 
-            const parsedItems = parseRawDetails(rawText, String(dateVal).replace(/\//g, '-'), priceVal);
+            const parsedItems = parseRawDetails(rawText, dateVal, priceVal);
 
             return parsedItems.map((item, subIndex) => {
-              // 優先使用項目自帶的上下文城市與標題 (底層精準紀錄)
               let finalCity = item.cityContext || globalCity;
               let finalCountry = globalCountry;
               if (item.cityContext) {
@@ -623,6 +644,7 @@
             });
           }).filter(t => t.date);
 
+          // 去重複邏輯
           const ticketMap = new Map();
           allTickets.forEach(ticket => {
             const normTitle = normalizeForDedup(ticket.airline);
@@ -632,39 +654,21 @@
           state.tickets = Array.from(ticketMap.values());
         }
 
-        // 2. 讀取旅行團資料
-        try {
-          const sheetName = encodeURIComponent('旅行團');
-          const resTours = await fetch(`${SHEET_URL}&sheet=${sheetName}${cacheBuster}`);
-          const textTours = await resTours.text();
-          const jsonStrTours = textTours.substring(textTours.indexOf('{'), textTours.lastIndexOf('}') + 1);
-          const dataTours = JSON.parse(jsonStrTours);
-          
-          if (dataTours && dataTours.table && dataTours.table.rows) {
-            let allTours = dataTours.table.rows.slice(1).flatMap((row, index) => {
-              let rawText = '';
-              if (row.c[1]?.v && String(row.c[1].v).includes('\n')) {
-                rawText = row.c[1].v; 
-              } else if (row.c[5]?.v) {
-                rawText = row.c[5].v; 
-              } else if (row.c[0]?.v && String(row.c[0].v).includes('\n')) {
-                rawText = row.c[0].v; 
-              }
+        // 處理旅行團資料
+        if (data && data.tours) {
+            let allTours = data.tours.flatMap((row, index) => {
+              let rawText = row.details || ''; 
 
               if (rawText) {
                 rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
               }
 
-              let globalCountry = row.c[0]?.v || '';
-              let title = row.c[1]?.v || '';
-              let dateVal = row.c[2]?.f || row.c[2]?.v || '';
-              let days = row.c[3]?.v || '';
-              let priceVal = row.c[4]?.v || row.c[4]?.f || '';
-              let link = row.c[6]?.v || '';
-
-              if (rawText === row.c[1]?.v || rawText === row.c[0]?.v) {
-                globalCountry = ''; title = ''; dateVal = ''; days = ''; priceVal = '';
-              }
+              let globalCountry = row.country || '';
+              let title = row.title || '';
+              let dateVal = row.date || '';
+              let days = row.days || '';
+              let priceVal = row.price || '';
+              let link = row.link || '';
 
               const inferred = inferInfoFromText(rawText);
               if (!globalCountry) globalCountry = inferred.country;
@@ -675,7 +679,7 @@
                 if (daysMatch) days = daysMatch[0]; 
               }
 
-              const parsedItems = parseRawDetails(rawText, String(dateVal).replace(/\//g, '-'), priceVal);
+              const parsedItems = parseRawDetails(rawText, dateVal, priceVal);
 
               return parsedItems.map((item, subIndex) => {
                 let finalCountry = globalCountry;
@@ -706,13 +710,10 @@
               tourMap.set(key, tour);
             });
             state.tours = Array.from(tourMap.values());
-          }
-        } catch (e) {
-          console.error('旅行團資料讀取失敗:', e);
         }
 
       } catch (error) {
-        console.error('讀取 Google Sheet 錯誤:', error);
+        console.error('讀取 API 錯誤:', error);
       } finally {
         state.isLoading = false;
         state.animateTransition = true;

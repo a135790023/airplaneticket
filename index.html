@@ -207,6 +207,9 @@
       }
     ];
 
+    // 動態取得所有「已知」且明確列出的國家名稱（排除「其他」）
+    const KNOWN_COUNTRIES = LOCATION_DATA.filter(loc => loc.country !== '其他').map(loc => loc.country);
+
     const CITY_ALIASES = [
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] },
       { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] },
@@ -544,9 +547,19 @@
             const parsedItems = parseRawDetails(rawText, dateVal, priceVal);
 
             return parsedItems.map((item, subIndex) => {
+              // 優先使用項目自帶的上下文城市與標題 (底層精準紀錄)
               let finalCity = item.cityContext || globalCity;
               let finalCountry = globalCountry;
-              if (item.cityContext) finalCountry = getCountryByCity(item.cityContext) || globalCountry;
+              
+              if (item.cityContext) {
+                finalCountry = getCountryByCity(item.cityContext) || globalCountry;
+              }
+
+              // 防護網：如果抓出來的國家不是已知的四大國，強制分類至「其他」以防消失
+              if (!KNOWN_COUNTRIES.includes(finalCountry)) {
+                finalCountry = '其他';
+              }
+
               return {
                 id: `ticket-${index}-${subIndex}`, country: finalCountry, city: finalCity,
                 date: item.date, airline: item.titleContext || airline, price: item.price,
@@ -582,7 +595,15 @@
 
               return parsedItems.map((item, subIndex) => {
                 let finalCountry = globalCountry;
-                if (item.cityContext) finalCountry = getCountryByCity(item.cityContext) || globalCountry;
+                if (item.cityContext) {
+                  finalCountry = getCountryByCity(item.cityContext) || globalCountry;
+                }
+                
+                // 防護網：如果抓出來的國家不是已知的四大國，強制分類至「其他」以防消失
+                if (!KNOWN_COUNTRIES.includes(finalCountry)) {
+                  finalCountry = '其他';
+                }
+
                 return {
                   id: `tour-${index}-${subIndex}`, country: finalCountry, title: item.titleContext || title,
                   date: item.date, days: days, price: item.price, details: rawText, link: link,
@@ -710,7 +731,14 @@
       } else {
         const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
         const allowedCities = activeTabObj ? activeTabObj.cities : [];
-        const dayTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city) && t.date === dateStr);
+        const dayTickets = state.tickets.filter(t => {
+           // 針對「其他」國家的特殊處理：直接顯示被歸類為「其他」的所有機票，不需限制 allowedCities
+           if (state.selectedCountryObj.country === '其他') {
+               return t.country === '其他' && t.date === dateStr;
+           }
+           return t.country === state.selectedCountryObj.country && allowedCities.includes(t.city) && t.date === dateStr;
+        });
+
         if (dayTickets.length > 0) {
           state.selectedDateTickets = { date: dateStr, tickets: dayTickets, isTours: false };
           state.isModalOpen = true;
@@ -934,7 +962,14 @@
 
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
-      const filteredTickets = state.tickets.filter(t => t.country === state.selectedCountryObj.country && allowedCities.includes(t.city));
+      
+      // 在「其他」分頁中，顯示所有被歸類到「其他」的機票
+      const filteredTickets = state.tickets.filter(t => {
+         if (state.selectedCountryObj.country === '其他') {
+             return t.country === '其他';
+         }
+         return t.country === state.selectedCountryObj.country && allowedCities.includes(t.city);
+      });
 
       // UI 區域(Tab)按鈕
       const pillsHTML = state.selectedCountryObj.tabs.map(tab => {
@@ -999,7 +1034,7 @@
               <div class="col-span-7 py-24 text-center text-gray-500 flex flex-col items-center fade-in">
                 <i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i>
                 <p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有清艙機票唷！</p>
-                <p class="text-sm">您可以點擊上方箭頭看看下個月，或切換成「列表模式」查看所有未來機票 ✈️</p>
+                <p class="text-sm">您可以點擊上方箭頭看看下個月，或切換成「列表模式」查看所有未來機票</p>
               </div>
             `;
         } else {

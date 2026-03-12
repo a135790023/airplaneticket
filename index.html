@@ -394,6 +394,9 @@
       let isPakState = isGlobalPak;
       let currentCityContext = null;
       let currentTitleContext = null;
+      
+      // 加入記憶掃描器：記住從上到下掃描過程中最新讀取到的價格
+      let runningPrice = fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : null;
 
       // 提取日期的共用函數
       const extractDates = (text) => {
@@ -475,35 +478,56 @@
           isPakState = false;
         }
 
+        // 偵測這行有沒有價格，有的話就更新「記憶掃描器」
         const priceMatch = line.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
-
         if (priceMatch) {
-          let price = priceMatch[1].replace(/,/g, ''); 
-          let dates = extractDates(line);
+            runningPrice = priceMatch[1].replace(/,/g, ''); 
+        }
 
-          // 跨行尋找日期
-          if (dates.length === 0 && i > 0) {
-            dates = extractDates(lines[i-1]);
-          }
-          if (dates.length === 0 && i < lines.length - 1) {
-            dates = extractDates(lines[i+1]);
-          }
+        let dates = extractDates(line);
 
-          for (let dateStr of dates) {
-            let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true :
-                            (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
-            
-            let lineIsBogo = isGlobalBogo || line.includes('買一送一');
+        // 只要這行有出現日期，就進行處理
+        if (dates.length > 0) {
+            let priceForTheseDates = runningPrice;
 
-            items.push({ 
-              date: dateStr, 
-              price: price, 
-              isFlightAndHotel: lineIsPak, 
-              isBogo: lineIsBogo,
-              cityContext: currentCityContext,
-              titleContext: currentTitleContext
-            });
-          }
+            // 跨行尋找邏輯 (解決日期寫在上面、價格寫在下面的罕見情況)
+            if (!priceMatch && i < lines.length - 1) {
+                const nextLine = lines[i+1];
+                const nextPriceMatch = nextLine.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
+                // 確保下一行是純價格沒有夾帶其他日期
+                if (nextPriceMatch && extractDates(nextLine).length === 0) {
+                    priceForTheseDates = nextPriceMatch[1].replace(/,/g, '');
+                    runningPrice = priceForTheseDates; // 同步更新記憶
+                }
+            }
+
+            // Fallback 全文掃描 (如果真的上面下面都找不到，從頭掃一次找全局預設)
+            if (!priceForTheseDates) {
+                for (let j = 0; j < lines.length; j++) {
+                    const pm = lines[j].match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
+                    if (pm) {
+                        priceForTheseDates = pm[1].replace(/,/g, '');
+                        runningPrice = priceForTheseDates; // 同步更新記憶
+                        break;
+                    }
+                }
+            }
+
+            for (let dateStr of dates) {
+                let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true :
+                                (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
+                
+                let lineIsBogo = isGlobalBogo || line.includes('買一送一');
+
+                items.push({ 
+                  date: dateStr, 
+                  price: priceForTheseDates || '', 
+                  isFlightAndHotel: lineIsPak, 
+                  isBogo: lineIsBogo,
+                  cityContext: currentCityContext,
+                  titleContext: currentTitleContext
+                });
+            }
         }
       }
 
@@ -512,7 +536,7 @@
       } else {
         return [{ 
           date: fallbackDate, 
-          price: fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : '', 
+          price: runningPrice || '', 
           isFlightAndHotel: isGlobalPak, 
           isBogo: isGlobalBogo,
           cityContext: currentCityContext,

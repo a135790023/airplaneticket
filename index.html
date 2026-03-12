@@ -202,7 +202,7 @@
         country: '其他',
         image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
         tabs: [
-          { label: '其他航點', cities: ['其他航點'] }
+          { label: '其他航點', cities: ['其他航點', '新加坡', '吉隆坡', '澳門', '香港', '馬尼拉', '宿霧', '長灘島', '峇里島'] }
         ]
       }
     ];
@@ -257,7 +257,16 @@
       { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] },
       { standard: '河內', aliases: ['河內', '內排', 'HAN'] },
       { standard: '峴港', aliases: ['峴港', 'DAD'] },
-      { standard: '富國島', aliases: ['富國島', 'PQC'] }
+      { standard: '富國島', aliases: ['富國島', 'PQC'] },
+      // 擴充東南亞與其他熱門航點
+      { standard: '新加坡', aliases: ['新加坡', 'SIN'] },
+      { standard: '吉隆坡', aliases: ['吉隆坡', 'KUL'] },
+      { standard: '澳門', aliases: ['澳門', 'MFM', 'Macau'] },
+      { standard: '香港', aliases: ['香港', 'HKG', 'Hong Kong'] },
+      { standard: '馬尼拉', aliases: ['馬尼拉', 'MNL'] },
+      { standard: '宿霧', aliases: ['宿霧', 'CEB'] },
+      { standard: '長灘島', aliases: ['長灘島'] },
+      { standard: '峇里島', aliases: ['峇里島', 'DPS'] }
     ];
 
     // --- 狀態管理 ---
@@ -283,7 +292,6 @@
       try {
         window.history.pushState({}, '', url);
       } catch (e) {
-        // 在 iframe 或 blob 等受限環境中忽略推播 URL 的錯誤
         console.warn('URL 更新被環境限制忽略:', e);
       }
     }
@@ -505,7 +513,6 @@
       state.isLoading = true;
       renderMain();
       
-      // 實作：前端資料快取 (秒開體驗)
       const CACHE_KEY_TICKETS = 'eddie_tickets_v1';
       const CACHE_KEY_TOURS = 'eddie_tours_v1';
       const CACHE_TIME = 'eddie_cache_time_v1';
@@ -516,7 +523,6 @@
         const cachedTours = sessionStorage.getItem(CACHE_KEY_TOURS);
         const cacheTime = sessionStorage.getItem(CACHE_TIME);
         
-        // 快取有效期 5 分鐘
         if (cachedTickets && cachedTours && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) {
            state.tickets = JSON.parse(cachedTickets);
            state.tours = JSON.parse(cachedTours);
@@ -535,9 +541,21 @@
             let rawText = row.details || '';
             if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
             
-            let globalCountry = row.country || ''; let globalCity = row.city || '';
-            let dateVal = row.date || ''; let airline = row.airline || '';
-            let priceVal = row.price || ''; let link = row.link || '';
+            let globalCountry = row.country || ''; 
+            let globalCity = row.city || '';
+            let dateVal = row.date || ''; 
+            let airline = row.airline || '';
+            let priceVal = row.price || ''; 
+            let link = row.link || '';
+
+            // 修正 Webhook 資料判定邏輯：若 city 與 rawText 相同，代表是未處理的原始對話，必須清空讓智慧引擎接手
+            if (globalCity === rawText || globalCountry === rawText) {
+                globalCountry = ''; 
+                globalCity = ''; 
+                dateVal = ''; 
+                airline = ''; 
+                priceVal = '';
+            }
 
             const inferred = inferInfoFromText(rawText);
             if (!globalCountry) globalCountry = inferred.country;
@@ -547,7 +565,6 @@
             const parsedItems = parseRawDetails(rawText, dateVal, priceVal);
 
             return parsedItems.map((item, subIndex) => {
-              // 優先使用項目自帶的上下文城市與標題 (底層精準紀錄)
               let finalCity = item.cityContext || globalCity;
               let finalCountry = globalCountry;
               
@@ -582,9 +599,17 @@
               let rawText = row.details || ''; 
               if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
 
-              let globalCountry = row.country || ''; let title = row.title || '';
-              let dateVal = row.date || ''; let days = row.days || '';
-              let priceVal = row.price || ''; let link = row.link || '';
+              let globalCountry = row.country || ''; 
+              let title = row.title || '';
+              let dateVal = row.date || ''; 
+              let days = row.days || '';
+              let priceVal = row.price || ''; 
+              let link = row.link || '';
+
+              // 修正 Webhook 資料判定邏輯
+              if (globalCity === rawText || globalCountry === rawText || title === rawText) {
+                globalCountry = ''; title = ''; dateVal = ''; days = ''; priceVal = '';
+              }
 
               const inferred = inferInfoFromText(rawText);
               if (!globalCountry) globalCountry = inferred.country;
@@ -599,7 +624,7 @@
                   finalCountry = getCountryByCity(item.cityContext) || globalCountry;
                 }
                 
-                // 防護網：如果抓出來的國家不是已知的四大國，強制分類至「其他」以防消失
+                // 防護網
                 if (!KNOWN_COUNTRIES.includes(finalCountry)) {
                   finalCountry = '其他';
                 }
@@ -621,7 +646,6 @@
             state.tours = Array.from(tourMap.values());
         }
         
-        // 寫入快取
         sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets));
         sessionStorage.setItem(CACHE_KEY_TOURS, JSON.stringify(state.tours));
         sessionStorage.setItem(CACHE_TIME, now.toString());
@@ -712,7 +736,6 @@
     };
 
     window.openModalFromItem = (itemData) => {
-      // 提供給列表模式直接開啟單一項目
       const item = JSON.parse(decodeURIComponent(itemData));
       state.selectedDateTickets = { date: item.date, tickets: [item], isTours: !!item.title };
       state.isModalOpen = true;
@@ -732,7 +755,6 @@
         const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
         const allowedCities = activeTabObj ? activeTabObj.cities : [];
         const dayTickets = state.tickets.filter(t => {
-           // 針對「其他」國家的特殊處理：直接顯示被歸類為「其他」的所有機票，不需限制 allowedCities
            if (state.selectedCountryObj.country === '其他') {
                return t.country === '其他' && t.date === dateStr;
            }
@@ -754,7 +776,6 @@
 
     // --- 渲染邏輯 (UI 產生器) ---
     
-    // 實作：高質感骨架屏載入動畫
     function getLoadingHTML() {
       const cards = Array(8).fill('<div class="bg-gray-200/60 h-64 rounded-3xl w-full"></div>').join('');
       return `
@@ -770,7 +791,6 @@
       `;
     }
 
-    // 實作：全局搜尋結果頁面
     function getSearchHTML() {
        const q = state.searchQuery;
        const matchedTickets = state.tickets.filter(t => 
@@ -904,7 +924,6 @@
     }
 
     function getToursHTML() {
-      // 旅行團維持獨立頁面邏輯
       const todayStr = new Date().toISOString().split('T')[0];
       const upcomingTours = state.tours.filter(t => t.date >= todayStr).sort((a,b) => {
           let pa = parseInt((a.price||'').replace(/\D/g, '')) || 999999;
@@ -963,7 +982,6 @@
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
       
-      // 在「其他」分頁中，顯示所有被歸類到「其他」的機票
       const filteredTickets = state.tickets.filter(t => {
          if (state.selectedCountryObj.country === '其他') {
              return t.country === '其他';
@@ -971,7 +989,6 @@
          return t.country === state.selectedCountryObj.country && allowedCities.includes(t.city);
       });
 
-      // UI 區域(Tab)按鈕
       const pillsHTML = state.selectedCountryObj.tabs.map(tab => {
         let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點');
         if (displayCities.length === 0) displayCities = tab.cities; 
@@ -990,7 +1007,6 @@
 
       let contentHTML = '';
 
-      // 實作：列表 / 月曆 雙模式切換
       if (state.viewMode === 'list') {
          const todayStr = new Date().toISOString().split('T')[0];
          const upcoming = filteredTickets.filter(t => t.date >= todayStr).sort((a,b) => {
@@ -1023,13 +1039,12 @@
             }).join('') + `</div>`;
          }
       } else {
-        // 月曆模式
-        // 實作：空資料的友善提示
         const currentMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
         const monthHasTickets = filteredTickets.some(t => t.date.startsWith(currentMonthPrefix));
 
         let daysHTML = '';
         if (!monthHasTickets) {
+            // 已移除飛機圖示
             daysHTML = `
               <div class="col-span-7 py-24 text-center text-gray-500 flex flex-col items-center fade-in">
                 <i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i>

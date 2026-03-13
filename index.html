@@ -10,6 +10,11 @@
   <meta name="keywords" content="艾迪王, 清艙機票, 晚鳥機票, 便宜機票, 優惠旅行團, 日本機票, 韓國機票, eSIM推薦, KKday優惠">
   <meta name="author" content="艾迪王">
 
+  <!-- 資源預先連線 (加速載入) -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+
   <!-- Open Graph 標籤 -->
   <meta property="og:title" content="艾迪王 清艙機票．旅遊必備推薦">
   <meta property="og:description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票，並提供出國必備 eSIM、KKday 行程等專屬旅遊優惠推薦！">
@@ -100,7 +105,6 @@
           <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110"><i class="ph-fill ph-facebook-logo text-4xl"></i></a>
           <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110"><i class="ph-fill ph-instagram-logo text-4xl"></i></a>
           <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noreferrer" class="transition-all transform hover:scale-110 flex items-center justify-center" title="加入 LINE 社群">
-            <!-- 將尺寸再縮小為 w-7 h-7 -->
             <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE 社群" class="w-7 h-7 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300" />
           </a>
         </div>
@@ -194,7 +198,6 @@
     const state = { tickets: [], tours: [], isLoading: true, selectedCountryObj: null, selectedTab: null, selectedTourCountry: '全部', currentDate: new Date(), selectedDateTickets: null, isModalOpen: false, animateTransition: true, viewMode: 'calendar', searchQuery: '' };
 
     // --- 輔助函式 ---
-    
     function safeUpdateURL(url) { try { window.history.pushState({}, '', url); } catch (e) { console.warn('URL 更新被環境限制忽略:', e); } }
 
     function getCityFromText(text) {
@@ -312,12 +315,23 @@
     }
 
     async function fetchSheetData(force = false) {
-      state.isLoading = true; renderMain();
+      // 移除 state.isLoading = true 時阻擋整個畫面的邏輯
       const CACHE_KEY_TICKETS = 'eddie_tickets_v1', CACHE_KEY_TOURS = 'eddie_tours_v1', CACHE_TIME = 'eddie_cache_time_v1', now = new Date().getTime();
+      
       if (!force) {
         const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS), cachedTours = sessionStorage.getItem(CACHE_KEY_TOURS), cacheTime = sessionStorage.getItem(CACHE_TIME);
-        if (cachedTickets && cachedTours && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { state.tickets = JSON.parse(cachedTickets); state.tours = JSON.parse(cachedTours); state.isLoading = false; renderMain(); return; }
+        if (cachedTickets && cachedTours && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { 
+          state.tickets = JSON.parse(cachedTickets); 
+          state.tours = JSON.parse(cachedTours); 
+          state.isLoading = false; 
+          renderMain(); 
+          return; 
+        }
       }
+
+      // 如果沒有快取，立刻渲染首頁(此時仍沒有機票資料，但首頁是靜態的)，並顯示小小的載入狀態
+      renderMain(); 
+
       try {
         const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
@@ -356,10 +370,19 @@
             const tourMap = new Map(); allTours.forEach(t => { const normTitle = normalizeForDedup(t.title), key = `${t.date}_${normTitle}_${t.isFlightAndHotel}_${t.isBogo}`; tourMap.set(key, t); }); state.tours = Array.from(tourMap.values());
         }
         sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); sessionStorage.setItem(CACHE_KEY_TOURS, JSON.stringify(state.tours)); sessionStorage.setItem(CACHE_TIME, now.toString());
-      } catch (error) { console.error('讀取 API 錯誤:', error); } finally { state.isLoading = false; state.animateTransition = true; renderMain(); state.animateTransition = false; }
+      } catch (error) { 
+        console.error('讀取 API 錯誤:', error); 
+      } finally { 
+        state.isLoading = false; 
+        state.animateTransition = false; 
+        renderMain(); 
+      }
     }
 
-    window.forceRefresh = () => fetchSheetData(true);
+    window.forceRefresh = () => {
+      state.isLoading = true;
+      fetchSheetData(true);
+    };
     
     window.executeSearch = (q) => { 
       q = q.trim().toLowerCase(); state.searchQuery = q; 
@@ -428,15 +451,17 @@
       
       const bannersHTML = `
         <div class="mt-16 w-full space-y-6">
-          <h2 class="text-2xl font-black text-gray-900 mb-6 pl-3 border-l-4 border-gray-900 tracking-tight">旅遊必備推薦</h2>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-black text-gray-900 pl-3 border-l-4 border-gray-900 tracking-tight">旅遊必備推薦</h2>
+            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>同步機票中</div>' : ''}
+          </div>
 
           <!-- LINE 社群推薦 -->
           <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" alt="LINE 社群" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="LINE 社群" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/50 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
               <div class="flex items-center gap-2 mb-2">
-                <!-- 橫幅區塊使用全彩官方 LINE SVG，將尺寸從 w-6 h-6 縮小為 w-5 h-5 -->
                 <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" class="w-5 h-5 drop-shadow-md" />
                 <span class="text-[#06C755] font-bold tracking-widest text-sm drop-shadow-md">LINE 專屬社群</span>
               </div>
@@ -447,7 +472,7 @@
 
           <!-- eSIM 推薦 -->
           <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
-            <img src="https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=1200&q=80" alt="eSIM 推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
+            <img src="https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="eSIM 推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
               <div class="flex items-center gap-2 mb-2">
@@ -461,7 +486,7 @@
 
           <!-- KKday 推薦 -->
           <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
-            <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80" alt="KKday 行程推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
+            <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="KKday 行程推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
               <div class="flex items-center gap-2 mb-2">
@@ -475,7 +500,7 @@
 
           <!-- 團購/代購 (反灰敬請期待) -->
           <div class="relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-not-allowed shadow-sm border border-gray-200">
-            <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80" alt="團購代購" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60"/>
+            <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="團購代購" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60"/>
             <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center">
               <i class="ph-bold ph-shopping-bag text-white text-3xl mb-2 drop-shadow-md"></i>
@@ -502,7 +527,6 @@
       
       let contentHTML = '';
       
-      // 構建月曆的 Header (確保不論有沒有資料，這個區塊都會顯示)
       const calendarHeaderHTML = `
         <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
           <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-left"></i></button>
@@ -590,7 +614,25 @@
       modalRoot.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(e.target===this) closeModal()"><div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col max-h-[85vh]"><div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0"><h3 class="text-xl font-bold text-gray-900 flex items-center gap-2"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${state.selectedDateTickets.date}</h3><button onclick="closeModal()" class="p-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center"><i class="ph-bold ph-x text-xl"></i></button></div><div class="p-6 overflow-y-auto bg-gray-50/50 flex-1 no-scrollbar">${contentHTML}</div></div></div>`;
     }
 
-    function renderMain() { const el = document.getElementById('main-content'); if (state.isLoading) el.innerHTML = getLoadingHTML(); else if (state.searchQuery || state.selectedCountryObj?.isSearch) el.innerHTML = getSearchHTML(); else if (!state.selectedCountryObj) el.innerHTML = getHomeHTML(); else el.innerHTML = getFlightsHTML(); }
+    // 更新主渲染邏輯：將首頁渲染與 API 等待解耦
+    function renderMain() { 
+      const el = document.getElementById('main-content'); 
+      
+      // 如果還沒有選任何國家/搜尋，就一律顯示「首頁」，就算還在 isLoading 也是！
+      if (!state.selectedCountryObj && !state.searchQuery) {
+        el.innerHTML = getHomeHTML();
+      } 
+      // 如果已經點擊了國家/搜尋，但資料還沒準備好，才顯示大範圍骨架屏
+      else if (state.isLoading) {
+        el.innerHTML = getLoadingHTML(); 
+      } 
+      else if (state.searchQuery || state.selectedCountryObj?.isSearch) {
+        el.innerHTML = getSearchHTML(); 
+      } 
+      else {
+        el.innerHTML = getFlightsHTML(); 
+      }
+    }
 
     // --- 啟動邏輯：從英文 Slug 還原中文標籤 ---
     window.addEventListener('DOMContentLoaded', () => { 
@@ -611,6 +653,8 @@
           state.selectedTab = tabObj ? tabObj.label : countryObj.tabs[0].label; 
         } 
       } 
+      
+      // 觸發取資料，但在這之前 renderMain() 已經會先被呼叫畫出首頁了
       fetchSheetData(); 
     });
   </script>

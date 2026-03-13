@@ -369,6 +369,7 @@
     };
 
     window.selectCountry = (index) => {
+      if (index === 'tours') return;
       const countryObj = LOCATION_DATA[index];
       state.selectedCountryObj = countryObj;
       state.selectedTab = countryObj.tabs[0].label;
@@ -419,23 +420,69 @@
 
     function getFlightsHTML() {
       const year = state.currentDate.getFullYear(), month = state.currentDate.getMonth(), activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab), allowedCities = activeTabObj ? activeTabObj.cities : [], filteredTickets = state.tickets.filter(t => (state.selectedCountryObj.country === '其他' ? t.country === '其他' : t.country === state.selectedCountryObj.country && allowedCities.includes(t.city)));
-      const pillsHTML = state.selectedCountryObj.tabs.map(tab => { let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點'); if (displayCities.length === 0) displayCities = tab.cities; const subText = displayCities.slice(0, 2).join(' · '); const isSelected = state.selectedTab === tab.label; return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-300' : 'text-gray-400'}">${subText}</span></button>`; }).join('');
+      
+      const pillsHTML = state.selectedCountryObj.tabs.map(tab => { 
+        let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點'); 
+        if (displayCities.length === 0) displayCities = tab.cities; 
+        const subText = displayCities.slice(0, 2).join(' · '); 
+        const isSelected = state.selectedTab === tab.label; 
+        return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-300' : 'text-gray-400'}">${subText}</span></button>`; 
+      }).join('');
+      
       let contentHTML = '';
+      
+      // 構建月曆的 Header (確保不論有沒有資料，這個區塊都會顯示)
+      const calendarHeaderHTML = `
+        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
+          <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-left"></i></button>
+          <h2 class="text-lg font-bold">${year}年 ${month + 1}月</h2>
+          <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-right"></i></button>
+        </div>
+      `;
+
       if (state.viewMode === 'list') {
          const todayStr = new Date().toISOString().split('T')[0], upcoming = filteredTickets.filter(t => t.date >= todayStr).sort((a,b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
          contentHTML = upcoming.length === 0 ? `<div class="py-20 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-airplane-tilt text-4xl text-gray-300 mb-3"></i>目前暫無機票！</div>` : `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">${upcoming.map(t => `<div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodeURIComponent(JSON.stringify(t))}')"><div><div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div><div class="font-black text-gray-900 text-lg line-clamp-1">${t.airline}</div><div class="text-xs font-medium text-gray-600 mt-1.5 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city}${t.isFlightAndHotel ? ' · 機+酒' : ''}${t.isBogo ? ' · 買一送一' : ''}</div></div><div class="text-right shrink-0 ml-4"><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div><div class="text-xl font-black text-red-500">$${t.price || '--'}</div></div></div>`).join('')}</div>`;
       } else {
         const prefix = `${year}-${String(month + 1).padStart(2, '0')}`, monthTickets = filteredTickets.filter(t => t.date.startsWith(prefix));
-        if (monthTickets.length === 0) contentHTML = `<div class="bg-white rounded-2xl py-24 text-center text-gray-500 border border-gray-100"><i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有清艙機票唷！</p><p class="text-sm">換個月份或改用列表模式看看吧！</p></div>`;
-        else {
+        
+        // 修改這裡：當月沒有票時，依然保留 Header，僅取代下方網格
+        if (monthTickets.length === 0) {
+          contentHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-in">
+              ${calendarHeaderHTML}
+              <div class="py-24 text-center text-gray-500">
+                <i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i>
+                <p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有清艙機票唷！</p>
+                <p class="text-sm">請點擊上方箭頭看看其他月份，或改用「列表模式」</p>
+              </div>
+            </div>
+          `;
+        } else {
           let blanks = Array(new Date(year, month, 1).getDay()).fill(null), days = Array.from({ length: new Date(year, month+1, 0).getDate() }, (_, i) => i + 1);
-          contentHTML = `<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white"><button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-left"></i></button><h2 class="text-lg font-bold">${year}年 ${month + 1}月</h2><button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-right"></i></button></div><div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="bg-white py-3 text-center text-xs font-bold text-gray-400">${d}</div>`).join('')}</div><div class="grid grid-cols-7 gap-px bg-gray-100">${blanks.map(() => `<div class="bg-white/50 min-h-[80px]"></div>`).join('')}${days.map(d => { 
-            const dateStr = `${prefix}-${String(d).padStart(2, '0')}`, dayTickets = filteredTickets.filter(t => t.date === dateStr); 
-            return `<div class="bg-white min-h-[80px] p-1 transition-all ${dayTickets.length ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}" ${dayTickets.length ? `onclick="openModal('${dateStr}')"` : ''}><div class="text-[10px] sm:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full mb-1 ${dateStr === new Date().toISOString().split('T')[0] ? 'bg-gray-900 text-white' : 'text-gray-700'}">${d}</div><div class="flex flex-col gap-1">${dayTickets.map(t => {
-              const extraLabel = (t.isFlightAndHotel ? ' 機+酒' : '') + (t.isBogo ? ' 買一送一' : '');
-              return `<div class="text-[9px] px-0.5 py-0.5 ${t.isFlightAndHotel ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'} rounded font-black tracking-tighter text-center flex flex-col items-center"><span class="whitespace-nowrap">${t.price || '有票'}</span>${extraLabel ? `<span class="text-[7px] leading-none opacity-80">${extraLabel}</span>` : ''}</div>`;
-            }).join('')}</div></div>`; 
-          }).join('')}</div></div>`;
+          contentHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-in">
+              ${calendarHeaderHTML}
+              <div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+                ${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="bg-white py-3 text-center text-xs font-bold text-gray-400">${d}</div>`).join('')}
+              </div>
+              <div class="grid grid-cols-7 gap-px bg-gray-100">
+                ${blanks.map(() => `<div class="bg-white/50 min-h-[80px]"></div>`).join('')}${days.map(d => { 
+                  const dateStr = `${prefix}-${String(d).padStart(2, '0')}`, dayTickets = filteredTickets.filter(t => t.date === dateStr); 
+                  return `
+                    <div class="bg-white min-h-[80px] p-1 transition-all ${dayTickets.length ? 'cursor-pointer hover:bg-blue-50/50' : 'text-gray-400'}" ${dayTickets.length ? `onclick="openModal('${dateStr}')"` : ''}>
+                      <div class="text-[10px] sm:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full mb-1 ${dateStr === new Date().toISOString().split('T')[0] ? 'bg-gray-900 text-white' : 'text-gray-700'}">${d}</div>
+                      <div class="flex flex-col gap-1">
+                        ${dayTickets.map(t => {
+                          const extraLabel = (t.isFlightAndHotel ? ' 機+酒' : '') + (t.isBogo ? ' 買一送一' : '');
+                          return `<div class="text-[9px] px-0.5 py-0.5 ${t.isFlightAndHotel ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'} rounded font-black tracking-tighter text-center flex flex-col items-center"><span class="whitespace-nowrap">${t.price || '有票'}</span>${extraLabel ? `<span class="text-[7px] leading-none opacity-80">${extraLabel}</span>` : ''}</div>`;
+                        }).join('')}
+                      </div>
+                    </div>`; 
+                }).join('')}
+              </div>
+            </div>
+          `;
         }
       }
       return `<div class="fade-in"><div class="flex items-center justify-between mb-8 flex-wrap"><div class="flex items-center gap-4"><button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center"><i class="ph-bold ph-arrow-left"></i></button><h1 class="text-xl font-bold">${state.selectedCountryObj.country} 清艙機票</h1></div><div class="flex items-center bg-gray-100 p-1 rounded-xl"><button onclick="setViewMode('calendar')" class="px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${state.viewMode==='calendar' ? 'bg-white shadow-sm':'text-gray-500'}"><i class="ph-bold ph-calendar-blank"></i>月曆</button><button onclick="setViewMode('list')" class="px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${state.viewMode==='list' ? 'bg-white shadow-sm':'text-gray-500'}"><i class="ph-bold ph-list-dashes"></i>列表</button></div></div><div class="flex flex-wrap gap-2.5 mb-8">${pillsHTML}</div>${contentHTML}</div>`;
@@ -447,6 +494,8 @@
       const contentHTML = state.selectedDateTickets.tickets.map((item, index) => {
         const lineOaUrl = `https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?${encodeURIComponent('清艙機票訂購公版\n備註：eddie推薦(不可刪)\n航空航點：' + item.airline + ' ' + item.country + item.city + '\n日期：' + item.date + '\n金額：' + (item.price ? '$' + item.price : '') + '\n姓名：\n張數：\n聯絡電話：\n聯絡信箱：')}`;
         const extraLabels = (item.isFlightAndHotel ? ' · 機+酒' : '') + (item.isBogo ? ' · 買一送一' : '');
+        const urlMatch = item.details.match(/(https?:\/\/reurl\.cc\/[^\s]+|https?:\/\/[^\s]+)/);
+        
         return `
           <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${index !== 0 ? 'mt-4' : ''}">
             <div class="flex justify-between items-start mb-4">
@@ -458,13 +507,13 @@
             </div>
             <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">${item.details}</div>
             
-            <!-- 機位餘額提醒標語 -->
             <div class="mt-3 flex items-start gap-1.5 text-[11px] text-gray-400 leading-tight">
               <i class="ph-bold ph-info text-xs mt-0.5 shrink-0"></i>
               <span>機位剩餘數量依旅行社即時查詢為準，點擊下方按鈕後請儘速聯絡確認名額。</span>
             </div>
 
-            <a href="${item.link || lineOaUrl}" target="_blank" rel="noreferrer" class="mt-5 w-full text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm ${item.link ? 'bg-orange-600 shadow-orange-200' : 'bg-[#06C755] shadow-green-200'}"><i class="ph-bold ${item.link ? 'ph-arrow-square-out' : 'ph-chat-circle-dots'} text-xl"></i> ${item.link ? '前往指定報名網頁' : '聯繫合作旅行社 LINE 搶購'}</a>
+            ${(item.isTours && urlMatch) ? `<a href="${urlMatch[0]}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm"><i class="ph-bold ph-notebook text-xl"></i> 查看行程資訊</a>` : ''}
+            <a href="${item.link || lineOaUrl}" target="_blank" rel="noreferrer" class="mt-4 w-full text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm ${item.link ? 'bg-orange-600 shadow-orange-200' : 'bg-[#06C755] shadow-green-200'}"><i class="ph-bold ${item.link ? 'ph-arrow-square-out' : 'ph-chat-circle-dots'} text-xl"></i> ${item.link ? '前往指定報名網頁' : '聯繫合作旅行社 LINE 搶購'}</a>
           </div>
         `;
       }).join('');
@@ -497,3 +546,5 @@
   </script>
 </body>
 </html>
+
+

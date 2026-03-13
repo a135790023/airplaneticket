@@ -73,21 +73,22 @@
   <div id="app-root">
     <!-- 導覽列 -->
     <nav class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         
         <div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity shrink-0" onclick="goHome()">
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
-          <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none hidden sm:block">
-            艾迪王 <span class="text-gray-400 font-medium">清艙機票．旅遊必備</span>
+          <!-- 讓「艾迪王」在手機版顯示，副標題在平板以上(sm)才顯示 -->
+          <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none">
+            艾迪王<span class="text-gray-400 font-medium hidden sm:inline ml-1.5">清艙機票．旅遊必備</span>
           </span>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end ml-4 sm:ml-0">
-          <div class="relative w-full max-w-[180px] sm:max-w-xs">
+        <div class="flex items-center gap-2 sm:gap-4 flex-1 justify-end ml-2 sm:ml-0">
+          <div class="relative w-full max-w-[140px] sm:max-w-xs">
             <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') executeSearch(this.value)" placeholder="搜尋目的地、航空..." class="w-full pl-9 pr-4 py-2 bg-gray-100 border-transparent rounded-full text-sm focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all outline-none" />
+            <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') executeSearch(this.value)" placeholder="搜尋目的地、航空..." class="w-full pl-9 pr-3 py-2 bg-gray-100 border-transparent rounded-full text-sm focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all outline-none" />
           </div>
           <button onclick="forceRefresh()" class="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full transition-colors shrink-0">
             <i class="ph-bold ph-arrows-clockwise text-lg"></i>

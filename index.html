@@ -73,7 +73,7 @@
   <div id="app-root">
     <!-- 導覽列 -->
     <nav class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         
         <div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity shrink-0" onclick="goHome()">
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
@@ -85,8 +85,9 @@
           </span>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-4 flex-1 justify-end ml-2 sm:ml-0">
-          <div class="relative w-full max-w-[140px] sm:max-w-xs">
+        <div class="flex items-center gap-2 sm:gap-4 flex-1 justify-end shrink min-w-0">
+          <!-- 放大手機版的搜尋欄位最大寬度，從 140px 放寬至 190px，並允許彈性收縮 -->
+          <div class="relative w-full max-w-[190px] sm:max-w-xs shrink">
             <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input type="text" id="searchInput" onkeyup="if(event.key === 'Enter') executeSearch(this.value)" placeholder="搜尋目的地、航空..." class="w-full pl-9 pr-3 py-2 bg-gray-100 border-transparent rounded-full text-sm focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all outline-none" />
           </div>

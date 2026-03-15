@@ -227,6 +227,23 @@
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] }, { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] }, { standard: '茨城', aliases: ['茨城', 'IBR'] }, { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM'] }, { standard: '神戶', aliases: ['神戶', 'UKB'] }, { standard: '京都', aliases: ['京都'] }, { standard: '北海道', aliases: ['北海道'] }, { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, { standard: '函館', aliases: ['函館', 'HKD'] }, { standard: '旭川', aliases: ['旭川', 'AKJ'] }, { standard: '帶廣', aliases: ['帶廣', 'OBO'] }, { standard: '釧路', aliases: ['釧路', 'KUH'] }, { standard: '女滿別', aliases: ['女滿別', 'MMB'] }, { standard: '仙台', aliases: ['仙台', 'SDJ'] }, { standard: '花卷', aliases: ['花卷', 'HNA'] }, { standard: '新潟', aliases: ['新潟', 'KIJ'] }, { standard: '秋田', aliases: ['秋田', 'AXT'] }, { standard: '青森', aliases: ['青森', 'AOJ'] }, { standard: '山形', aliases: ['山形', 'GAJ'] }, { standard: '福島', aliases: ['福島', 'FKS'] }, { standard: '福岡', aliases: ['福岡', 'FUK'] }, { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] }, { standard: '高松', aliases: ['高松', 'TAK'] }, { standard: '高知', aliases: ['高知', 'KCZ'] }, { standard: '佐賀', aliases: ['佐賀', 'HSG'] }, { standard: '長崎', aliases: ['長崎', 'NGS'] }, { standard: '宮崎', aliases: ['宮崎', 'KMI'] }, { standard: '鹿兒島', aliases: ['鹿兒島', 'KOJ'] }, { standard: '松山', aliases: ['松山', 'MYJ'] }, { standard: '大分', aliases: ['大分', 'OIT'] }, { standard: '北九州', aliases: ['北九州', 'KKJ'] }, { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] }, { standard: '靜岡', aliases: ['靜岡', 'FSZ'] }, { standard: '小松', aliases: ['小松', 'KMQ'] }, { standard: '富山', aliases: ['富山', 'TOY'] }, { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] }, { standard: '石垣島', aliases: ['石垣島', 'ISG'] }, { standard: '宮古島', aliases: ['宮古島', 'MMY'] }, { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] }, { standard: '清邁', aliases: ['清邁', 'CNX'] }, { standard: '普吉島', aliases: ['普吉島', 'HKT'] }, { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] }, { standard: '河內', aliases: ['河內', '內排', 'HAN'] }, { standard: '峴港', aliases: ['峴港', 'DAD'] }, { standard: '富國島', aliases: ['富國島', 'PQC'] }, { standard: '新加坡', aliases: ['新加坡', 'SIN'] }, { standard: '吉隆坡', aliases: ['吉隆坡', 'KUL'] }, { standard: '澳門', aliases: ['澳門', 'MFM'] }, { standard: '香港', aliases: ['香港', 'HKG'] }, { standard: '馬尼拉', aliases: ['馬尼拉', 'MNL'] }, { standard: '宿霧', aliases: ['宿霧', 'CEB'] }, { standard: '長灘島', aliases: ['長灘島'] }, { standard: '峇里島', aliases: ['峇里島', 'DPS'] }
     ];
 
+    // 新增：航班號碼對應字典 (如果未來有新航班，可以直接在這裡補充)
+    const FLIGHT_MAPPINGS = [
+      { city: '清邁', codes: ['FD242', 'FD243', 'FD244', 'FD245', 'VZ822', 'VZ823', 'JX751', 'JX752'] },
+      { city: '曼谷', codes: ['VZ562', 'VZ563', 'VZ564', 'VZ565', 'SL398', 'SL399', 'FD230', 'FD231', 'IT505', 'IT506'] },
+      { city: '東京', codes: ['IT200', 'IT201', 'IT202', 'IT203', 'MM620', 'MM621', 'MM622', 'MM623', 'MM624', 'MM625', 'GK11', 'GK12', 'TR898', 'TR899', 'JX800', 'JX801', 'CI100', 'CI101', 'BR198', 'BR197'] },
+      { city: '大阪', codes: ['IT210', 'IT211', 'IT212', 'IT213', 'MM22', 'MM23', 'MM28', 'MM29', 'MM36', 'MM37', 'JX820', 'JX821'] },
+      { city: '沖繩', codes: ['IT230', 'IT231', 'MM923', 'MM924', 'MM927', 'MM928'] },
+      { city: '福岡', codes: ['IT240', 'IT241', 'JX840', 'JX841'] },
+      { city: '北海道', codes: ['IT234', 'IT235', 'TR892', 'TR893', 'JX830', 'JX831'] },
+      { city: '仙台', codes: ['IT254', 'IT255', 'JX862', 'JX863'] },
+      { city: '峴港', codes: ['IT551', 'IT552', 'JX701', 'JX702'] },
+      { city: '富國島', codes: ['VJ844', 'VJ845', 'IT543', 'IT544', 'JX705', 'JX706'] },
+      { city: '釜山', codes: ['BX793', 'BX794', 'BX795', 'BX796', 'IT606', 'IT607'] },
+      { city: '濟州島', codes: ['IT654', 'IT655', 'TW687', 'TW688'] },
+      { city: '澳門', codes: ['IT301', 'IT302', 'JX201', 'JX202', 'JX203', 'JX204'] }
+    ];
+
     const state = { tickets: [], tours: [], isLoading: true, selectedCountryObj: null, selectedTab: null, selectedTourCountry: '全部', currentDate: new Date(), selectedDateTickets: null, isModalOpen: false, animateTransition: true, viewMode: 'calendar', searchQuery: '' };
 
     // --- 輔助函式 ---
@@ -239,8 +256,23 @@
         let idx = text.indexOf(matchStr);
         if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) { earliestIndex = idx; foundCity = city; }
       };
+      
+      // 1. 先用原本的城市別名與名稱尋找
       for (let mapping of CITY_ALIASES) { for (let alias of mapping.aliases) { checkMatch(mapping.standard, alias); } }
       for (let loc of LOCATION_DATA) { for (let tab of loc.tabs) { for (let c of tab.cities) { checkMatch(c, c); } } }
+      
+      // 2. 如果找不到具體城市，啟動航班代號判斷 (去除空白以便精準比對，例如 FD 242 -> FD242)
+      if (!foundCity) {
+        const normalizedText = text.toUpperCase().replace(/\s+/g, '');
+        for (let mapping of FLIGHT_MAPPINGS) {
+          for (let code of mapping.codes) {
+            if (normalizedText.includes(code)) {
+              return mapping.city;
+            }
+          }
+        }
+      }
+      
       return foundCity;
     }
 
@@ -380,7 +412,7 @@
               return { id: `ticket-${index}-${subIndex}`, country: finalCountry, city: finalCity, date: item.date, airline: item.titleContext || airline, price: item.price, details: rawText, link: link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo };
             });
           }).filter(t => t.date);
-          const ticketMap = new Map(); allTickets.forEach(t => { const normTitle = normalizeForDedup(t.airline), key = `${t.date}_${t.city}_${normTitle}_${t.isFlightAndHotel}_${t.isBogo}`; ticketMap.set(key, t); }); state.tickets = Array.from(ticketMap.values());
+          const ticketMap = new Map(); allTickets.forEach(t => { const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, ''), key = `${t.date}_${t.city}_${normTitle}_${t.isFlightAndHotel}`; ticketMap.set(key, t); }); state.tickets = Array.from(ticketMap.values());
         }
         if (data && data.tours) {
             let allTours = data.tours.flatMap((row, index) => {
@@ -397,7 +429,7 @@
                 return { id: `tour-${index}-${subIndex}`, country: finalCountry, title: item.titleContext || title, date: item.date, days: days, price: item.price, details: rawText, link: link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo };
               });
             }).filter(t => t.date);
-            const tourMap = new Map(); allTours.forEach(t => { const normTitle = normalizeForDedup(t.title), key = `${t.date}_${normTitle}_${t.isFlightAndHotel}_${t.isBogo}`; tourMap.set(key, t); }); state.tours = Array.from(tourMap.values());
+            const tourMap = new Map(); allTours.forEach(t => { const normTitle = normalizeForDedup(t.title).replace(/\d+/g, ''), key = `${t.date}_${normTitle}_${t.isFlightAndHotel}`; tourMap.set(key, t); }); state.tours = Array.from(tourMap.values());
         }
         sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); sessionStorage.setItem(CACHE_KEY_TOURS, JSON.stringify(state.tours)); sessionStorage.setItem(CACHE_TIME, now.toString());
       } catch (error) { 

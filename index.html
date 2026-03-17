@@ -428,6 +428,7 @@
     }
 
     function getHomeHTML() {
+      // 修改：設定 lg:grid-cols-3 使其在電腦版分兩行排列
       let cardsHTML = LOCATION_DATA.map((loc, index) => `<div onclick="selectCountry(${index})" class="group relative h-64 lg:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300"><img src="${loc.image}" alt="${loc.country}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/><div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent transition-opacity group-hover:opacity-90"></div><div class="absolute bottom-0 left-0 p-4 sm:p-5"><h3 class="text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2"><i class="ph-bold ph-map-pin text-white/80"></i> ${loc.country}</h3><p class="text-white/70 text-[10px] sm:text-xs font-medium">包含 ${loc.tabs.reduce((sum, tab) => sum + tab.cities.length, 0)} 航點</p></div></div>`).join('');
       
       const hotelCardHTML = `
@@ -507,7 +508,8 @@
         </div>
       `;
 
-      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-12"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500">點擊探索最新晚鳥清艙機票與飯店總覽</p></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">${cardsHTML}</div>${bannersHTML}</div>`;
+      // 這裡也已修改為 lg:grid-cols-3
+      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-12"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500">點擊探索最新晚鳥清艙機票與飯店總覽</p></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
     }
 
     function getFlightsHTML() {

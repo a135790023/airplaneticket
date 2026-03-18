@@ -274,7 +274,7 @@
       if (!details) return [{ date: normalizeDate(fallbackDate), price: fallbackPrice, isFlightAndHotel: false, isBogo: false, cityContext: null, titleContext: null }];
       const lines = details.split('\n'), items = [];
       const currentYear = new Date().getFullYear();
-      let isPakState = isGlobalPak, currentCityContext = null, currentTitleContext = null, runningPrice = fallbackPrice ? String(fallbackPrice).replace(/,/g, '') : null;
+      let isPakState = isGlobalPak, currentCityContext = null, currentTitleContext = null, runningPrice = fallbackPrice ? String(fallbackPrice).replace(/[^\d]/g, '') : null;
       const extractDates = (text) => {
         if (!text) return [];
         const dates = [];
@@ -307,18 +307,50 @@
         }
         if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) isPakState = true;
         else if (line.includes('純機票') || line.includes('單機票')) isPakState = false;
-        const priceMatch = line.match(/(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|機票)[:：\s\-\$＄]*([0-9,]{3,})/i);
+        
+        const priceRegexes = [
+          /(?:NT\$|\$|＄|💵|💰|現金價|售價|價格|優惠價|促銷價|機票|含稅|未稅|TWD|NTD|只要)[:：\s\-\$＄]*([0-9,]{3,})/i,
+          /([0-9]{1,2},[0-9]{3}|[1-9][0-9]{3,})[\s]*(?:起|元)/
+        ];
+        let priceMatch = null;
+        for (let rx of priceRegexes) { priceMatch = line.match(rx); if (priceMatch) break; }
         if (priceMatch) runningPrice = priceMatch[1].replace(/,/g, ''); 
+        
         let dates = extractDates(line);
         if (dates.length > 0) {
+            let priceForTheseDates = runningPrice;
+            if (!priceMatch && i < lines.length - 1) {
+                const nextLine = lines[i+1];
+                let nextPriceMatch = null;
+                for (let rx of priceRegexes) { nextPriceMatch = nextLine.match(rx); if (nextPriceMatch) break; }
+                if (nextPriceMatch && extractDates(nextLine).length === 0) { priceForTheseDates = nextPriceMatch[1].replace(/,/g, ''); runningPrice = priceForTheseDates; }
+            }
+            if (!priceForTheseDates) { 
+                for (let j = 0; j < lines.length; j++) { 
+                    let pm = null;
+                    for (let rx of priceRegexes) { pm = lines[j].match(rx); if (pm) break; }
+                    if (pm) { priceForTheseDates = pm[1].replace(/,/g, ''); runningPrice = priceForTheseDates; break; } 
+                } 
+            }
             for (let dateStr of dates) {
                 let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true : (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
-                items.push({ date: dateStr, price: runningPrice || '', isFlightAndHotel: lineIsPak, isBogo: isGlobalBogo || line.includes('買一送一'), cityContext: currentCityContext, titleContext: currentTitleContext });
+                let lineIsBogo = isGlobalBogo || line.includes('買一送一');
+                items.push({ date: dateStr, price: priceForTheseDates || '', isFlightAndHotel: lineIsPak, isBogo: lineIsBogo, cityContext: currentCityContext, titleContext: currentTitleContext });
             }
         }
       }
       if (items.length > 0) return items;
       return [{ date: normalizeDate(fallbackDate), price: runningPrice || '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, cityContext: currentCityContext, titleContext: currentTitleContext }];
+    }
+
+    // 新增：航空公司精準萃取引擎，無視其他冗詞贅字
+    function extractAirline(text) {
+      if (!text) return '未知航空';
+      const airlines = ['酷航', '虎航', '星宇', '長榮', '華航', '中華', '越捷', '越竹', '亞洲', '亞航', 'AirAsia', '樂桃', '捷星', '國泰', '泰越捷', '獅航', '泰獅', '泰航', '大韓', '韓亞', '真航空', '德威', '濟州', '釜山', '首爾', '易斯達', '吉祥', '馬航', '新航', '星悅', '大灣區', '香港', '澳門', '阿聯酋', '聯合', '日航', '全日空', 'ANA', 'JAL', '峇迪'];
+      for (let a of airlines) {
+         if (text.includes(a)) return a;
+      }
+      return '未知航空';
     }
 
     async function fetchSheetData(force = false) {
@@ -345,11 +377,25 @@
               return { id: `ticket-${index}-${subIndex}`, country: finalCountry, city: finalCity.trim(), date: item.date, airline: item.titleContext || row.airline || inferred.title, price: item.price, details: rawText, link: row.link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo };
             });
           }).filter(t => t.date);
-          const ticketMap = new Map(); allTickets.forEach(t => { 
-            const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, ''),
-                  key = `${t.date}_${t.city}_${normTitle}_${t.isFlightAndHotel}_${t.isBogo}`;
-            ticketMap.set(key, t); 
-          }); state.tickets = Array.from(ticketMap.values());
+          
+          const ticketMap = new Map(); 
+          allTickets.forEach(t => { 
+            // 透過航空公司名稱、日期、城市來建立絕對唯一的比對群組
+            const airlineKey = extractAirline(t.airline + ' ' + t.details);
+            const key = `${t.date}_${t.city}_${airlineKey}_${t.isFlightAndHotel}_${t.isBogo}`;
+            
+            // 相同日期、航點、航空公司的機票，進行最低價比對
+            if (ticketMap.has(key)) {
+              const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
+              const newPrice = parseInt((t.price || '').replace(/\D/g, '')) || 999999;
+              if (newPrice < existingPrice) {
+                ticketMap.set(key, t); // 發現更便宜的價格，取代舊的
+              }
+            } else {
+              ticketMap.set(key, t); 
+            }
+          }); 
+          state.tickets = Array.from(ticketMap.values());
         }
         if (data && data.tours) {
           let allTours = data.tours.flatMap((row, index) => {
@@ -374,7 +420,7 @@
       else { const countryObj = LOCATION_DATA[index]; state.selectedCountryObj = countryObj; state.selectedTab = countryObj.tabs[0].label; state.viewMode = 'calendar'; safeUpdateURL(`?country=${countryObj.slug}&tab=${countryObj.tabs[0].slug}`); }
       state.currentDate = new Date(); state.animateTransition = true; renderMain(); state.animateTransition = false; window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-    window.selectTab = (tabLabel) => { state.selectedTab = tabLabel; const countryObj = state.selectedCountryObj; const tabObj = countryObj.tabs.find(t => t.label === tabLabel); safeUpdateURL(`?country=${countryObj.slug}&tab=${tabObj.slug}`); state.animateTransition = false; renderMain(); };
+    window.selectTab = (tabLabel) => { state.selectedTab = tabLabel; const countryObj = state.selectedCountryObj; const tabObj = countryObj.tabs.find(t => t.label === tabLabel); safeUpdateURL(`?country=${countryObj.slug}&tab=${tabObj.slug}`); state.currentDate = new Date(); state.animateTransition = false; renderMain(); };
     window.setViewMode = (mode) => { state.viewMode = mode; renderMain(); };
     window.prevMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() - 1, 1); state.animateTransition = false; renderMain(); };
     window.nextMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 1); state.animateTransition = false; renderMain(); };

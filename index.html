@@ -175,8 +175,63 @@
     ];
 
     const KNOWN_COUNTRIES = LOCATION_DATA.filter(loc => loc.country !== '其他').map(loc => loc.country);
+    
+    // 【更新】將廣泛地區（如東北、九州）映射至該區的「代表城市」，讓行程能準確出現在月曆
     const CITY_ALIASES = [
-      { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] }, { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND'] }, { standard: '茨城', aliases: ['茨城', 'IBR'] }, { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM'] }, { standard: '神戶', aliases: ['神戶', 'UKB'] }, { standard: '京都', aliases: ['京都'] }, { standard: '北海道', aliases: ['北海道'] }, { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, { standard: '函館', aliases: ['函館', 'HKD'] }, { standard: '旭川', aliases: ['旭川', 'AKJ'] }, { standard: '帶廣', aliases: ['帶廣', 'OBO'] }, { standard: '釧路', aliases: ['釧路', 'KUH'] }, { standard: '女滿別', aliases: ['女滿別', 'MMB'] }, { standard: '仙台', aliases: ['仙台', 'SDJ'] }, { standard: '花卷', aliases: ['花卷', 'HNA'] }, { standard: '新潟', aliases: ['新潟', 'KIJ'] }, { standard: '秋田', aliases: ['秋田', 'AXT'] }, { standard: '青森', aliases: ['青森', 'AOJ'] }, { standard: '山形', aliases: ['山形', 'GAJ'] }, { standard: '福島', aliases: ['福島', 'FKS'] }, { standard: '福岡', aliases: ['福岡', 'FUK'] }, { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] }, { standard: '高松', aliases: ['高松', 'TAK'] }, { standard: '高知', aliases: ['高知', 'KCZ'] }, { standard: '佐賀', aliases: ['佐賀', 'HSG'] }, { standard: '長崎', aliases: ['長崎', 'NGS'] }, { standard: '宮崎', aliases: ['宮崎', 'KMI'] }, { standard: '鹿兒島', aliases: ['鹿兒島', 'KOJ'] }, { standard: '松山', aliases: ['松山', 'MYJ'] }, { standard: '大分', aliases: ['大分', 'OIT'] }, { standard: '北九州', aliases: ['北九州', 'KKJ'] }, { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO'] }, { standard: '靜岡', aliases: ['靜岡', 'FSZ'] }, { standard: '小松', aliases: ['小松', 'KMQ'] }, { standard: '富山', aliases: ['富山', 'TOY'] }, { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] }, { standard: '石垣島', aliases: ['石垣島', 'ISG'] }, { standard: '宮古島', aliases: ['宮古島', 'MMY'] }, { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] }, { standard: '清邁', aliases: ['清邁', 'CNX'] }, { standard: '普吉島', aliases: ['普吉島', 'HKT'] }, { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] }, { standard: '河內', aliases: ['河內', '內排', 'HAN'] }, { standard: '峴港', aliases: ['峴港', 'DAD'] }, { standard: '富國島', aliases: ['富國島', 'PQC'] }, { standard: '新加坡', aliases: ['新加坡', 'SIN'] }, { standard: '吉隆坡', aliases: ['吉隆坡', 'KUL'] }, { standard: '澳門', aliases: ['澳門', 'MFM'] }, { standard: '香港', aliases: ['香港', 'HKG'] }, { standard: '馬尼拉', aliases: ['馬尼拉', 'MNL'] }, { standard: '宿霧', aliases: ['宿霧', 'CEB'] }, { standard: '長灘島', aliases: ['長灘島'] }, { standard: '峇里島', aliases: ['峇里島', 'DPS'] }
+      { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, 
+      { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, 
+      { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] }, 
+      { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND', '關東'] }, 
+      { standard: '茨城', aliases: ['茨城', 'IBR'] }, 
+      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM', '京阪神'] }, 
+      { standard: '神戶', aliases: ['神戶', 'UKB'] }, 
+      { standard: '京都', aliases: ['京都'] }, 
+      { standard: '北海道', aliases: ['北海道', '道央', '道東', '道南', '道北'] }, 
+      { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, 
+      { standard: '函館', aliases: ['函館', 'HKD'] }, 
+      { standard: '旭川', aliases: ['旭川', 'AKJ'] }, 
+      { standard: '帶廣', aliases: ['帶廣', 'OBO'] }, 
+      { standard: '釧路', aliases: ['釧路', 'KUH'] }, 
+      { standard: '女滿別', aliases: ['女滿別', 'MMB'] }, 
+      { standard: '仙台', aliases: ['仙台', 'SDJ', '東北'] }, 
+      { standard: '花卷', aliases: ['花卷', 'HNA'] }, 
+      { standard: '新潟', aliases: ['新潟', 'KIJ'] }, 
+      { standard: '秋田', aliases: ['秋田', 'AXT'] }, 
+      { standard: '青森', aliases: ['青森', 'AOJ'] }, 
+      { standard: '山形', aliases: ['山形', 'GAJ'] }, 
+      { standard: '福島', aliases: ['福島', 'FKS'] }, 
+      { standard: '福岡', aliases: ['福岡', 'FUK', '九州'] }, 
+      { standard: '熊本', aliases: ['熊本', 'KMJ', '阿蘇熊本'] }, 
+      { standard: '高松', aliases: ['高松', 'TAK', '四國'] }, 
+      { standard: '佐賀', aliases: ['佐賀', 'HSG'] }, 
+      { standard: '長崎', aliases: ['長崎', 'NGS'] }, 
+      { standard: '宮崎', aliases: ['宮崎', 'KMI'] }, 
+      { standard: '鹿兒島', aliases: ['鹿兒島', 'KOJ'] }, 
+      { standard: '松山', aliases: ['松山', 'MYJ'] }, 
+      { standard: '大分', aliases: ['大分', 'OIT'] }, 
+      { standard: '北九州', aliases: ['北九州', 'KKJ'] }, 
+      { standard: '名古屋', aliases: ['名古屋', '中部國際', 'NGO', '北陸', '黑部立山', '立山黑部', '合掌村'] }, 
+      { standard: '靜岡', aliases: ['靜岡', 'FSZ'] }, 
+      { standard: '小松', aliases: ['小松', 'KMQ'] }, 
+      { standard: '富山', aliases: ['富山', 'TOY'] }, 
+      { standard: '沖繩', aliases: ['沖繩', '那霸', '琉球', 'OKA'] }, 
+      { standard: '石垣島', aliases: ['石垣島', 'ISG'] }, 
+      { standard: '宮古島', aliases: ['宮古島', 'MMY'] }, 
+      { standard: '曼谷', aliases: ['曼谷', '蘇凡納布', 'BKK', '廊曼', 'DMK'] }, 
+      { standard: '清邁', aliases: ['清邁', 'CNX'] }, 
+      { standard: '普吉島', aliases: ['普吉島', 'HKT'] }, 
+      { standard: '胡志明市', aliases: ['胡志明', '新山一', 'SGN'] }, 
+      { standard: '河內', aliases: ['河內', '內排', 'HAN'] }, 
+      { standard: '峴港', aliases: ['峴港', 'DAD'] }, 
+      { standard: '富國島', aliases: ['富國島', 'PQC'] }, 
+      { standard: '新加坡', aliases: ['新加坡', 'SIN'] }, 
+      { standard: '吉隆坡', aliases: ['吉隆坡', 'KUL'] }, 
+      { standard: '澳門', aliases: ['澳門', 'MFM'] }, 
+      { standard: '香港', aliases: ['香港', 'HKG'] }, 
+      { standard: '馬尼拉', aliases: ['馬尼拉', 'MNL'] }, 
+      { standard: '宿霧', aliases: ['宿霧', 'CEB'] }, 
+      { standard: '長灘島', aliases: ['長灘島'] }, 
+      { standard: '峇里島', aliases: ['峇里島', 'DPS'] }
     ];
 
     const FLIGHT_MAPPINGS = [
@@ -195,7 +250,6 @@
       { city: '澳門', codes: ['IT301', 'IT302', 'JX201', 'JX202', 'JX203', 'JX204'] }
     ];
 
-    // 新增 state 的 listSortBy 變數
     const state = { 
       tickets: [], tours: [], hotels: [], 
       isLoading: true, selectedCountryObj: null, selectedTab: null, 
@@ -246,19 +300,22 @@
       let inferredCity = getCityFromText(text);
       if (inferredCity) { city = inferredCity; country = getCountryByCity(city); }
       else { for (let loc of LOCATION_DATA) { if (text.includes(loc.country)) { country = loc.country; break; } } }
-      let bestTitle = '', titleScore = -1;
+      let bestTitle = '';
       for (let line of lines) {
         const fluffRegex = /^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉更新降價再降大降價清艙促銷最後機會預估最新快訊]+$/u;
         if (fluffRegex.test(line)) continue;
-        let score = 0, lineContainsCityRelated = false;
-        if (city !== '其他航點' && line.includes(city)) score = 2; else if (country !== '其他' && line.includes(country)) score = 1;
-        if (score > titleScore) { bestTitle = line; titleScore = score; }
+        const cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()\-]+/gu, '').trim();
+        if (cleanLine.length >= 2 && !cleanLine.startsWith('更新') && !cleanLine.startsWith('降價')) {
+            bestTitle = cleanLine;
+            break;
+        }
       }
-      if (bestTitle) title = bestTitle.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '').replace(/^(更新|降價|再降|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
+      if (bestTitle) {
+          title = bestTitle.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '').trim();
+      }
       return { title, country, city };
     }
 
-    // 智慧航空辨識引擎（利用代號與常見名稱捕捉）
     function inferAirlineFromCode(text) {
       if (!text) return '';
       const normalized = text.toUpperCase().replace(/\s+/g, '');
@@ -283,6 +340,8 @@
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
       const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
       const isGlobalBogo = details && details.includes('買一送一');
+      const isGlobalTour = details && (details.includes('行程 👉') || details.includes('行程：') || details.includes('團體') || details.includes('旅行團'));
+
       const normalizeDate = (d) => {
           if (!d) return null;
           let s = String(d).replace(/\//g, '-').trim();
@@ -296,14 +355,10 @@
       };
       
       let runningPrice = fallbackPrice ? String(fallbackPrice).replace(/[^\d]/g, '') : null;
-      if (!details) return [{ date: normalizeDate(fallbackDate), price: runningPrice, isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, cityContext: null, titleContext: null }];
+      if (!details) return [{ date: normalizeDate(fallbackDate), price: runningPrice, isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, isTour: isGlobalTour, cityContext: null, titleContext: null, link: null, blockText: '' }];
       
-      const lines = details.split('\n');
       const items = [];
       const currentYear = new Date().getFullYear();
-      let isPakState = isGlobalPak;
-      let currentCityContext = null;
-      let currentTitleContext = null;
       
       const extractDates = (text) => {
         if (!text) return [];
@@ -333,64 +388,130 @@
         /([0-9]{1,2},[0-9]{3}|[1-9][0-9]{3,})[\s]*(?:起|元)/
       ];
 
-      for (let i = 0; i < lines.length; i++) {
-        let line = lines[i];
-        let foundCityInLine = getCityFromText(line);
-        if (foundCityInLine) {
-            currentCityContext = foundCityInLine;
-            let cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '').replace(/^(更新|降價|再調|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
-            if (cleanLine.length > 2) currentTitleContext = cleanLine;
+      const blocks = details.split(/\n\s*[-=_]{3,}\s*\n?/);
+      let footerText = '';
+      
+      if (blocks.length > 1) {
+          const lastBlock = blocks[blocks.length - 1];
+          if (extractDates(lastBlock).length === 0) {
+              footerText = '\n\n' + lastBlock.trim();
+          }
+      }
+
+      // 修正作用域問題：將變數拉出迴圈外宣告
+      let currentCityContext = null;
+      let currentTitleContext = null;
+
+      for (let block of blocks) {
+        if (!block.trim()) continue;
+        if (block === blocks[blocks.length - 1] && extractDates(block).length === 0 && blocks.length > 1) continue; 
+
+        let blockGlobalLinkMatch = block.match(/(https?:\/\/[^\s]+)/);
+        let blockGlobalLink = blockGlobalLinkMatch ? blockGlobalLinkMatch[0] : null;
+
+        const lines = block.split('\n');
+        
+        // 在每個區塊開始前初始化
+        currentCityContext = null;
+        currentTitleContext = null;
+        let blockRunningPrice = runningPrice;
+
+        for (let line of lines) {
+            let pm = null;
+            if (line.includes('→') || line.includes('->') || line.includes('=>')) {
+                const parts = line.split(/→|->|=>/);
+                pm = parts[parts.length - 1].match(/([0-9,]{4,})/);
+            }
+            if (!pm) { for (let rx of priceRegexes) { pm = line.match(rx); if (pm) break; } }
+            if (pm) { blockRunningPrice = pm[1].replace(/,/g, ''); break; }
         }
-        if (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) isPakState = true;
-        else if (line.includes('純機票') || line.includes('單機票')) isPakState = false;
-        
-        let priceMatch = null;
-        for (let rx of priceRegexes) { priceMatch = line.match(rx); if (priceMatch) break; }
-        if (priceMatch) runningPrice = priceMatch[1].replace(/,/g, ''); 
-        
-        let dates = extractDates(line);
-        if (dates.length > 0) {
-            let priceForTheseDates = runningPrice;
-            if (!priceMatch && i < lines.length - 1) {
-                const nextLine = lines[i+1];
-                let nextPriceMatch = null;
-                for (let rx of priceRegexes) { nextPriceMatch = nextLine.match(rx); if (nextPriceMatch) break; }
-                if (nextPriceMatch && extractDates(nextLine).length === 0) { 
-                  priceForTheseDates = nextPriceMatch[1].replace(/,/g, ''); 
-                  runningPrice = priceForTheseDates; 
-                }
-            }
-            if (!priceForTheseDates) { 
-                for (let j = 0; j < lines.length; j++) { 
-                    let pm = null;
-                    for (let rx of priceRegexes) { pm = lines[j].match(rx); if (pm) break; }
-                    if (pm) { priceForTheseDates = pm[1].replace(/,/g, ''); runningPrice = priceForTheseDates; break; } 
-                } 
-            }
-            for (let dateStr of dates) {
-                let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true : (line.includes('純機票') || line.includes('單機票')) ? false : isPakState;
-                let lineIsBogo = isGlobalBogo || line.includes('買一送一');
-                items.push({ 
-                  date: dateStr, 
-                  price: priceForTheseDates || '', 
-                  isFlightAndHotel: lineIsPak, 
-                  isBogo: lineIsBogo, 
-                  cityContext: currentCityContext, 
-                  titleContext: currentTitleContext 
-                });
-            }
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          let foundCityInLine = getCityFromText(line);
+          if (foundCityInLine) {
+              currentCityContext = foundCityInLine;
+              let cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '').replace(/^(更新|降價|再調|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
+              cleanLine = cleanLine.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '');
+              if (cleanLine.length > 2) currentTitleContext = cleanLine;
+          }
+          let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true : (line.includes('純機票') || line.includes('單機票')) ? false : isGlobalPak;
+          
+          let priceMatch = null;
+          if (line.includes('→') || line.includes('->') || line.includes('=>')) {
+              const parts = line.split(/→|->|=>/);
+              priceMatch = parts[parts.length - 1].match(/([0-9,]{4,})/);
+          }
+          if (!priceMatch) {
+              for (let rx of priceRegexes) { priceMatch = line.match(rx); if (priceMatch) break; }
+          }
+          if (priceMatch) blockRunningPrice = priceMatch[1].replace(/,/g, ''); 
+          
+          let urlMatch = line.match(/(https?:\/\/[^\s]+)/);
+          let lineLink = urlMatch ? urlMatch[0] : null;
+
+          let dates = extractDates(line);
+          if (dates.length > 0) {
+              let priceForTheseDates = blockRunningPrice;
+              if (!priceMatch && i < lines.length - 1) {
+                  const nextLine = lines[i+1];
+                  let nextPriceMatch = null;
+                  if (nextLine.includes('→') || nextLine.includes('->')) {
+                      const parts = nextLine.split(/→|->/);
+                      nextPriceMatch = parts[parts.length - 1].match(/([0-9,]{4,})/);
+                  } else {
+                      for (let rx of priceRegexes) { nextPriceMatch = nextLine.match(rx); if (nextPriceMatch) break; }
+                  }
+                  if (nextPriceMatch && extractDates(nextLine).length === 0) { 
+                    priceForTheseDates = nextPriceMatch[1].replace(/,/g, ''); 
+                    blockRunningPrice = priceForTheseDates; 
+                  }
+              }
+              if (!priceForTheseDates) { 
+                  for (let j = 0; j < lines.length; j++) { 
+                      let pm = null;
+                      if (lines[j].includes('→') || lines[j].includes('->')) {
+                          const parts = lines[j].split(/→|->/);
+                          pm = parts[parts.length - 1].match(/([0-9,]{4,})/);
+                      } else {
+                          for (let rx of priceRegexes) { pm = lines[j].match(rx); if (pm) break; }
+                      }
+                      if (pm) { priceForTheseDates = pm[1].replace(/,/g, ''); blockRunningPrice = priceForTheseDates; break; } 
+                  } 
+              }
+
+              if (!currentTitleContext) {
+                  let cleanLine = line.replace(/^[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️👉【】\[\]()]+|[\p{Extended_Pictographic}\s❗️🔥✨⭐⚡️]+$/gu, '').replace(/^(更新|降價|再調|大降價|清艙|促銷|最後機會|最新|快訊)\s*/gi, '').trim();
+                  cleanLine = cleanLine.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '');
+                  if (cleanLine.length > 2) currentTitleContext = cleanLine;
+              }
+
+              for (let dateStr of dates) {
+                  items.push({ 
+                    date: dateStr, 
+                    price: priceForTheseDates || '', 
+                    isFlightAndHotel: lineIsPak, 
+                    isBogo: isGlobalBogo || line.includes('買一送一'), 
+                    isTour: isGlobalTour,
+                    cityContext: currentCityContext, 
+                    titleContext: currentTitleContext,
+                    link: lineLink || blockGlobalLink,
+                    blockText: block.trim() + footerText
+                  });
+              }
+          }
         }
       }
       if (items.length > 0) return items;
-      return [{ date: normalizeDate(fallbackDate), price: runningPrice || '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, cityContext: currentCityContext, titleContext: currentTitleContext }];
+      return [{ date: normalizeDate(fallbackDate), price: runningPrice || '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, isTour: isGlobalTour, cityContext: currentCityContext, titleContext: currentTitleContext, link: null, blockText: details }];
     }
 
     async function fetchSheetData(force = false) {
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v1', CACHE_KEY_TOURS = 'eddie_tours_v1', CACHE_KEY_HOTELS = 'eddie_hotels_v1', CACHE_TIME = 'eddie_cache_time_v1', now = new Date().getTime();
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v5', CACHE_KEY_HOTELS = 'eddie_hotels_v5', CACHE_TIME = 'eddie_cache_time_v5', now = new Date().getTime();
       if (!force) {
-        const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS), cachedTours = sessionStorage.getItem(CACHE_KEY_TOURS), cachedHotels = sessionStorage.getItem(CACHE_KEY_HOTELS), cacheTime = sessionStorage.getItem(CACHE_TIME);
-        if (cachedTickets && cachedTours && cachedHotels && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { 
-          state.tickets = JSON.parse(cachedTickets); state.tours = JSON.parse(cachedTours); state.hotels = JSON.parse(cachedHotels);
+        const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS), cachedHotels = sessionStorage.getItem(CACHE_KEY_HOTELS), cacheTime = sessionStorage.getItem(CACHE_TIME);
+        if (cachedTickets && cachedHotels && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { 
+          state.tickets = JSON.parse(cachedTickets); state.hotels = JSON.parse(cachedHotels);
           state.isLoading = false; renderMain(); return; 
         }
       }
@@ -398,24 +519,51 @@
       try {
         const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
+        const ticketMap = new Map(); 
         
         if (data && data.tickets) {
           let allTickets = data.tickets.flatMap((row, index) => {
-            let rawText = row.details || ''; if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+            let rawText = row.details || row.city || row.country || ''; 
+            if (typeof rawText !== 'string') rawText = String(rawText);
+            if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+            
             const inferred = inferInfoFromText(rawText);
             const parsedItems = parseRawDetails(rawText, row.date, row.price);
+            
             return parsedItems.map((item, subIndex) => {
-              let finalCity = item.cityContext || row.city || inferred.city, finalCountry = getCountryByCity(finalCity);
+              let finalCity = item.cityContext || row.city || inferred.city;
+              if (finalCity === '其他航點') finalCity = getCityFromText(inferred.title) || '其他航點';
+              let finalCountry = getCountryByCity(finalCity);
+              
+              if (finalCity === '其他航點' || finalCountry === '其他') {
+                  if (rawText.includes('泰國')) { finalCountry = '泰國'; finalCity = '曼谷'; }
+                  else if (rawText.includes('韓國')) { finalCountry = '韓國'; finalCity = '首爾'; }
+                  else if (rawText.includes('越南')) { finalCountry = '越南'; finalCity = '峴港'; }
+              }
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
-              let airlineTag = inferAirlineFromCode(rawText);
-              return { id: `ticket-${index}-${subIndex}`, country: finalCountry, city: finalCity.trim(), date: item.date, airline: item.titleContext || row.airline || inferred.title, airlineTag: airlineTag, price: item.price, details: rawText, link: row.link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo };
+              
+              let airlineTag = item.isTour ? '跟團行程' : inferAirlineFromCode(rawText);
+              
+              return { 
+                id: `ticket-${index}-${subIndex}`, 
+                country: finalCountry, 
+                city: finalCity.trim(), 
+                date: item.date, 
+                airline: item.titleContext || inferred.title, 
+                airlineTag: airlineTag, 
+                price: item.price, 
+                details: item.blockText || rawText, 
+                link: item.link || row.link, 
+                isFlightAndHotel: item.isFlightAndHotel, 
+                isBogo: item.isBogo, 
+                isTour: item.isTour 
+              };
             });
           }).filter(t => t.date);
           
-          const ticketMap = new Map(); 
           allTickets.forEach(t => { 
             const airlineKey = t.airlineTag || normalizeForDedup(t.airline).replace(/\d+/g, '');
-            const key = `${t.date}_${t.city}_${airlineKey}_${t.isFlightAndHotel}_${t.isBogo}`;
+            const key = `${t.date}_${t.city}_${airlineKey}_${t.isFlightAndHotel}_${t.isBogo}_${t.isTour}`;
             
             if (ticketMap.has(key)) {
               const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
@@ -427,24 +575,61 @@
               ticketMap.set(key, t); 
             }
           }); 
-          state.tickets = Array.from(ticketMap.values());
         }
         
         if (data && data.tours) {
           let allTours = data.tours.flatMap((row, index) => {
-            const parsedItems = parseRawDetails(row.details || '', row.date, row.price);
+            let rawText = row.details || row.title || row.country || '';
+            if (typeof rawText !== 'string') rawText = String(rawText);
+            const inferred = inferInfoFromText(rawText);
+            const parsedItems = parseRawDetails(rawText, row.date, row.price);
+            
             return parsedItems.map((item, subIndex) => {
-              let finalCountry = row.country; if (item.cityContext) finalCountry = getCountryByCity(item.cityContext) || row.country;
-              return { id: `tour-${index}-${subIndex}`, country: finalCountry, title: item.titleContext || row.title, date: item.date, days: row.days, price: item.price, details: row.details, link: row.link, isFlightAndHotel: item.isFlightAndHotel, isBogo: item.isBogo };
+              let finalCity = item.cityContext || inferred.city;
+              if (finalCity === '其他航點') finalCity = getCityFromText(inferred.title) || '其他航點';
+              let finalCountry = getCountryByCity(finalCity);
+              
+              if (finalCity === '其他航點' || finalCountry === '其他') {
+                  if (rawText.includes('泰國')) { finalCountry = '泰國'; finalCity = '曼谷'; }
+                  else if (rawText.includes('韓國')) { finalCountry = '韓國'; finalCity = '首爾'; }
+                  else if (rawText.includes('越南')) { finalCountry = '越南'; finalCity = '峴港'; }
+              }
+              if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
+              
+              return { 
+                id: `tour-${index}-${subIndex}`, 
+                country: finalCountry, 
+                city: finalCity.trim(), 
+                date: item.date, 
+                airline: item.titleContext || inferred.title, 
+                airlineTag: '跟團行程', 
+                price: item.price, 
+                details: item.blockText || rawText, 
+                link: item.link || row.link, 
+                isFlightAndHotel: item.isFlightAndHotel, 
+                isBogo: item.isBogo, 
+                isTour: true 
+              };
             });
           }).filter(t => t.date);
-          const tourMap = new Map(); allTours.forEach(t => { const normTitle = normalizeForDedup(t.title).replace(/\d+/g, ''), key = `${t.date}_${normTitle}_${t.isFlightAndHotel}`; tourMap.set(key, t); }); state.tours = Array.from(tourMap.values());
+          
+          allTours.forEach(t => { 
+            const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, '');
+            const key = `${t.date}_${t.city}_跟團行程_${normTitle}_${t.price}`;
+            if (ticketMap.has(key)) {
+              const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
+              const newPrice = parseInt((t.price || '').replace(/\D/g, '')) || 999999;
+              if (newPrice < existingPrice) ticketMap.set(key, t);
+            } else {
+              ticketMap.set(key, t); 
+            }
+          }); 
         }
         
+        state.tickets = Array.from(ticketMap.values());
         state.hotels = (data.hotels || []).map((h, i) => ({ id: `hotel-${i}`, country: (h.country||'其他').trim(), city: (h.city||'').trim(), name: h.name||h.飯店名稱||'', description: h.description||h.心得||h.詳細說明||'', link: h.link||h.連結||'' })).filter(h => h.name && h.city);
         
         sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
-        sessionStorage.setItem(CACHE_KEY_TOURS, JSON.stringify(state.tours)); 
         sessionStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
         sessionStorage.setItem(CACHE_TIME, now.toString());
       } catch (error) { 
@@ -460,7 +645,6 @@
     window.executeSearch = (q) => { q = q.trim().toLowerCase(); state.searchQuery = q; if (q) { state.selectedCountryObj = { isSearch: true }; safeUpdateURL(`?q=${encodeURIComponent(q)}`); } else { goHome(); } state.animateTransition = true; renderMain(); state.animateTransition = false; };
     window.goHome = () => { document.getElementById('searchInput').value = ''; state.searchQuery = ''; state.selectedCountryObj = null; state.selectedTab = null; state.currentDate = new Date(); state.animateTransition = true; safeUpdateURL(window.location.pathname || '/'); renderMain(); state.animateTransition = false; window.scrollTo({ top: 0, behavior: 'smooth' }); };
     
-    // 修正：選擇國家時重置日期，並修復了之前缺少的 closing brace 錯誤
     window.selectCountry = (index) => {
       if (index === 'hotels') { 
         state.selectedCountryObj = { isHotelsGlobal: true }; 
@@ -493,12 +677,12 @@
     window.setListSortBy = (mode) => { state.listSortBy = mode; renderMain(); };
     window.prevMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() - 1, 1); state.animateTransition = false; renderMain(); };
     window.nextMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 1); state.animateTransition = false; renderMain(); };
-    window.openModalFromItem = (itemData) => { const item = JSON.parse(decodeURIComponent(itemData)); state.selectedDateTickets = { date: item.date, tickets: [item], isTours: !!item.title }; state.isModalOpen = true; renderModal(); };
+    window.openModalFromItem = (itemData) => { const item = JSON.parse(decodeURIComponent(itemData)); state.selectedDateTickets = { date: item.date, tickets: [item] }; state.isModalOpen = true; renderModal(); };
     
     window.openModal = (dateStr) => {
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab), allowedCities = activeTabObj ? activeTabObj.cities : [];
       const dayTickets = state.tickets.filter(t => (state.selectedCountryObj.country === '其他' ? t.country === '其他' : t.country === state.selectedCountryObj.country && allowedCities.some(c => t.city.includes(c) || c.includes(t.city))) && t.date === dateStr);
-      if (dayTickets.length > 0) { state.selectedDateTickets = { date: dateStr, tickets: dayTickets, isTours: false }; state.isModalOpen = true; renderModal(); }
+      if (dayTickets.length > 0) { state.selectedDateTickets = { date: dateStr, tickets: dayTickets }; state.isModalOpen = true; renderModal(); }
     };
     window.closeModal = () => { state.isModalOpen = false; renderModal(); };
 
@@ -507,12 +691,15 @@
     }
 
     function getSearchHTML() {
-       const q = state.searchQuery, matchedTickets = state.tickets.filter(t => (t.country && t.country.toLowerCase().includes(q)) || (t.city && t.city.toLowerCase().includes(q)) || (t.airline && t.airline.toLowerCase().includes(q)) || (t.details && t.details.toLowerCase().includes(q))), matchedTours = state.tours.filter(t => (t.country && t.country.toLowerCase().includes(q)) || (t.title && t.title.toLowerCase().includes(q)) || (t.details && t.details.toLowerCase().includes(q)));
-       const allMatches = [...matchedTickets, ...matchedTours].sort((a, b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
+       const q = state.searchQuery, matchedTickets = state.tickets.filter(t => (t.country && t.country.toLowerCase().includes(q)) || (t.city && t.city.toLowerCase().includes(q)) || (t.airline && t.airline.toLowerCase().includes(q)) || (t.details && t.details.toLowerCase().includes(q)));
+       const allMatches = [...matchedTickets].sort((a, b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
        if (allMatches.length === 0) return `<div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i><h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3></div>`;
        const listHTML = allMatches.map(t => { 
          const encodedItem = encodeURIComponent(JSON.stringify(t)); 
-         const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded-md border border-blue-100"><i class="ph-bold ph-airplane-tilt"></i> ${t.airlineTag}</div>` : '';
+         const isTour = t.isTour;
+         const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
+         const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
+         const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
          return `
            <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
              <div>
@@ -532,7 +719,6 @@
        return `<div class="fade-in"><div class="flex items-center gap-4 mb-8"><button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center"><i class="ph-bold ph-arrow-left text-xl"></i></button><h1 class="text-2xl font-bold">搜尋結果: "${state.searchQuery}"</h1></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${listHTML}</div></div>`;
     }
 
-    // 全域飯店的渲染函數
     function getGlobalHotelsHTML() {
       if (state.hotels.length === 0) {
         return `
@@ -588,7 +774,6 @@
     }
 
     function getHomeHTML() {
-      // 修改：設定 lg:grid-cols-3 使其在電腦版分兩行排列
       let cardsHTML = LOCATION_DATA.map((loc, index) => `
         <div onclick="selectCountry(${index})" class="group relative h-64 lg:h-80 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300">
           <img src="${loc.image}" alt="${loc.country}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
@@ -749,12 +934,16 @@
 
          const listHTML = upcoming.map(t => {
            const encodedItem = encodeURIComponent(JSON.stringify(t)); 
-           const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded-md border border-blue-100"><i class="ph-bold ph-airplane-tilt"></i> ${t.airlineTag}</div>` : '';
+           const isTour = t.isTour;
+           const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
+           const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
+           const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
+           
            return `
              <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
                <div>
                  <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
-                 <div class="font-black text-gray-900 text-lg line-clamp-1">${t.airline}</div>
+                 <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title || t.airline}</div>
                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                    <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city || t.country}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
                    ${airlineTagHtml}
@@ -780,7 +969,7 @@
                 <h2 class="text-lg font-bold">${year}年 ${month + 1}月</h2>
                 <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-right"></i></button>
               </div>
-              <div class="py-24 text-center text-gray-500"><i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有清艙機票唷！</p></div>
+              <div class="py-24 text-center text-gray-500"><i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有機票或行程唷！</p></div>
             </div>`;
         } else {
           let blanks = Array(new Date(year, month, 1).getDay()).fill(null);
@@ -802,12 +991,15 @@
                     <div class="bg-white min-h-[80px] p-1 transition-all ${dayTickets.length ? 'cursor-pointer' : 'text-gray-400'}" ${dayTickets.length ? `onclick="openModal('${dateStr}')"` : ''}>
                       <div class="text-[10px] sm:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full mb-1 ${dateStr === new Date().toISOString().split('T')[0] ? 'bg-gray-900 text-white' : 'text-gray-700'}">${d}</div>
                       <div class="flex flex-col gap-1">
-                        ${dayTickets.map(t => `
-                          <div class="text-[9px] px-0.5 py-0.5 ${t.isFlightAndHotel ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'} rounded font-black text-center flex flex-col items-center">
+                        ${dayTickets.map(t => {
+                          const boxClass = t.isTour ? 'bg-orange-50 text-orange-700' : (t.isFlightAndHotel ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700');
+                          const extraLabel = t.isTour ? '<span class="text-[7px] leading-tight opacity-90 mt-[1px]">跟團行程</span>' : (t.isFlightAndHotel ? '<span class="text-[7px] leading-tight opacity-90 mt-[1px]">機加酒</span>' : '');
+                          return `
+                          <div class="text-[9px] px-0.5 py-0.5 ${boxClass} rounded font-black text-center flex flex-col items-center">
                             <span class="whitespace-nowrap">${t.price || '有票'}</span>
-                            ${t.isFlightAndHotel ? '<span class="text-[7px] leading-tight opacity-90 mt-[1px]">機加酒</span>' : ''}
+                            ${extraLabel}
                           </div>
-                        `).join('')}
+                        `}).join('')}
                       </div>
                     </div>`; 
                 }).join('')}
@@ -821,7 +1013,7 @@
           <div class="flex items-center justify-between mb-6 flex-wrap">
             <div class="flex items-center gap-4">
               <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm"><i class="ph-bold ph-arrow-left text-xl"></i></button>
-              <h1 class="text-2xl font-black">${state.selectedCountryObj.country} ${state.viewMode === 'hotels' ? '住宿推薦' : '清艙機票'}</h1>
+              <h1 class="text-2xl font-black">${state.selectedCountryObj.country} ${state.viewMode === 'hotels' ? '住宿推薦' : '機票與行程'}</h1>
             </div>
             <div class="flex items-center bg-gray-100 p-1 rounded-xl w-full sm:w-auto mt-4 sm:mt-0">
               <button onclick="setViewMode('calendar')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${state.viewMode==='calendar' ? 'bg-white shadow-sm text-gray-900':'text-gray-500'}">月曆</button>
@@ -838,10 +1030,20 @@
       const modalRoot = document.getElementById('modal-root');
       if (!state.isModalOpen || !state.selectedDateTickets) { modalRoot.innerHTML = ''; return; }
       const contentHTML = state.selectedDateTickets.tickets.map((item, index) => {
-        const lineOaUrl = `https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?${encodeURIComponent('清艙機票訂購公版\n備註：eddie推薦(不可刪)\n航空航點：' + item.airline + ' ' + item.country + item.city + '\n日期：' + item.date + '\n金額：' + (item.price ? '$' + item.price : '') + '\n姓名：\n張數：\n聯絡電話：\n聯絡信箱：')}`;
-        const extraLabels = (item.isFlightAndHotel ? ' · 機+酒' : '') + (item.isBogo ? ' · 買一送一' : '');
-        const urlMatch = item.details.match(/(https?:\/\/reurl\.cc\/[^\s]+|https?:\/\/[^\s]+)/);
-        const airlineTagHtml = item.airlineTag ? `<span class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-md mb-2"><i class="ph-bold ph-airplane-tilt"></i> ${item.airlineTag}</span>` : '';
+        
+        const templateTitle = item.isTour ? '跟團行程訂購公版' : '清艙機票訂購公版';
+        const targetInfo = item.isTour ? ('行程名稱：' + item.airline) : ('航空航點：' + item.airline + ' ' + item.country + item.city);
+        const countLabel = item.isTour ? '報名人數' : '張數';
+        const lineOaUrl = `https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?${encodeURIComponent(templateTitle + '\n備註：eddie推薦(不可刪)\n' + targetInfo + '\n日期：' + item.date + '\n金額：' + (item.price ? '$' + item.price : '') + '\n姓名：\n' + countLabel + '：\n聯絡電話：\n聯絡信箱：')}`;
+        
+        const extraLabels = (item.isTour ? ' · 跟團行程' : (item.isFlightAndHotel ? ' · 機+酒' : '')) + (item.isBogo ? ' · 買一送一' : '');
+        
+        const targetUrl = item.link || (item.details.match(/(https?:\/\/reurl\.cc\/[^\s]+|https?:\/\/[^\s]+|https?:\/\/heyzine\.com\/[^\s]+)/) ? item.details.match(/(https?:\/\/[^\s]+)/)[0] : null);
+        
+        const isTour = item.isTour;
+        const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
+        const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
+        const airlineTagHtml = item.airlineTag ? `<span class="inline-flex items-center gap-1 ${tagClass} text-xs font-bold px-2 py-1 rounded-md mb-2 border"><i class="ph-bold ${iconClass}"></i> ${item.airlineTag}</span>` : '';
         
         return `
           <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${index !== 0 ? 'mt-4' : ''}">
@@ -859,13 +1061,13 @@
             
             <div class="mt-3 flex items-start gap-1.5 text-[11px] text-gray-400 leading-tight">
               <i class="ph-bold ph-info text-xs mt-0.5 shrink-0"></i>
-              <span>機位剩餘數量依旅行社即時查詢為準，點擊下方按鈕後請儘速聯絡確認名額。</span>
+              <span>機位與名額依旅行社即時查詢為準，點擊下方按鈕後請儘速聯絡確認。</span>
             </div>
 
             <div class="mt-5 p-3.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl flex items-center justify-between shadow-md cursor-pointer hover:scale-[1.02] transition-transform border border-gray-700" onclick="window.open('https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang', '_blank')">
               <div class="flex flex-col">
                 <span class="text-yellow-400 text-[10px] font-bold mb-0.5 tracking-wider flex items-center gap-1">
-                  <i class="ph-fill ph-lightbulb"></i> 訂好機票了嗎？
+                  <i class="ph-fill ph-lightbulb"></i> ${isTour ? '訂好行程了嗎？' : '訂好機票了嗎？'}
                 </span>
                 <span class="text-white text-sm font-black">領取艾迪王專屬 eSIM 優惠</span>
               </div>
@@ -874,8 +1076,9 @@
               </div>
             </div>
 
-            ${(item.isTours && urlMatch) ? `<a href="${urlMatch[0]}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm"><i class="ph-bold ph-notebook text-xl"></i> 查看行程資訊</a>` : ''}
-            <a href="${item.link || lineOaUrl}" target="_blank" rel="noreferrer" class="mt-3 w-full text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm ${item.link ? 'bg-orange-600' : 'bg-[#06C755]'}"><i class="ph-bold ${item.link ? 'ph-arrow-square-out' : 'ph-chat-circle-dots'} text-xl"></i> ${item.link ? '前往指定報名網頁' : '聯繫合作旅行社 LINE 搶購'}</a>
+            ${(item.isTour && targetUrl) ? `<a href="${targetUrl}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm"><i class="ph-bold ph-notebook text-xl"></i> 查看行程資訊</a>` : ''}
+            
+            <a href="${lineOaUrl}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm shadow-green-200/50"><i class="ph-bold ph-chat-circle-dots text-xl"></i> ${isTour ? '聯繫旅行社 LINE 報名' : '聯繫旅行社 LINE 搶購'}</a>
           </div>
         `;
       }).join('');

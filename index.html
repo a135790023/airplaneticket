@@ -338,7 +338,7 @@
         }
       }
       if (bestTitle) {
-          title = bestTitle.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '').trim();
+          bestTitle = bestTitle.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '').trim();
       }
       return { title, country, city };
     }
@@ -362,6 +362,39 @@
         if (text.includes(name)) return name.replace('虎航', '台灣虎航').replace('台灣台灣虎航', '台灣虎航'); 
       }
       return '';
+    }
+
+    // 新增：智慧自動下架引擎 (排除例假日計算工作天)
+    function isTicketExpired(dateStr, airline) {
+      if (!dateStr) return true;
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return false; // 格式若非 YYYY-MM-DD 則不處理隱藏
+      
+      const depDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      
+      // 判斷所需的工作天數 (樂桃 7 天，其餘預設 5 天)
+      let requiredWorkingDays = 5; 
+      if (airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'))) {
+          requiredWorkingDays = 7;
+      }
+
+      // 往前推算底線日期，自動略過週六(6)與週日(0)
+      let deadline = new Date(depDate);
+      let daysToSubtract = requiredWorkingDays;
+      while (daysToSubtract > 0) {
+          deadline.setDate(deadline.getDate() - 1);
+          if (deadline.getDay() !== 0 && deadline.getDay() !== 6) {
+              daysToSubtract--;
+          }
+      }
+      
+      // 將時間重置為 00:00:00 以便純日期比較
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      deadline.setHours(0, 0, 0, 0);
+
+      // 如果今天已經達到或超過開票底線日，則回傳 true 表示已過期 (需下架)
+      return today.getTime() >= deadline.getTime();
     }
 
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
@@ -425,7 +458,6 @@
           }
       }
 
-      // 修正作用域問題：將變數拉出迴圈外宣告
       let currentCityContext = null;
       let currentTitleContext = null;
 
@@ -438,7 +470,6 @@
 
         const lines = block.split('\n');
         
-        // 在每個區塊開始前初始化
         currentCityContext = null;
         currentTitleContext = null;
         let blockRunningPrice = runningPrice;
@@ -534,7 +565,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v5', CACHE_KEY_HOTELS = 'eddie_hotels_v5', CACHE_TIME = 'eddie_cache_time_v5', now = new Date().getTime();
+      // 升級快取版本為 v6，保證新功能 (自動下架過期航班) 立即生效
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v6', CACHE_KEY_HOTELS = 'eddie_hotels_v6', CACHE_TIME = 'eddie_cache_time_v6', now = new Date().getTime();
       if (!force) {
         const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS), cachedHotels = sessionStorage.getItem(CACHE_KEY_HOTELS), cacheTime = sessionStorage.getItem(CACHE_TIME);
         if (cachedTickets && cachedHotels && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { 
@@ -586,7 +618,7 @@
                 isTour: item.isTour 
               };
             });
-          }).filter(t => t.date);
+          }).filter(t => t.date && !isTicketExpired(t.date, t.airlineTag || t.airline)); // 套用自動下架引擎
           
           allTickets.forEach(t => { 
             const airlineKey = t.airlineTag || normalizeForDedup(t.airline).replace(/\d+/g, '');
@@ -638,7 +670,7 @@
                 isTour: true 
               };
             });
-          }).filter(t => t.date);
+          }).filter(t => t.date && !isTicketExpired(t.date, t.airlineTag || t.airline)); // 套用自動下架引擎
           
           allTours.forEach(t => { 
             const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, '');

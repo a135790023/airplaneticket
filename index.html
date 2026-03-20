@@ -111,7 +111,6 @@
         </div>
         <p class="leading-relaxed mb-4">本網站由艾迪王 @eddie.tour 維護</p>
         
-        <!-- 更新：專業排版的安心交易保障區塊 -->
         <div class="inline-block w-full max-w-xl bg-gray-50/80 px-5 py-5 rounded-3xl border border-gray-200 mt-2 shadow-sm">
           <div class="flex items-center justify-center gap-1.5 mb-4">
             <i class="ph-fill ph-shield-check text-green-600 text-xl drop-shadow-sm"></i>
@@ -149,9 +148,8 @@
     <div id="modal-root"></div>
   </div>
 
-  <!-- 懸浮福利球 (Floating Action Button) -->
+  <!-- 懸浮福利球 -->
   <div class="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
-    <!-- 展開選單 -->
     <div id="fab-menu" class="hidden flex-col gap-2.5 transition-all transform origin-bottom-right zoom-in-95">
       <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
         <i class="ph-fill ph-sim-card text-blue-500 text-lg"></i><span class="text-sm font-bold text-gray-700">eSIM 9折</span>
@@ -163,7 +161,6 @@
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" class="w-4 h-4" /><span class="text-sm font-bold text-gray-700">專屬社群</span>
       </a>
     </div>
-    <!-- 主按鈕 -->
     <button onclick="toggleFab()" class="bg-gradient-to-tr from-gray-900 to-gray-700 text-white p-4 rounded-full shadow-xl shadow-gray-900/30 hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center group relative border border-gray-600">
       <span class="absolute -top-1 -right-1 flex h-3 w-3">
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -174,14 +171,12 @@
   </div>
 
   <script>
-    // --- 懸浮球切換邏輯 ---
     function toggleFab() {
       const menu = document.getElementById('fab-menu');
       menu.classList.toggle('hidden');
       menu.classList.toggle('flex');
     }
 
-    // --- 基礎防護 ---
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
@@ -189,7 +184,6 @@
       }
     });
 
-    // --- 參數設定 ---
     const API_URL = 'https://script.google.com/macros/s/AKfycbz2CErSj-zj7aM2zVvJCSax0gOFaMwp1ZQbxoZtYenlszYFnCCgpVJI1mLaC0iemzJj/exec'; 
     const LINE_OFFICIAL_ID = '@616fwicf'; 
 
@@ -203,7 +197,6 @@
 
     const KNOWN_COUNTRIES = LOCATION_DATA.filter(loc => loc.country !== '其他').map(loc => loc.country);
     
-    // 【更新】將廣泛地區（如東北、九州）映射至該區的「代表城市」，讓行程能準確出現在月曆
     const CITY_ALIASES = [
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, 
       { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, 
@@ -339,6 +332,7 @@
       }
       if (bestTitle) {
           bestTitle = bestTitle.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '').trim();
+          title = bestTitle;
       }
       return { title, country, city };
     }
@@ -364,37 +358,50 @@
       return '';
     }
 
-    // 新增：智慧自動下架引擎 (排除例假日計算工作天)
-    function isTicketExpired(dateStr, airline) {
-      if (!dateStr) return true;
+    function getTicketStatus(dateStr, airline) {
+      if (!dateStr) return { isHidden: false, isWarning: false };
       const parts = dateStr.split('-');
-      if (parts.length !== 3) return false; // 格式若非 YYYY-MM-DD 則不處理隱藏
+      if (parts.length !== 3) return { isHidden: false, isWarning: false };
       
       const depDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      
-      // 判斷所需的工作天數 (樂桃 7 天，其餘預設 5 天)
-      let requiredWorkingDays = 5; 
-      if (airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'))) {
-          requiredWorkingDays = 7;
-      }
-
-      // 往前推算底線日期，自動略過週六(6)與週日(0)
-      let deadline = new Date(depDate);
-      let daysToSubtract = requiredWorkingDays;
-      while (daysToSubtract > 0) {
-          deadline.setDate(deadline.getDate() - 1);
-          if (deadline.getDay() !== 0 && deadline.getDay() !== 6) {
-              daysToSubtract--;
-          }
-      }
-      
-      // 將時間重置為 00:00:00 以便純日期比較
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      deadline.setHours(0, 0, 0, 0);
+      depDate.setHours(0, 0, 0, 0);
 
-      // 如果今天已經達到或超過開票底線日，則回傳 true 表示已過期 (需下架)
-      return today.getTime() >= deadline.getTime();
+      if (depDate <= today) return { isHidden: true, isWarning: false };
+
+      let workingDaysLeft = 0;
+      let cur = new Date(today);
+      while (cur < depDate) {
+          cur.setDate(cur.getDate() + 1);
+          if (cur.getDay() !== 0 && cur.getDay() !== 6) {
+              workingDaysLeft++;
+          }
+      }
+
+      const isPeach = airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'));
+      const isScoot = airline && (airline.includes('酷航') || airline.toUpperCase().includes('TR'));
+
+      let isHidden = false;
+      let isWarning = false;
+
+      if (isPeach) {
+          if (workingDaysLeft <= 7) isHidden = true;
+      } else if (isScoot) {
+          if (workingDaysLeft < 2) {
+              isHidden = true;
+          } else if (workingDaysLeft === 2) {
+              isWarning = true;
+          }
+      } else {
+          if (workingDaysLeft < 4) {
+              isHidden = true;
+          } else if (workingDaysLeft === 4 || workingDaysLeft === 5) {
+              isWarning = true;
+          }
+      }
+
+      return { isHidden, isWarning };
     }
 
     function parseRawDetails(details, fallbackDate, fallbackPrice) {
@@ -565,16 +572,34 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 升級快取版本為 v6，保證新功能 (自動下架過期航班) 立即生效
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v6', CACHE_KEY_HOTELS = 'eddie_hotels_v6', CACHE_TIME = 'eddie_cache_time_v6', now = new Date().getTime();
-      if (!force) {
-        const cachedTickets = sessionStorage.getItem(CACHE_KEY_TICKETS), cachedHotels = sessionStorage.getItem(CACHE_KEY_HOTELS), cacheTime = sessionStorage.getItem(CACHE_TIME);
-        if (cachedTickets && cachedHotels && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) { 
-          state.tickets = JSON.parse(cachedTickets); state.hotels = JSON.parse(cachedHotels);
-          state.isLoading = false; renderMain(); return; 
+      // 升級至 v11：導入 LocalStorage 背景靜默更新機制 (Stale-While-Revalidate)
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v11', CACHE_KEY_HOTELS = 'eddie_hotels_v11', CACHE_TIME = 'eddie_cache_time_v11', now = new Date().getTime();
+      
+      // 1. 嘗試先從 LocalStorage (持久快取) 拿舊資料，達成秒開體驗
+      const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
+      const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
+      const cacheTime = localStorage.getItem(CACHE_TIME);
+
+      let hasCache = false;
+      if (cachedTickets && cachedHotels && !force) {
+        state.tickets = JSON.parse(cachedTickets);
+        state.hotels = JSON.parse(cachedHotels);
+        state.isLoading = false;
+        hasCache = true;
+        renderMain(); // 立即渲染舊資料，粉絲不用等！
+        
+        // 若快取在 1 分鐘內，連背景更新都省了；超過 1 分鐘才去背景同步
+        if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
+            return;
         }
       }
-      renderMain(); 
+
+      if (!hasCache) {
+          state.isLoading = true;
+          renderMain();
+      }
+
+      // 2. 背景默默向 Google 請求最新資料 (重新驗證)
       try {
         const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
@@ -602,6 +627,7 @@
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
               let airlineTag = item.isTour ? '跟團行程' : inferAirlineFromCode(rawText);
+              let status = getTicketStatus(item.date, airlineTag || inferred.title);
               
               return { 
                 id: `ticket-${index}-${subIndex}`, 
@@ -615,10 +641,19 @@
                 link: item.link || row.link, 
                 isFlightAndHotel: item.isFlightAndHotel, 
                 isBogo: item.isBogo, 
-                isTour: item.isTour 
+                isTour: item.isTour,
+                isHidden: status.isHidden,
+                isWarning: status.isWarning
               };
             });
-          }).filter(t => t.date && !isTicketExpired(t.date, t.airlineTag || t.airline)); // 套用自動下架引擎
+          }).filter(t => {
+            if (!t.date) return false;
+            if (t.isHidden) {
+              console.log(`[自動下架] ${t.city} ${t.airline} (${t.date}) 已超過開票底線`);
+              return false;
+            }
+            return true;
+          }); 
           
           allTickets.forEach(t => { 
             const airlineKey = t.airlineTag || normalizeForDedup(t.airline).replace(/\d+/g, '');
@@ -655,6 +690,8 @@
               }
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
+              let status = getTicketStatus(item.date, '跟團行程');
+
               return { 
                 id: `tour-${index}-${subIndex}`, 
                 country: finalCountry, 
@@ -667,10 +704,19 @@
                 link: item.link || row.link, 
                 isFlightAndHotel: item.isFlightAndHotel, 
                 isBogo: item.isBogo, 
-                isTour: true 
+                isTour: true,
+                isHidden: status.isHidden,
+                isWarning: status.isWarning
               };
             });
-          }).filter(t => t.date && !isTicketExpired(t.date, t.airlineTag || t.airline)); // 套用自動下架引擎
+          }).filter(t => {
+            if (!t.date) return false;
+            if (t.isHidden) {
+              console.log(`[自動下架] 行程 ${t.city} ${t.airline} (${t.date}) 已超過底線`);
+              return false;
+            }
+            return true;
+          }); 
           
           allTours.forEach(t => { 
             const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, '');
@@ -686,21 +732,39 @@
         }
         
         state.tickets = Array.from(ticketMap.values());
-        state.hotels = (data.hotels || []).map((h, i) => ({ id: `hotel-${i}`, country: (h.country||'其他').trim(), city: (h.city||'').trim(), name: h.name||h.飯店名稱||'', description: h.description||h.心得||h.詳細說明||'', link: h.link||h.連結||'' })).filter(h => h.name && h.city);
         
-        sessionStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
-        sessionStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
-        sessionStorage.setItem(CACHE_TIME, now.toString());
+        state.hotels = (data.hotels || []).map((h, i) => ({ 
+            id: `hotel-${i}`, 
+            country: (h.country||'其他').trim(), 
+            city: (h.city||'').trim(), 
+            name: h.name||h.飯店名稱||'', 
+            description: h.description||h.心得||h.詳細說明||'', 
+            link: h.link||h.連結||'',
+            submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
+        })).filter(h => h.name && h.city);
+        
+        // 寫入 localStorage 供下次秒開使用
+        localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
+        localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
+        localStorage.setItem(CACHE_TIME, now.toString());
       } catch (error) { 
         console.error('API Error:', error); 
       } finally { 
         state.isLoading = false; 
         state.animateTransition = false; 
+        // 背景拿到新資料後，無縫更新畫面
         renderMain(); 
       }
     }
 
-    window.forceRefresh = () => { state.isLoading = true; fetchSheetData(true); };
+    window.forceRefresh = () => { 
+        state.isLoading = true; 
+        // 強制刷新時，清空現有快取
+        localStorage.removeItem('eddie_tickets_v11');
+        localStorage.removeItem('eddie_hotels_v11');
+        fetchSheetData(true); 
+    };
+    
     window.executeSearch = (q) => { q = q.trim().toLowerCase(); state.searchQuery = q; if (q) { state.selectedCountryObj = { isSearch: true }; safeUpdateURL(`?q=${encodeURIComponent(q)}`); } else { goHome(); } state.animateTransition = true; renderMain(); state.animateTransition = false; };
     window.goHome = () => { document.getElementById('searchInput').value = ''; state.searchQuery = ''; state.selectedCountryObj = null; state.selectedTab = null; state.currentDate = new Date(); state.animateTransition = true; safeUpdateURL(window.location.pathname || '/'); renderMain(); state.animateTransition = false; window.scrollTo({ top: 0, behavior: 'smooth' }); };
     
@@ -746,7 +810,7 @@
     window.closeModal = () => { state.isModalOpen = false; renderModal(); };
 
     function getLoadingHTML() { 
-      return `<div class="animate-pulse fade-in text-center py-32"><i class="ph-bold ph-airplane-tilt text-5xl text-gray-200 mb-4 animate-bounce inline-block"></i><p class="text-gray-400 font-medium">正在載入秘笈資料...</p></div>`; 
+      return `<div class="animate-pulse fade-in text-center py-32"><i class="ph-bold ph-airplane-tilt text-5xl text-gray-200 mb-4 animate-bounce inline-block"></i><p class="text-gray-400 font-medium">正在載入清艙資料...</p></div>`; 
     }
 
     function getSearchHTML() {
@@ -759,14 +823,17 @@
          const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
          const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
          const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
+         const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
+         
          return `
-           <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
+           <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
              <div>
                <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
                <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title || t.airline}</div>
                <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                  <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city || t.country}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
                  ${airlineTagHtml}
+                 ${warningTagHtml}
                </div>
              </div>
              <div class="text-right shrink-0 ml-4">
@@ -795,6 +862,8 @@
 
       const listHTML = state.hotels.map(h => {
         const searchUrl = h.link || `https://www.google.com/search?q=${encodeURIComponent((h.country==='其他'?'':h.country) + ' ' + h.city + ' ' + h.name + ' 飯店')}`;
+        const submitterHtml = h.submitter ? `<div class="mt-4 flex items-center justify-end gap-1.5 text-[11px] font-bold text-gray-400"><i class="ph-fill ph-user-circle text-[14px]"></i> @${h.submitter} 熱心分享</div>` : '';
+        
         return `
           <div class="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between h-full group">
             <div>
@@ -808,6 +877,7 @@
                 <i class="ph-fill ph-quotes text-gray-200 text-2xl absolute -top-2 -left-1"></i>
                 <div class="relative z-10 selectable-text pr-2">${h.description}</div>
               </div>
+              ${submitterHtml}
             </div>
             <a href="${searchUrl}" target="_blank" rel="noreferrer" class="mt-5 w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
               <i class="ph-bold ph-magnifying-glass text-lg"></i> 前往搜尋查看
@@ -862,10 +932,9 @@
         <div class="mt-16 w-full space-y-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-black text-gray-900 pl-3 border-l-4 border-gray-900 tracking-tight">旅遊必備推薦</h2>
-            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>同步機票中</div>' : ''}
+            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>後台同步中</div>' : ''}
           </div>
 
-          <!-- LINE 社群推薦 -->
           <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="LINE 社群" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/50 to-transparent"></div>
@@ -879,7 +948,6 @@
             </div>
           </a>
 
-          <!-- eSIM 推薦 -->
           <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="eSIM 推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
@@ -893,7 +961,6 @@
             </div>
           </a>
 
-          <!-- KKday 推薦 -->
           <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="KKday 行程推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
@@ -907,7 +974,6 @@
             </div>
           </a>
 
-          <!-- 團購/代購 (反灰敬請期待) -->
           <div class="relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-not-allowed shadow-sm border border-gray-200">
             <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="團購代購" class="absolute inset-0 w-full h-full object-cover grayscale opacity-60"/>
             <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>
@@ -965,12 +1031,14 @@
         } else {
           contentHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 fade-in">${filteredHotels.map(h => {
             const searchUrl = h.link || `https://www.google.com/search?q=${encodeURIComponent(h.country + ' ' + h.city + ' ' + h.name)}`;
+            const submitterHtml = h.submitter ? `<div class="mt-4 flex items-center justify-end gap-1.5 text-[11px] font-bold text-gray-400"><i class="ph-fill ph-user-circle text-[14px]"></i> @${h.submitter} 熱心分享</div>` : '';
             return `
               <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between h-full group">
                 <div>
                   <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1.5 rounded-lg mb-3"><i class="ph-bold ph-map-pin"></i> ${h.city}</span>
                   <h3 class="text-xl font-black text-gray-900 mb-4 leading-tight group-hover:text-blue-600 transition-colors">${h.name}</h3>
                   <div class="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl mb-5 leading-relaxed relative"><i class="ph-fill ph-quotes text-gray-200 absolute top-2 right-2 text-3xl opacity-50"></i><span class="relative z-10 block pr-6 selectable-text">${h.description}</span></div>
+                  ${submitterHtml}
                 </div>
                 <a href="${searchUrl}" target="_blank" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">前往搜尋查看</a>
               </div>`;
@@ -997,15 +1065,17 @@
            const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
            const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
            const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
+           const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
            
            return `
-             <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center" onclick="window.openModalFromItem('${encodedItem}')">
+             <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
                <div>
                  <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
                  <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title || t.airline}</div>
                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                    <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city || t.country}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
                    ${airlineTagHtml}
+                   ${warningTagHtml}
                  </div>
                </div>
                <div class="text-right shrink-0 ml-4">
@@ -1053,8 +1123,10 @@
                         ${dayTickets.map(t => {
                           const boxClass = t.isTour ? 'bg-orange-50 text-orange-700' : (t.isFlightAndHotel ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700');
                           const extraLabel = t.isTour ? '<span class="text-[7px] leading-tight opacity-90 mt-[1px]">跟團行程</span>' : (t.isFlightAndHotel ? '<span class="text-[7px] leading-tight opacity-90 mt-[1px]">機加酒</span>' : '');
+                          const warningIcon = t.isWarning ? '<span class="absolute -top-1 -right-1 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border border-white"></span></span>' : '';
                           return `
-                          <div class="text-[9px] px-0.5 py-0.5 ${boxClass} rounded font-black text-center flex flex-col items-center">
+                          <div class="relative text-[9px] px-0.5 py-0.5 ${boxClass} rounded font-black text-center flex flex-col items-center ${t.isWarning ? 'ring-1 ring-red-400 shadow-sm' : ''}">
+                            ${warningIcon}
                             <span class="whitespace-nowrap">${t.price || '有票'}</span>
                             ${extraLabel}
                           </div>
@@ -1104,8 +1176,19 @@
         const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
         const airlineTagHtml = item.airlineTag ? `<span class="inline-flex items-center gap-1 ${tagClass} text-xs font-bold px-2 py-1 rounded-md mb-2 border"><i class="ph-bold ${iconClass}"></i> ${item.airlineTag}</span>` : '';
         
+        const warningBanner = item.isWarning ? `
+          <div class="bg-red-50 border border-red-200 p-3.5 rounded-xl mb-4 flex items-start gap-2.5 text-red-700 shadow-sm">
+            <i class="ph-fill ph-warning-circle text-xl shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="text-sm font-black tracking-wide">即將結束開票！</strong>
+              <p class="text-xs mt-1 font-medium leading-relaxed opacity-90">距離開票期限較近，請務必點擊下方按鈕，透過 LINE 向客服確認是否還有保留機位。</p>
+            </div>
+          </div>
+        ` : '';
+
         return `
-          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${index !== 0 ? 'mt-4' : ''}">
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm ${index !== 0 ? 'mt-4' : ''} ${item.isWarning ? 'ring-2 ring-red-400/50' : ''}">
+            ${warningBanner}
             <div class="flex justify-between items-start mb-4">
               <div>
                 <div class="flex flex-wrap items-center gap-1.5">

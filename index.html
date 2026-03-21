@@ -19,7 +19,6 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    // 記得把這裡的 G-XXXXXXXXXX 換成您自己的 ID 才能看到數據喔！
     gtag('config', 'G-JP82PQ4DP5'); 
   </script>
 
@@ -48,6 +47,7 @@
   <!-- 引入 Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
+    /* 自訂動畫效果 */
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideInBottom { from { transform: translateY(1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes slideInRight { from { transform: translateX(2rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -58,9 +58,11 @@
     .slide-in-from-right-8 { animation: slideInRight 0.3s ease-out forwards; }
     .zoom-in-95 { animation: zoomIn 0.2s ease-out forwards; }
     
+    /* 隱藏捲軸但保留捲動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+    /* 基礎防護：停用文字選取 */
     body { 
       touch-action: manipulation; 
       -webkit-user-select: none;
@@ -69,6 +71,7 @@
       user-select: none;
     }
     
+    /* 彈出視窗內允許選取 */
     #modal-root, .selectable-text {
       -webkit-user-select: text;
       -moz-user-select: text;
@@ -88,6 +91,7 @@
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
+          <!-- 品牌化標題 -->
           <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none">
             艾迪王<span class="text-gray-400 font-medium hidden sm:inline ml-1.5">旅遊秘笈</span>
           </span>
@@ -220,16 +224,17 @@
 
     const KNOWN_COUNTRIES = LOCATION_DATA.filter(loc => loc.country !== '其他').map(loc => loc.country);
     
+    // 更新大地區與近郊的智慧映射對應
     const CITY_ALIASES = [
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, 
       { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, 
       { standard: '濟州島', aliases: ['濟州島', '濟州', 'CJU'] }, 
-      { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND', '關東'] }, 
+      { standard: '東京', aliases: ['東京', '成田', '羽田', 'NRT', 'HND', '關東', '千葉', '舞濱', '橫濱', '神奈川', '箱根', '河口湖', '富士', '輕井澤', '埼玉', '日光'] }, 
       { standard: '茨城', aliases: ['茨城', 'IBR'] }, 
-      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM', '京阪神'] }, 
+      { standard: '大阪', aliases: ['大阪', '關西', '關空', 'KIX', '伊丹', 'ITM', '京阪神', '環球影城'] }, 
       { standard: '神戶', aliases: ['神戶', 'UKB'] }, 
-      { standard: '京都', aliases: ['京都'] }, 
-      { standard: '北海道', aliases: ['北海道', '道央', '道東', '道南', '道北'] }, 
+      { standard: '京都', aliases: ['京都', '宇治'] }, 
+      { standard: '北海道', aliases: ['北海道', '道央', '道東', '道南', '道北', '富良野', '美瑛', '小樽'] }, 
       { standard: '札幌', aliases: ['札幌', '新千歲', '千歲', 'CTS'] }, 
       { standard: '函館', aliases: ['函館', 'HKD'] }, 
       { standard: '旭川', aliases: ['旭川', 'AKJ'] }, 
@@ -595,7 +600,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v11', CACHE_KEY_HOTELS = 'eddie_hotels_v11', CACHE_TIME = 'eddie_cache_time_v11', now = new Date().getTime();
+      // 升級至 v13：加入萬用地區收容機制，非首頁四大國一律歸類為「其他」
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v13', CACHE_KEY_HOTELS = 'eddie_hotels_v13', CACHE_TIME = 'eddie_cache_time_v13', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -752,15 +758,34 @@
         
         state.tickets = Array.from(ticketMap.values());
         
-        state.hotels = (data.hotels || []).map((h, i) => ({ 
-            id: `hotel-${i}`, 
-            country: (h.country||'其他').trim(), 
-            city: (h.city||'').trim(), 
-            name: h.name||h.飯店名稱||'', 
-            description: h.description||h.心得||h.詳細說明||'', 
-            link: h.link||h.連結||'',
-            submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
-        })).filter(h => h.name && h.city).reverse();
+        state.hotels = (data.hotels || []).map((h, i) => {
+            let rawCountry = (h.country || '').trim();
+            let rawCity = (h.city || '').trim();
+            let rawName = (h.name || h.飯店名稱 || '').trim();
+            
+            let combinedText = rawCountry + " " + rawCity + " " + rawName;
+            let inferredCity = getCityFromText(combinedText) || rawCity;
+            let inferredCountry = getCountryByCity(inferredCity);
+            
+            if (KNOWN_COUNTRIES.includes(inferredCountry) && inferredCountry !== '其他') {
+                rawCountry = inferredCountry;
+            }
+            // 【重要優化】如果最終國家不在首頁四大國裡，強制收容進「其他」
+            if (!KNOWN_COUNTRIES.includes(rawCountry)) {
+                rawCountry = '其他';
+            }
+
+            return { 
+                id: `hotel-${i}`, 
+                country: rawCountry, 
+                city: rawCity || inferredCity || '未提供城市', 
+                normalizedCity: inferredCity,
+                name: rawName, 
+                description: h.description||h.心得||h.詳細說明||'', 
+                link: h.link||h.連結||'',
+                submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
+            };
+        }).filter(h => h.name).reverse(); 
         
         localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
         localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
@@ -776,9 +801,9 @@
 
     window.forceRefresh = () => { 
         state.isLoading = true; 
-        window.trackEvent('force_refresh', {}); // GA4 追蹤
-        localStorage.removeItem('eddie_tickets_v11');
-        localStorage.removeItem('eddie_hotels_v11');
+        window.trackEvent('force_refresh', {}); 
+        localStorage.removeItem('eddie_tickets_v13');
+        localStorage.removeItem('eddie_hotels_v13');
         fetchSheetData(true); 
     };
     
@@ -788,7 +813,7 @@
         if (q) { 
             state.selectedCountryObj = { isSearch: true }; 
             safeUpdateURL(`?q=${encodeURIComponent(q)}`); 
-            window.trackEvent('search', { search_term: q }); // GA4 追蹤
+            window.trackEvent('search', { search_term: q }); 
         } else { 
             goHome(); 
         } 
@@ -803,7 +828,7 @@
         state.currentDate = new Date(); 
         state.animateTransition = true; 
         safeUpdateURL(window.location.pathname || '/'); 
-        window.trackEvent('navigate_home', {}); // GA4 追蹤
+        window.trackEvent('navigate_home', {}); 
         renderMain(); 
         state.animateTransition = false; 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -813,14 +838,14 @@
       if (index === 'hotels') { 
         state.selectedCountryObj = { isHotelsGlobal: true }; 
         safeUpdateURL(`?hotels=true`); 
-        window.trackEvent('select_category', { category: 'Hotels' }); // GA4 追蹤
+        window.trackEvent('select_category', { category: 'Hotels' }); 
       } else { 
         const countryObj = LOCATION_DATA[index]; 
         state.selectedCountryObj = countryObj; 
         state.selectedTab = countryObj.tabs[0].label; 
         state.viewMode = 'calendar'; 
         safeUpdateURL(`?country=${countryObj.slug}&tab=${countryObj.tabs[0].slug}`); 
-        window.trackEvent('select_country', { country: countryObj.country }); // GA4 追蹤
+        window.trackEvent('select_country', { country: countryObj.country }); 
       }
       state.currentDate = new Date(); 
       state.animateTransition = true; 
@@ -834,7 +859,7 @@
       const countryObj = state.selectedCountryObj; 
       const tabObj = countryObj.tabs.find(t => t.label === tabLabel); 
       safeUpdateURL(`?country=${countryObj.slug}&tab=${tabObj.slug}`); 
-      window.trackEvent('select_tab', { tab: tabLabel, country: countryObj.country }); // GA4 追蹤
+      window.trackEvent('select_tab', { tab: tabLabel, country: countryObj.country }); 
       state.currentDate = new Date(); 
       state.animateTransition = false; 
       renderMain(); 
@@ -842,7 +867,7 @@
     
     window.setViewMode = (mode) => { 
         state.viewMode = mode; 
-        window.trackEvent('change_view_mode', { mode: mode }); // GA4 追蹤
+        window.trackEvent('change_view_mode', { mode: mode }); 
         renderMain(); 
     };
     
@@ -853,17 +878,21 @@
         const item = JSON.parse(decodeURIComponent(itemData)); 
         state.selectedDateTickets = { date: item.date, tickets: [item] }; 
         state.isModalOpen = true; 
-        window.trackEvent('view_ticket_details', { date: item.date, city: item.city, airline: item.airline }); // GA4 追蹤
+        window.trackEvent('view_ticket_details', { date: item.date, city: item.city, airline: item.airline }); 
         renderModal(); 
     };
     
     window.openModal = (dateStr) => {
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab), allowedCities = activeTabObj ? activeTabObj.cities : [];
-      const dayTickets = state.tickets.filter(t => (state.selectedCountryObj.country === '其他' ? t.country === '其他' : t.country === state.selectedCountryObj.country && allowedCities.some(c => t.city.includes(c) || c.includes(t.city))) && t.date === dateStr);
+      const dayTickets = state.tickets.filter(t => {
+          const matchCountry = t.country === state.selectedCountryObj.country;
+          const matchCity = allowedCities.some(c => c === '其他航點' || t.city.includes(c) || c.includes(t.city));
+          return matchCountry && matchCity && t.date === dateStr;
+      });
       if (dayTickets.length > 0) { 
           state.selectedDateTickets = { date: dateStr, tickets: dayTickets }; 
           state.isModalOpen = true; 
-          window.trackEvent('view_calendar_date', { date: dateStr, tickets_count: dayTickets.length }); // GA4 追蹤
+          window.trackEvent('view_calendar_date', { date: dateStr, tickets_count: dayTickets.length }); 
           renderModal(); 
       }
     };
@@ -1053,7 +1082,12 @@
       const year = state.currentDate.getFullYear(), month = state.currentDate.getMonth();
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
-      const filteredTickets = state.tickets.filter(t => (state.selectedCountryObj.country === '其他' ? t.country === '其他' : t.country === state.selectedCountryObj.country && allowedCities.some(c => t.city.includes(c) || c.includes(t.city))));
+      const filteredTickets = state.tickets.filter(t => {
+          const matchCountry = t.country === state.selectedCountryObj.country;
+          // 新增：只要城市標籤是「其他航點」，當作萬用大雜燴全盤顯示！
+          const matchCity = allowedCities.some(c => c === '其他航點' || t.city.includes(c) || c.includes(t.city));
+          return matchCountry && matchCity;
+      });
       
       const pillsHTML = state.selectedCountryObj.tabs.map(tab => { 
         let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點'); 
@@ -1082,8 +1116,17 @@
       
       if (state.viewMode === 'hotels') {
         const filteredHotels = state.hotels.filter(h => {
-          const matchCountry = state.selectedCountryObj.country === '其他' ? h.country === '其他' : h.country === state.selectedCountryObj.country;
-          const matchCity = allowedCities.some(c => h.city.includes(c) || c.includes(h.city));
+          const matchCountry = h.country === state.selectedCountryObj.country;
+          
+          // 防呆匹配：包含「其他航點」萬用模式
+          const matchCity = allowedCities.some(c => 
+            c === '其他航點' ||
+            (h.city && h.city.includes(c)) || 
+            c.includes(h.city) || 
+            (h.normalizedCity && h.normalizedCity.includes(c)) ||
+            (h.normalizedCity && c.includes(h.normalizedCity))
+          );
+          
           return matchCountry && matchCity;
         });
         if (filteredHotels.length === 0) {

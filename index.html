@@ -733,6 +733,7 @@
         
         state.tickets = Array.from(ticketMap.values());
         
+        // 抓取飯店時增加 submitter 屬性，並使用 .reverse() 讓最新填寫的表單資料排在最前面顯示
         state.hotels = (data.hotels || []).map((h, i) => ({ 
             id: `hotel-${i}`, 
             country: (h.country||'其他').trim(), 
@@ -741,7 +742,7 @@
             description: h.description||h.心得||h.詳細說明||'', 
             link: h.link||h.連結||'',
             submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
-        })).filter(h => h.name && h.city);
+        })).filter(h => h.name && h.city).reverse();
         
         // 寫入 localStorage 供下次秒開使用
         localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 

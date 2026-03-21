@@ -10,6 +10,19 @@
   <meta name="keywords" content="艾迪王, 清艙機票, 晚鳥機票, 便宜機票, 優惠旅行團, 日本機票, 韓國機票, eSIM推薦, KKday優惠, 飯店推薦">
   <meta name="author" content="艾迪王">
 
+  <!-- ========================================== -->
+  <!-- 📊 Google Analytics 4 (GA4) 數據分析追蹤碼 -->
+  <!-- 請將下方 G-XXXXXXXXXX 替換為您的真實 GA4 評估 ID -->
+  <!-- ========================================== -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    // 記得把這裡的 G-XXXXXXXXXX 換成您自己的 ID 才能看到數據喔！
+    gtag('config', 'G-JP82PQ4DP5'); 
+  </script>
+
   <!-- 資源預先連線 (加速載入) -->
   <link rel="preconnect" href="https://script.google.com" crossorigin>
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
@@ -21,7 +34,7 @@
   <meta property="og:image" content="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&h=630&q=80">
   <meta property="og:type" content="website">
   
-  <!-- Twitter Card 標籤 (確保 LINE 顯示大圖預覽) -->
+  <!-- Twitter Card 標籤 -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="艾迪王旅遊秘笈｜清艙機票．團旅．出國必備">
   <meta name="twitter:description" content="艾迪王 @eddie.tour 專屬統整！為您精選各大旅行社的超值晚鳥機票，並提供出國必備 eSIM、KKday 行程等專屬旅遊優惠推薦！">
@@ -35,7 +48,6 @@
   <!-- 引入 Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    /* 自訂動畫效果 */
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideInBottom { from { transform: translateY(1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes slideInRight { from { transform: translateX(2rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -46,11 +58,9 @@
     .slide-in-from-right-8 { animation: slideInRight 0.3s ease-out forwards; }
     .zoom-in-95 { animation: zoomIn 0.2s ease-out forwards; }
     
-    /* 隱藏捲軸但保留捲動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 基礎防護：停用文字選取 */
     body { 
       touch-action: manipulation; 
       -webkit-user-select: none;
@@ -59,7 +69,6 @@
       user-select: none;
     }
     
-    /* 彈出視窗內允許選取 */
     #modal-root, .selectable-text {
       -webkit-user-select: text;
       -moz-user-select: text;
@@ -79,7 +88,6 @@
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
-          <!-- 品牌化標題 -->
           <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none">
             艾迪王<span class="text-gray-400 font-medium hidden sm:inline ml-1.5">旅遊秘笈</span>
           </span>
@@ -103,9 +111,9 @@
       <div class="max-w-3xl mx-auto flex flex-col items-center">
         <p class="font-bold text-gray-700 mb-4">艾迪王旅遊秘笈｜清艙機票．團旅．出國必備</p>
         <div class="flex items-center gap-6 mb-6">
-          <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110"><i class="ph-fill ph-facebook-logo text-4xl"></i></a>
-          <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110"><i class="ph-fill ph-instagram-logo text-4xl"></i></a>
-          <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noreferrer" class="transition-all transform hover:scale-110 flex items-center justify-center" title="加入 LINE 社群">
+          <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_social', {platform: 'Facebook'})" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110"><i class="ph-fill ph-facebook-logo text-4xl"></i></a>
+          <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_social', {platform: 'Instagram'})" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110"><i class="ph-fill ph-instagram-logo text-4xl"></i></a>
+          <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_social', {platform: 'LINE_Community'})" class="transition-all transform hover:scale-110 flex items-center justify-center" title="加入 LINE 社群">
             <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE 社群" class="w-7 h-7 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300" />
           </a>
         </div>
@@ -151,13 +159,13 @@
   <!-- 懸浮福利球 -->
   <div class="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
     <div id="fab-menu" class="hidden flex-col gap-2.5 transition-all transform origin-bottom-right zoom-in-95">
-      <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
+      <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'eSIM_FAB'})" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
         <i class="ph-fill ph-sim-card text-blue-500 text-lg"></i><span class="text-sm font-bold text-gray-700">eSIM 9折</span>
       </a>
-      <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
+      <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'KKday_FAB'})" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
         <i class="ph-fill ph-ticket text-[#26C2CD] text-lg"></i><span class="text-sm font-bold text-gray-700">KKday 體驗</span>
       </a>
-      <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
+      <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'LINE_FAB'})" class="flex items-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105">
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" class="w-4 h-4" /><span class="text-sm font-bold text-gray-700">專屬社群</span>
       </a>
     </div>
@@ -171,10 +179,25 @@
   </div>
 
   <script>
+    // --- 📊 GA4 追蹤分析封裝函式 ---
+    window.trackEvent = function(eventName, eventParams) {
+      try {
+        if (typeof gtag === 'function') {
+          gtag('event', eventName, eventParams);
+          console.log(`[Analytics] Tracked: ${eventName}`, eventParams);
+        }
+      } catch(e) {
+        console.warn('Analytics tracking failed', e);
+      }
+    };
+
     function toggleFab() {
       const menu = document.getElementById('fab-menu');
       menu.classList.toggle('hidden');
       menu.classList.toggle('flex');
+      if (menu.classList.contains('flex')) {
+        window.trackEvent('open_fab_menu', {});
+      }
     }
 
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -572,10 +595,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 升級至 v11：導入 LocalStorage 背景靜默更新機制 (Stale-While-Revalidate)
       const CACHE_KEY_TICKETS = 'eddie_tickets_v11', CACHE_KEY_HOTELS = 'eddie_hotels_v11', CACHE_TIME = 'eddie_cache_time_v11', now = new Date().getTime();
       
-      // 1. 嘗試先從 LocalStorage (持久快取) 拿舊資料，達成秒開體驗
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
       const cacheTime = localStorage.getItem(CACHE_TIME);
@@ -586,9 +607,8 @@
         state.hotels = JSON.parse(cachedHotels);
         state.isLoading = false;
         hasCache = true;
-        renderMain(); // 立即渲染舊資料，粉絲不用等！
+        renderMain(); 
         
-        // 若快取在 1 分鐘內，連背景更新都省了；超過 1 分鐘才去背景同步
         if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
             return;
         }
@@ -599,7 +619,6 @@
           renderMain();
       }
 
-      // 2. 背景默默向 Google 請求最新資料 (重新驗證)
       try {
         const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
@@ -733,7 +752,6 @@
         
         state.tickets = Array.from(ticketMap.values());
         
-        // 抓取飯店時增加 submitter 屬性，並使用 .reverse() 讓最新填寫的表單資料排在最前面顯示
         state.hotels = (data.hotels || []).map((h, i) => ({ 
             id: `hotel-${i}`, 
             country: (h.country||'其他').trim(), 
@@ -744,7 +762,6 @@
             submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
         })).filter(h => h.name && h.city).reverse();
         
-        // 寫入 localStorage 供下次秒開使用
         localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
         localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
         localStorage.setItem(CACHE_TIME, now.toString());
@@ -753,32 +770,57 @@
       } finally { 
         state.isLoading = false; 
         state.animateTransition = false; 
-        // 背景拿到新資料後，無縫更新畫面
         renderMain(); 
       }
     }
 
     window.forceRefresh = () => { 
         state.isLoading = true; 
-        // 強制刷新時，清空現有快取
+        window.trackEvent('force_refresh', {}); // GA4 追蹤
         localStorage.removeItem('eddie_tickets_v11');
         localStorage.removeItem('eddie_hotels_v11');
         fetchSheetData(true); 
     };
     
-    window.executeSearch = (q) => { q = q.trim().toLowerCase(); state.searchQuery = q; if (q) { state.selectedCountryObj = { isSearch: true }; safeUpdateURL(`?q=${encodeURIComponent(q)}`); } else { goHome(); } state.animateTransition = true; renderMain(); state.animateTransition = false; };
-    window.goHome = () => { document.getElementById('searchInput').value = ''; state.searchQuery = ''; state.selectedCountryObj = null; state.selectedTab = null; state.currentDate = new Date(); state.animateTransition = true; safeUpdateURL(window.location.pathname || '/'); renderMain(); state.animateTransition = false; window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    window.executeSearch = (q) => { 
+        q = q.trim().toLowerCase(); 
+        state.searchQuery = q; 
+        if (q) { 
+            state.selectedCountryObj = { isSearch: true }; 
+            safeUpdateURL(`?q=${encodeURIComponent(q)}`); 
+            window.trackEvent('search', { search_term: q }); // GA4 追蹤
+        } else { 
+            goHome(); 
+        } 
+        state.animateTransition = true; renderMain(); state.animateTransition = false; 
+    };
+    
+    window.goHome = () => { 
+        document.getElementById('searchInput').value = ''; 
+        state.searchQuery = ''; 
+        state.selectedCountryObj = null; 
+        state.selectedTab = null; 
+        state.currentDate = new Date(); 
+        state.animateTransition = true; 
+        safeUpdateURL(window.location.pathname || '/'); 
+        window.trackEvent('navigate_home', {}); // GA4 追蹤
+        renderMain(); 
+        state.animateTransition = false; 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    };
     
     window.selectCountry = (index) => {
       if (index === 'hotels') { 
         state.selectedCountryObj = { isHotelsGlobal: true }; 
         safeUpdateURL(`?hotels=true`); 
+        window.trackEvent('select_category', { category: 'Hotels' }); // GA4 追蹤
       } else { 
         const countryObj = LOCATION_DATA[index]; 
         state.selectedCountryObj = countryObj; 
         state.selectedTab = countryObj.tabs[0].label; 
         state.viewMode = 'calendar'; 
         safeUpdateURL(`?country=${countryObj.slug}&tab=${countryObj.tabs[0].slug}`); 
+        window.trackEvent('select_country', { country: countryObj.country }); // GA4 追蹤
       }
       state.currentDate = new Date(); 
       state.animateTransition = true; 
@@ -792,21 +834,38 @@
       const countryObj = state.selectedCountryObj; 
       const tabObj = countryObj.tabs.find(t => t.label === tabLabel); 
       safeUpdateURL(`?country=${countryObj.slug}&tab=${tabObj.slug}`); 
+      window.trackEvent('select_tab', { tab: tabLabel, country: countryObj.country }); // GA4 追蹤
       state.currentDate = new Date(); 
       state.animateTransition = false; 
       renderMain(); 
     };
     
-    window.setViewMode = (mode) => { state.viewMode = mode; renderMain(); };
+    window.setViewMode = (mode) => { 
+        state.viewMode = mode; 
+        window.trackEvent('change_view_mode', { mode: mode }); // GA4 追蹤
+        renderMain(); 
+    };
+    
     window.setListSortBy = (mode) => { state.listSortBy = mode; renderMain(); };
     window.prevMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() - 1, 1); state.animateTransition = false; renderMain(); };
     window.nextMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 1); state.animateTransition = false; renderMain(); };
-    window.openModalFromItem = (itemData) => { const item = JSON.parse(decodeURIComponent(itemData)); state.selectedDateTickets = { date: item.date, tickets: [item] }; state.isModalOpen = true; renderModal(); };
+    window.openModalFromItem = (itemData) => { 
+        const item = JSON.parse(decodeURIComponent(itemData)); 
+        state.selectedDateTickets = { date: item.date, tickets: [item] }; 
+        state.isModalOpen = true; 
+        window.trackEvent('view_ticket_details', { date: item.date, city: item.city, airline: item.airline }); // GA4 追蹤
+        renderModal(); 
+    };
     
     window.openModal = (dateStr) => {
       const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab), allowedCities = activeTabObj ? activeTabObj.cities : [];
       const dayTickets = state.tickets.filter(t => (state.selectedCountryObj.country === '其他' ? t.country === '其他' : t.country === state.selectedCountryObj.country && allowedCities.some(c => t.city.includes(c) || c.includes(t.city))) && t.date === dateStr);
-      if (dayTickets.length > 0) { state.selectedDateTickets = { date: dateStr, tickets: dayTickets }; state.isModalOpen = true; renderModal(); }
+      if (dayTickets.length > 0) { 
+          state.selectedDateTickets = { date: dateStr, tickets: dayTickets }; 
+          state.isModalOpen = true; 
+          window.trackEvent('view_calendar_date', { date: dateStr, tickets_count: dayTickets.length }); // GA4 追蹤
+          renderModal(); 
+      }
     };
     window.closeModal = () => { state.isModalOpen = false; renderModal(); };
 
@@ -855,7 +914,7 @@
                 <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center"><i class="ph-bold ph-arrow-left text-xl"></i></button>
                 <div><h1 class="text-2xl font-bold text-gray-900">網友分享住宿總覽</h1></div>
               </div>
-              <a href="https://forms.gle/w9A4onjw4dmcLdDD8" target="_blank" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105"><i class="ph-bold ph-pencil-simple text-lg"></i> 分享住宿</a>
+              <a href="https://forms.gle/w9A4onjw4dmcLdDD8" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Submit_Hotel_Form'})" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105"><i class="ph-bold ph-pencil-simple text-lg"></i> 分享住宿</a>
             </div>
             <div class="py-24 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-buildings text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">目前還沒有已核准的飯店資料唷！</p><p class="text-sm">如果有填寫表單，請記得至試算表的「核准」欄位填寫 Y 即可顯示。</p></div>
           </div>`;
@@ -880,7 +939,7 @@
               </div>
               ${submitterHtml}
             </div>
-            <a href="${searchUrl}" target="_blank" rel="noreferrer" class="mt-5 w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
+            <a href="${searchUrl}" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${h.name}'})" class="mt-5 w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
               <i class="ph-bold ph-magnifying-glass text-lg"></i> 前往搜尋查看
             </a>
           </div>
@@ -897,7 +956,7 @@
                 <p class="text-sm text-gray-500 mt-1">網友真實評鑑，高 CP 值住宿不踩雷！</p>
               </div>
             </div>
-            <a href="https://forms.gle/w9A4onjw4dmcLdDD8" target="_blank" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105"><i class="ph-bold ph-pencil-simple text-lg"></i> 分享住宿</a>
+            <a href="https://forms.gle/w9A4onjw4dmcLdDD8" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Submit_Hotel_Form'})" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105"><i class="ph-bold ph-pencil-simple text-lg"></i> 分享住宿</a>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${listHTML}</div>
         </div>`;
@@ -936,7 +995,7 @@
             ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>後台同步中</div>' : ''}
           </div>
 
-          <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+          <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'LINE_Community'})" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="LINE 社群" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/50 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
@@ -949,7 +1008,7 @@
             </div>
           </a>
 
-          <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+          <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'eSIM_Banner'})" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="eSIM 推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
@@ -962,7 +1021,7 @@
             </div>
           </a>
 
-          <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+          <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'KKday_Banner'})" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
             <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80" loading="lazy" decoding="async" alt="KKday 行程推薦" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-900/30 to-transparent"></div>
             <div class="absolute inset-0 flex flex-col justify-center p-6 sm:p-8">
@@ -1014,8 +1073,8 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2 w-full md:w-auto">
-            <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white hover:bg-blue-600 hover:text-white text-gray-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-gray-200">eSIM 9折</a>
-            <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white hover:bg-[#26C2CD] hover:text-white text-gray-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-gray-200">KKday 特惠</a>
+            <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'eSIM_Support_Banner'})" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white hover:bg-blue-600 hover:text-white text-gray-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-gray-200">eSIM 9折</a>
+            <a href="https://www.kkday.com/zh-tw?cid=22649" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'KKday_Support_Banner'})" class="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white hover:bg-[#26C2CD] hover:text-white text-gray-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-gray-200">KKday 特惠</a>
           </div>
         </div>`;
       
@@ -1041,7 +1100,7 @@
                   <div class="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl mb-5 leading-relaxed relative"><i class="ph-fill ph-quotes text-gray-200 absolute top-2 right-2 text-3xl opacity-50"></i><span class="relative z-10 block pr-6 selectable-text">${h.description}</span></div>
                   ${submitterHtml}
                 </div>
-                <a href="${searchUrl}" target="_blank" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">前往搜尋查看</a>
+                <a href="${searchUrl}" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${h.name}'})" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">前往搜尋查看</a>
               </div>`;
           }).join('')}</div>`;
         }
@@ -1207,7 +1266,7 @@
               <span>機位與名額依旅行社即時查詢為準，點擊下方按鈕後請儘速聯絡確認。</span>
             </div>
 
-            <div class="mt-5 p-3.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl flex items-center justify-between shadow-md cursor-pointer hover:scale-[1.02] transition-transform border border-gray-700" onclick="window.open('https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang', '_blank')">
+            <div class="mt-5 p-3.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl flex items-center justify-between shadow-md cursor-pointer hover:scale-[1.02] transition-transform border border-gray-700" onclick="window.open('https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang', '_blank'); window.trackEvent('click_affiliate', {target: 'eSIM_Modal'})">
               <div class="flex flex-col">
                 <span class="text-yellow-400 text-[10px] font-bold mb-0.5 tracking-wider flex items-center gap-1">
                   <i class="ph-fill ph-lightbulb"></i> ${isTour ? '訂好行程了嗎？' : '訂好機票了嗎？'}
@@ -1219,9 +1278,9 @@
               </div>
             </div>
 
-            ${(item.isTour && targetUrl) ? `<a href="${targetUrl}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm"><i class="ph-bold ph-notebook text-xl"></i> 查看行程資訊</a>` : ''}
+            ${(item.isTour && targetUrl) ? `<a href="${targetUrl}" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_outbound', {target: 'Tour_Detail', url: '${targetUrl}'})" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm"><i class="ph-bold ph-notebook text-xl"></i> 查看行程資訊</a>` : ''}
             
-            <a href="${lineOaUrl}" target="_blank" rel="noreferrer" class="mt-3 w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm shadow-green-200/50"><i class="ph-bold ph-chat-circle-dots text-xl"></i> ${isTour ? '聯繫旅行社 LINE 報名' : '聯繫旅行社 LINE 搶購'}</a>
+            <a href="${lineOaUrl}" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_conversion', {target: 'LINE_Booking', type: '${isTour ? 'Tour' : 'Ticket'}'})" class="mt-3 w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm shadow-green-200/50"><i class="ph-bold ph-chat-circle-dots text-xl"></i> ${isTour ? '聯繫旅行社 LINE 報名' : '聯繫旅行社 LINE 搶購'}</a>
           </div>
         `;
       }).join('');

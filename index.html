@@ -386,7 +386,8 @@
       return '';
     }
 
-    function getTicketStatus(dateStr, airline) {
+    // --- 修改：將機票和跟團行程的下架邏輯分開 ---
+    function getTicketStatus(dateStr, airline, isTour = false) {
       if (!dateStr) return { isHidden: false, isWarning: false };
       const parts = dateStr.split('-');
       if (parts.length !== 3) return { isHidden: false, isWarning: false };
@@ -396,8 +397,10 @@
       today.setHours(0, 0, 0, 0);
       depDate.setHours(0, 0, 0, 0);
 
+      // 已經出發或今天，一律下架
       if (depDate <= today) return { isHidden: true, isWarning: false };
 
+      // 扣除六、日，計算剩餘工作天
       let workingDaysLeft = 0;
       let cur = new Date(today);
       while (cur < depDate) {
@@ -407,25 +410,35 @@
           }
       }
 
-      const isPeach = airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'));
-      const isScoot = airline && (airline.includes('酷航') || airline.toUpperCase().includes('TR'));
-
       let isHidden = false;
       let isWarning = false;
 
-      if (isPeach) {
-          if (workingDaysLeft <= 7) isHidden = true;
-      } else if (isScoot) {
-          if (workingDaysLeft < 2) {
+      if (isTour) {
+          // 跟團行程放寬標準：出發前 1 天內才下架，前 5 個工作天內提示警告即可
+          if (workingDaysLeft < 1) {
               isHidden = true;
-          } else if (workingDaysLeft === 2) {
+          } else if (workingDaysLeft <= 5) {
               isWarning = true;
           }
       } else {
-          if (workingDaysLeft < 4) {
-              isHidden = true;
-          } else if (workingDaysLeft === 4 || workingDaysLeft === 5) {
-              isWarning = true;
+          // 純機票維持嚴格標準
+          const isPeach = airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'));
+          const isScoot = airline && (airline.includes('酷航') || airline.toUpperCase().includes('TR'));
+
+          if (isPeach) {
+              if (workingDaysLeft <= 7) isHidden = true;
+          } else if (isScoot) {
+              if (workingDaysLeft < 2) {
+                  isHidden = true;
+              } else if (workingDaysLeft === 2) {
+                  isWarning = true;
+              }
+          } else {
+              if (workingDaysLeft < 4) {
+                  isHidden = true;
+              } else if (workingDaysLeft === 4 || workingDaysLeft === 5) {
+                  isWarning = true;
+              }
           }
       }
 
@@ -505,6 +518,18 @@
 
         const lines = block.split('\n');
         
+        // 尋找此區塊最早的日期與旅遊天數，用來過濾回程航班
+        let allDatesInBlock = [];
+        for (let line of lines) allDatesInBlock.push(...extractDates(line));
+        let blockEarliestDate = null;
+        if (allDatesInBlock.length > 0) {
+            allDatesInBlock.sort();
+            let eParts = allDatesInBlock[0].split('-');
+            blockEarliestDate = new Date(parseInt(eParts[0], 10), parseInt(eParts[1], 10) - 1, parseInt(eParts[2], 10));
+        }
+        let daysMatch = block.match(/(\d+)\s*(?:日|天)/);
+        let blockDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
+
         currentCityContext = null;
         currentTitleContext = null;
         let blockRunningPrice = runningPrice;
@@ -580,6 +605,21 @@
               }
 
               for (let dateStr of dates) {
+                  // 智慧回程過濾引擎：過濾掉有時間但無出發等字眼的後續日期
+                  if (blockEarliestDate) {
+                      let parts = dateStr.split('-');
+                      let d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                      let diffDays = Math.round((d - blockEarliestDate) / (1000 * 60 * 60 * 24));
+                      
+                      if (diffDays > 0) {
+                          if (line.match(/回程|抵達|回航/)) continue;
+                          if (line.match(/\d{2}:\d{2}/) && !line.match(/出發|席|位|剩|\$|元|起|價/)) continue;
+                          if (blockDays && (diffDays === blockDays - 1 || diffDays === blockDays || diffDays === blockDays + 1)) {
+                              if (!line.match(/出發|席|位|剩|\$|元|起|價/)) continue;
+                          }
+                      }
+                  }
+                  
                   items.push({ 
                     date: dateStr, 
                     price: priceForTheseDates || '', 
@@ -600,8 +640,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 升級至 v13：加入萬用地區收容機制，非首頁四大國一律歸類為「其他」
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v13', CACHE_KEY_HOTELS = 'eddie_hotels_v13', CACHE_TIME = 'eddie_cache_time_v13', now = new Date().getTime();
+      // 升級至 v16：修復跟團行程下架邏輯，保留彈性出發日
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v16', CACHE_KEY_HOTELS = 'eddie_hotels_v16', CACHE_TIME = 'eddie_cache_time_v16', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -652,10 +692,12 @@
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
               let airlineTag = item.isTour ? '跟團行程' : inferAirlineFromCode(rawText);
-              let status = getTicketStatus(item.date, airlineTag || inferred.title);
+              // 加入 isTour 參數，機票套用嚴格下架標準
+              let status = getTicketStatus(item.date, airlineTag || inferred.title, item.isTour);
               
               return { 
                 id: `ticket-${index}-${subIndex}`, 
+                uploadIndex: index, 
                 country: finalCountry, 
                 city: finalCity.trim(), 
                 date: item.date, 
@@ -715,10 +757,12 @@
               }
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
-              let status = getTicketStatus(item.date, '跟團行程');
+              // 標記為旅行團，套用彈性標準
+              let status = getTicketStatus(item.date, '跟團行程', true);
 
               return { 
                 id: `tour-${index}-${subIndex}`, 
+                uploadIndex: index,
                 country: finalCountry, 
                 city: finalCity.trim(), 
                 date: item.date, 
@@ -770,7 +814,6 @@
             if (KNOWN_COUNTRIES.includes(inferredCountry) && inferredCountry !== '其他') {
                 rawCountry = inferredCountry;
             }
-            // 【重要優化】如果最終國家不在首頁四大國裡，強制收容進「其他」
             if (!KNOWN_COUNTRIES.includes(rawCountry)) {
                 rawCountry = '其他';
             }
@@ -802,8 +845,8 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v13');
-        localStorage.removeItem('eddie_hotels_v13');
+        localStorage.removeItem('eddie_tickets_v16');
+        localStorage.removeItem('eddie_hotels_v16');
         fetchSheetData(true); 
     };
     
@@ -1075,7 +1118,57 @@
         </div>
       `;
 
-      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-12"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500">點擊探索最新晚鳥清艙機票與飯店總覽</p></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
+      let recentHTML = '';
+      if (state.tickets.length > 0) {
+          const tks = state.tickets.filter(t => !t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 3);
+          const trs = state.tickets.filter(t => t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 3);
+          const recentItems = [];
+          for(let i=0; i<3; i++) {
+              if (trs[i]) recentItems.push(trs[i]);
+              if (tks[i]) recentItems.push(tks[i]);
+          }
+
+          const recentCards = recentItems.map(t => {
+              const encodedItem = encodeURIComponent(JSON.stringify(t)); 
+              const tagClass = t.isTour ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+              const iconClass = t.isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
+              const isWarning = t.isWarning ? '<span class="absolute -top-1 -right-1 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>' : '';
+              return `
+              <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md cursor-pointer shrink-0 w-[180px] sm:w-48 snap-start transition-all relative ${t.isWarning ? 'ring-1 ring-red-300' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
+                ${isWarning}
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="flex items-center justify-center w-7 h-7 rounded-full ${tagClass} shrink-0">
+                     <i class="ph-bold ${iconClass}"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                     <div class="text-[10px] font-bold text-gray-400 leading-none mb-1"><i class="ph-bold ph-calendar-blank"></i> ${t.date}</div>
+                     <div class="text-[10px] font-bold text-gray-600 truncate">${t.country} · ${t.city}</div>
+                  </div>
+                </div>
+                <h4 class="font-black text-gray-800 text-xs line-clamp-2 leading-snug mb-2 h-[34px]" title="${t.title || t.airline}">${t.title || t.airline}</h4>
+                <div class="flex items-end justify-between mt-auto">
+                  <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">優惠價</span>
+                  <span class="text-sm font-black text-red-500">$${t.price || '--'}</span>
+                </div>
+              </div>
+              `;
+          }).join('');
+
+          if (recentCards) {
+            recentHTML = `
+            <div class="mb-10 w-full animate-in slide-in-from-bottom-4 duration-500">
+              <div class="flex items-center justify-between mb-4 px-1">
+                <h2 class="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2"><i class="ph-fill ph-fire text-red-500 text-2xl"></i> 近期上架快訊</h2>
+              </div>
+              <div class="flex gap-4 overflow-x-auto pb-4 pt-2 snap-x snap-mandatory no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                ${recentCards}
+              </div>
+            </div>
+            `;
+          }
+      }
+
+      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-10"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500">點擊探索最新晚鳥清艙機票與飯店總覽</p></div>${recentHTML}<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
     }
 
     function getFlightsHTML() {
@@ -1084,7 +1177,6 @@
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
       const filteredTickets = state.tickets.filter(t => {
           const matchCountry = t.country === state.selectedCountryObj.country;
-          // 新增：只要城市標籤是「其他航點」，當作萬用大雜燴全盤顯示！
           const matchCity = allowedCities.some(c => c === '其他航點' || t.city.includes(c) || c.includes(t.city));
           return matchCountry && matchCity;
       });
@@ -1118,7 +1210,6 @@
         const filteredHotels = state.hotels.filter(h => {
           const matchCountry = h.country === state.selectedCountryObj.country;
           
-          // 防呆匹配：包含「其他航點」萬用模式
           const matchCity = allowedCities.some(c => 
             c === '其他航點' ||
             (h.city && h.city.includes(c)) || 

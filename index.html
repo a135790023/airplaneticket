@@ -47,7 +47,6 @@
   <!-- 引入 Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    /* 自訂動畫效果 */
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideInBottom { from { transform: translateY(1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes slideInRight { from { transform: translateX(2rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -58,11 +57,9 @@
     .slide-in-from-right-8 { animation: slideInRight 0.3s ease-out forwards; }
     .zoom-in-95 { animation: zoomIn 0.2s ease-out forwards; }
     
-    /* 隱藏捲軸但保留捲動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 基礎防護：停用文字選取 */
     body { 
       touch-action: manipulation; 
       -webkit-user-select: none;
@@ -71,7 +68,6 @@
       user-select: none;
     }
     
-    /* 彈出視窗內允許選取 */
     #modal-root, .selectable-text {
       -webkit-user-select: text;
       -moz-user-select: text;
@@ -91,7 +87,6 @@
           <div class="bg-gray-900 p-2 rounded-xl text-white flex items-center justify-center">
             <i class="ph-bold ph-airplane-tilt text-xl"></i>
           </div>
-          <!-- 品牌化標題 -->
           <span class="text-lg sm:text-xl font-black text-gray-900 tracking-tight select-none">
             艾迪王<span class="text-gray-400 font-medium hidden sm:inline ml-1.5">旅遊秘笈</span>
           </span>
@@ -386,7 +381,6 @@
       return '';
     }
 
-    // --- 修改：將機票和跟團行程的下架邏輯分開 ---
     function getTicketStatus(dateStr, airline, isTour = false) {
       if (!dateStr) return { isHidden: false, isWarning: false };
       const parts = dateStr.split('-');
@@ -414,14 +408,12 @@
       let isWarning = false;
 
       if (isTour) {
-          // 跟團行程放寬標準：出發前 1 天內才下架，前 5 個工作天內提示警告即可
           if (workingDaysLeft < 1) {
               isHidden = true;
           } else if (workingDaysLeft <= 5) {
               isWarning = true;
           }
       } else {
-          // 純機票維持嚴格標準
           const isPeach = airline && (airline.includes('樂桃') || airline.toUpperCase().includes('MM'));
           const isScoot = airline && (airline.includes('酷航') || airline.toUpperCase().includes('TR'));
 
@@ -518,7 +510,6 @@
 
         const lines = block.split('\n');
         
-        // 尋找此區塊最早的日期與旅遊天數，用來過濾回程航班
         let allDatesInBlock = [];
         for (let line of lines) allDatesInBlock.push(...extractDates(line));
         let blockEarliestDate = null;
@@ -605,7 +596,6 @@
               }
 
               for (let dateStr of dates) {
-                  // 智慧回程過濾引擎：過濾掉有時間但無出發等字眼的後續日期
                   if (blockEarliestDate) {
                       let parts = dateStr.split('-');
                       let d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
@@ -640,8 +630,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 升級至 v16：修復跟團行程下架邏輯，保留彈性出發日
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v16', CACHE_KEY_HOTELS = 'eddie_hotels_v16', CACHE_TIME = 'eddie_cache_time_v16', now = new Date().getTime();
+      // 升級至 v18：極致輕量化快訊膠囊 + 強化 localStorage 秒開體驗
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v18', CACHE_KEY_HOTELS = 'eddie_hotels_v18', CACHE_TIME = 'eddie_cache_time_v18', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -653,8 +643,9 @@
         state.hotels = JSON.parse(cachedHotels);
         state.isLoading = false;
         hasCache = true;
-        renderMain(); 
+        renderMain(); // 秒開！瞬間渲染出舊資料
         
+        // 快取如果在 60 秒內，連背景都不用更新
         if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
             return;
         }
@@ -665,6 +656,7 @@
           renderMain();
       }
 
+      // 背景靜默更新資料
       try {
         const res = await fetch(`${API_URL}?cache=${now}`);
         const data = await res.json();
@@ -692,7 +684,6 @@
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
               let airlineTag = item.isTour ? '跟團行程' : inferAirlineFromCode(rawText);
-              // 加入 isTour 參數，機票套用嚴格下架標準
               let status = getTicketStatus(item.date, airlineTag || inferred.title, item.isTour);
               
               return { 
@@ -715,11 +706,7 @@
             });
           }).filter(t => {
             if (!t.date) return false;
-            if (t.isHidden) {
-              console.log(`[自動下架] ${t.city} ${t.airline} (${t.date}) 已超過開票底線`);
-              return false;
-            }
-            return true;
+            return !t.isHidden;
           }); 
           
           allTickets.forEach(t => { 
@@ -757,7 +744,6 @@
               }
               if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
               
-              // 標記為旅行團，套用彈性標準
               let status = getTicketStatus(item.date, '跟團行程', true);
 
               return { 
@@ -780,11 +766,7 @@
             });
           }).filter(t => {
             if (!t.date) return false;
-            if (t.isHidden) {
-              console.log(`[自動下架] 行程 ${t.city} ${t.airline} (${t.date}) 已超過底線`);
-              return false;
-            }
-            return true;
+            return !t.isHidden;
           }); 
           
           allTours.forEach(t => { 
@@ -845,8 +827,8 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v16');
-        localStorage.removeItem('eddie_hotels_v16');
+        localStorage.removeItem('eddie_tickets_v18');
+        localStorage.removeItem('eddie_hotels_v18');
         fetchSheetData(true); 
     };
     
@@ -915,8 +897,13 @@
     };
     
     window.setListSortBy = (mode) => { state.listSortBy = mode; renderMain(); };
-    window.prevMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() - 1, 1); state.animateTransition = false; renderMain(); };
-    window.nextMonth = () => { state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 1); state.animateTransition = false; renderMain(); };
+    
+    window.setMonth = (y, m) => { 
+        state.currentDate = new Date(y, m, 1); 
+        state.animateTransition = false; 
+        renderMain(); 
+    };
+
     window.openModalFromItem = (itemData) => { 
         const item = JSON.parse(decodeURIComponent(itemData)); 
         state.selectedDateTickets = { date: item.date, tickets: [item] }; 
@@ -941,8 +928,14 @@
     };
     window.closeModal = () => { state.isModalOpen = false; renderModal(); };
 
+    // 更新：載入畫面加上友善提示
     function getLoadingHTML() { 
-      return `<div class="animate-pulse fade-in text-center py-32"><i class="ph-bold ph-airplane-tilt text-5xl text-gray-200 mb-4 animate-bounce inline-block"></i><p class="text-gray-400 font-medium">正在載入清艙資料...</p></div>`; 
+      return `
+        <div class="animate-pulse fade-in text-center py-32">
+          <i class="ph-bold ph-airplane-tilt text-5xl text-gray-300 mb-4 animate-bounce inline-block"></i>
+          <p class="text-gray-600 font-bold mb-1">正在從試算表同步資料...</p>
+          <p class="text-xs text-gray-400 font-medium">首次載入約需 2~3 秒，請稍候</p>
+        </div>`; 
     }
 
     function getSearchHTML() {
@@ -950,7 +943,7 @@
        const allMatches = [...matchedTickets].sort((a, b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
        if (allMatches.length === 0) return `<div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i><h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3></div>`;
        const listHTML = allMatches.map(t => { 
-         const encodedItem = encodeURIComponent(JSON.stringify(t)); 
+         const encodedItem = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27"); 
          const isTour = t.isTour;
          const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
          const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
@@ -995,7 +988,8 @@
       const listHTML = state.hotels.map(h => {
         const searchUrl = h.link || `https://www.google.com/search?q=${encodeURIComponent((h.country==='其他'?'':h.country) + ' ' + h.city + ' ' + h.name + ' 飯店')}`;
         const submitterHtml = h.submitter ? `<div class="mt-4 flex items-center justify-end gap-1.5 text-[11px] font-bold text-gray-400"><i class="ph-fill ph-user-circle text-[14px]"></i> @${h.submitter} 熱心分享</div>` : '';
-        
+        const hotelNameSafe = h.name.replace(/'/g, "\\'");
+
         return `
           <div class="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between h-full group">
             <div>
@@ -1011,7 +1005,7 @@
               </div>
               ${submitterHtml}
             </div>
-            <a href="${searchUrl}" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${h.name}'})" class="mt-5 w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
+            <a href="${searchUrl}" target="_blank" rel="noreferrer" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${hotelNameSafe}'})" class="mt-5 w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
               <i class="ph-bold ph-magnifying-glass text-lg"></i> 前往搜尋查看
             </a>
           </div>
@@ -1064,7 +1058,7 @@
         <div class="mt-16 w-full space-y-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-black text-gray-900 pl-3 border-l-4 border-gray-900 tracking-tight">旅遊必備推薦</h2>
-            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>後台同步中</div>' : ''}
+            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>背景同步中</div>' : ''}
           </div>
 
           <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'LINE_Community'})" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
@@ -1118,49 +1112,39 @@
         </div>
       `;
 
+      // 更新：極致輕量化的膠囊型快訊
       let recentHTML = '';
       if (state.tickets.length > 0) {
-          const tks = state.tickets.filter(t => !t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 3);
-          const trs = state.tickets.filter(t => t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 3);
+          const tks = state.tickets.filter(t => !t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 5);
+          const trs = state.tickets.filter(t => t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 5);
           const recentItems = [];
-          for(let i=0; i<3; i++) {
+          for(let i=0; i<5; i++) {
               if (trs[i]) recentItems.push(trs[i]);
               if (tks[i]) recentItems.push(tks[i]);
           }
 
           const recentCards = recentItems.map(t => {
-              const encodedItem = encodeURIComponent(JSON.stringify(t)); 
-              const tagClass = t.isTour ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
-              const iconClass = t.isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
-              const isWarning = t.isWarning ? '<span class="absolute -top-1 -right-1 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>' : '';
+              const encodedItem = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27"); 
+              const tagClass = t.isTour ? 'bg-orange-500' : 'bg-blue-500';
+              const tagText = t.isTour ? '新行程' : '新機票';
+              
               return `
-              <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md cursor-pointer shrink-0 w-[180px] sm:w-48 snap-start transition-all relative ${t.isWarning ? 'ring-1 ring-red-300' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
-                ${isWarning}
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="flex items-center justify-center w-7 h-7 rounded-full ${tagClass} shrink-0">
-                     <i class="ph-bold ${iconClass}"></i>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                     <div class="text-[10px] font-bold text-gray-400 leading-none mb-1"><i class="ph-bold ph-calendar-blank"></i> ${t.date}</div>
-                     <div class="text-[10px] font-bold text-gray-600 truncate">${t.country} · ${t.city}</div>
-                  </div>
+                <div class="bg-white border border-gray-100 rounded-full px-3 py-1.5 shadow-sm hover:shadow-md cursor-pointer shrink-0 snap-start transition-all flex items-center gap-2" onclick="window.openModalFromItem('${encodedItem}')">
+                  <span class="${tagClass} text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-widest">${tagText}</span>
+                  <span class="text-[11px] sm:text-xs font-bold text-gray-800 truncate max-w-[130px]">${t.city} ${t.date.slice(5).replace('-','/')}出發</span>
+                  <span class="text-[11px] sm:text-xs font-black text-red-500">$${t.price || '--'}</span>
                 </div>
-                <h4 class="font-black text-gray-800 text-xs line-clamp-2 leading-snug mb-2 h-[34px]" title="${t.title || t.airline}">${t.title || t.airline}</h4>
-                <div class="flex items-end justify-between mt-auto">
-                  <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">優惠價</span>
-                  <span class="text-sm font-black text-red-500">$${t.price || '--'}</span>
-                </div>
-              </div>
               `;
           }).join('');
 
           if (recentCards) {
             recentHTML = `
-            <div class="mb-10 w-full animate-in slide-in-from-bottom-4 duration-500">
-              <div class="flex items-center justify-between mb-4 px-1">
-                <h2 class="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2"><i class="ph-fill ph-fire text-red-500 text-2xl"></i> 近期上架快訊</h2>
+            <div class="mb-8 w-full animate-in fade-in duration-300">
+              <div class="flex items-center gap-1.5 mb-2.5 px-2">
+                <i class="ph-fill ph-lightning text-yellow-500 text-lg"></i>
+                <h2 class="text-sm font-black text-gray-800 tracking-wide">最新快訊</h2>
               </div>
-              <div class="flex gap-4 overflow-x-auto pb-4 pt-2 snap-x snap-mandatory no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div class="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar px-2 -mx-4 sm:mx-0">
                 ${recentCards}
               </div>
             </div>
@@ -1168,12 +1152,41 @@
           }
       }
 
-      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-10"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500">點擊探索最新晚鳥清艙機票與飯店總覽</p></div>${recentHTML}<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
+      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-10"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500 mb-6">探索最新晚鳥清艙機票與飯店總覽</p></div>${recentHTML}<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
     }
 
     function getFlightsHTML() {
-      const year = state.currentDate.getFullYear(), month = state.currentDate.getMonth();
-      const activeTabObj = state.selectedCountryObj.tabs.find(t => t.label === state.selectedTab);
+      // 1. 智慧過濾：只保留「目前有清艙機票或行程」的城市/區域 (Tabs)
+      const availableTabs = state.selectedCountryObj.tabs.filter(tab => {
+          return state.tickets.some(t => {
+              const matchCountry = t.country === state.selectedCountryObj.country;
+              const matchCity = tab.cities.some(c => c === '其他航點' || t.city.includes(c) || c.includes(t.city));
+              return matchCountry && matchCity;
+          });
+      });
+
+      // 如果該國家完全沒有票，直接顯示友善提示
+      if (availableTabs.length === 0) {
+          return `
+            <div class="fade-in">
+              <div class="flex items-center gap-4 mb-8">
+                <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm"><i class="ph-bold ph-arrow-left text-xl"></i></button>
+                <h1 class="text-2xl font-black">${state.selectedCountryObj.country} 機票與行程</h1>
+              </div>
+              <div class="py-24 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <i class="ph-bold ph-airplane-tilt text-5xl text-gray-300 mb-4"></i>
+                <p class="font-bold text-gray-700 text-lg mb-2">目前該地區暫無任何清艙機票或行程唷！</p>
+              </div>
+            </div>
+          `;
+      }
+
+      // 如果當前選中的 Tab 沒票被隱藏了，自動切換到第一個有票的 Tab
+      if (!state.selectedTab || !availableTabs.find(t => t.label === state.selectedTab)) {
+          state.selectedTab = availableTabs[0].label;
+      }
+
+      const activeTabObj = availableTabs.find(t => t.label === state.selectedTab);
       const allowedCities = activeTabObj ? activeTabObj.cities : [];
       const filteredTickets = state.tickets.filter(t => {
           const matchCountry = t.country === state.selectedCountryObj.country;
@@ -1181,13 +1194,39 @@
           return matchCountry && matchCity;
       });
       
-      const pillsHTML = state.selectedCountryObj.tabs.map(tab => { 
+      const pillsHTML = availableTabs.map(tab => { 
         let displayCities = tab.cities.filter(c => c !== tab.label && c !== '北海道' && c !== '沖繩' && c !== '其他航點'); 
         if (displayCities.length === 0) displayCities = tab.cities; 
         const subText = displayCities.slice(0, 2).join(' · '); 
         const isSelected = state.selectedTab === tab.label; 
-        return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-300' : 'text-gray-400'}">${subText}</span></button>`; 
+        return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md ring-1 ring-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-600' : 'text-gray-400'}">${subText}</span></button>`; 
       }).join('');
+
+      // 2. 智慧日期跳轉：找出所有有票的月份
+      const availableMonths = [...new Set(filteredTickets.map(t => t.date.substring(0, 7)))].sort();
+      let year = state.currentDate.getFullYear();
+      let month = state.currentDate.getMonth();
+      let currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+      // 如果當前月份沒有票，自動快轉到第一個有票的月份
+      if (availableMonths.length > 0 && !availableMonths.includes(currentMonthStr)) {
+          const [y, m] = availableMonths[0].split('-');
+          state.currentDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+          year = state.currentDate.getFullYear();
+          month = state.currentDate.getMonth();
+          currentMonthStr = availableMonths[0];
+      }
+
+      // 修正產生小月份按鈕，移除了錯誤的字串跳脫
+      const monthButtonsHTML = availableMonths.length > 0 && state.viewMode === 'calendar' ? `
+        <div class="flex flex-wrap gap-2 mb-4 fade-in">
+          ${availableMonths.map(mStr => {
+              const [y, m] = mStr.split('-');
+              const isSelected = mStr === currentMonthStr;
+              return `<button onclick="setMonth(${y}, ${m-1})" class="px-4 py-2 rounded-xl text-sm font-bold transition-all ${isSelected ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}">${parseInt(m, 10)}月</button>`;
+          }).join('')}
+        </div>
+      ` : '';
       
       const supportStationHTML = `
         <div class="mb-8 p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4 fade-in">
@@ -1226,6 +1265,8 @@
           contentHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 fade-in">${filteredHotels.map(h => {
             const searchUrl = h.link || `https://www.google.com/search?q=${encodeURIComponent(h.country + ' ' + h.city + ' ' + h.name)}`;
             const submitterHtml = h.submitter ? `<div class="mt-4 flex items-center justify-end gap-1.5 text-[11px] font-bold text-gray-400"><i class="ph-fill ph-user-circle text-[14px]"></i> @${h.submitter} 熱心分享</div>` : '';
+            const hotelNameSafe = h.name.replace(/'/g, "\\'");
+
             return `
               <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between h-full group">
                 <div>
@@ -1234,7 +1275,7 @@
                   <div class="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl mb-5 leading-relaxed relative"><i class="ph-fill ph-quotes text-gray-200 absolute top-2 right-2 text-3xl opacity-50"></i><span class="relative z-10 block pr-6 selectable-text">${h.description}</span></div>
                   ${submitterHtml}
                 </div>
-                <a href="${searchUrl}" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${h.name}'})" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">前往搜尋查看</a>
+                <a href="${searchUrl}" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Hotel_Search', hotel_name: '${hotelNameSafe}'})" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-sm">前往搜尋查看</a>
               </div>`;
           }).join('')}</div>`;
         }
@@ -1254,7 +1295,7 @@
          const sortUI = upcoming.length > 0 ? `<div class="flex items-center justify-end gap-2 mb-4 fade-in"><span class="text-sm font-bold text-gray-500">排序：</span><div class="bg-gray-100 p-1 rounded-lg flex text-xs font-bold"><button onclick="setListSortBy('price')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy !== 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">最低金額</button><button onclick="setListSortBy('date')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy === 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">出發日期</button></div></div>` : '';
 
          const listHTML = upcoming.map(t => {
-           const encodedItem = encodeURIComponent(JSON.stringify(t)); 
+           const encodedItem = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27"); 
            const isTour = t.isTour;
            const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
            const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
@@ -1281,16 +1322,17 @@
          
          contentHTML = upcoming.length === 0 ? `<div class="py-20 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-airplane-tilt text-4xl text-gray-300 mb-3"></i>目前暫無機票！</div>` : `${sortUI}<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">${listHTML}</div>`;
       } else {
-        const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        // 月曆視圖
+        const prefix = currentMonthStr;
         const monthTickets = filteredTickets.filter(t => t.date.startsWith(prefix));
         
         if (monthTickets.length === 0) {
           contentHTML = `
+            ${monthButtonsHTML}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-in">
-              <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
-                <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-left"></i></button>
-                <h2 class="text-lg font-bold">${year}年 ${month + 1}月</h2>
-                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-right"></i></button>
+              <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2.5">
+                <i class="ph-bold ph-calendar-check text-blue-600 text-xl"></i>
+                <h2 class="text-lg font-black text-gray-800">${year}年 ${month + 1}月</h2>
               </div>
               <div class="py-24 text-center text-gray-500"><i class="ph-bold ph-calendar-x text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">這個月暫時沒有機票或行程唷！</p></div>
             </div>`;
@@ -1298,11 +1340,11 @@
           let blanks = Array(new Date(year, month, 1).getDay()).fill(null);
           let days = Array.from({ length: new Date(year, month+1, 0).getDate() }, (_, i) => i + 1);
           contentHTML = `
+            ${monthButtonsHTML}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-in">
-              <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
-                <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-left"></i></button>
-                <h2 class="text-lg font-bold">${year}年 ${month + 1}月</h2>
-                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full"><i class="ph-bold ph-caret-right"></i></button>
+              <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2.5">
+                <i class="ph-bold ph-calendar-check text-blue-600 text-xl"></i>
+                <h2 class="text-lg font-black text-gray-800">${year}年 ${month + 1}月</h2>
               </div>
               <div class="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="bg-white py-3 text-center text-xs font-bold text-gray-400">${d}</div>`).join('')}</div>
               <div class="grid grid-cols-7 gap-px bg-gray-100">

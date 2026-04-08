@@ -183,11 +183,8 @@
       try {
         if (typeof gtag === 'function') {
           gtag('event', eventName, eventParams);
-          console.log(`[Analytics] Tracked: ${eventName}`, eventParams);
         }
-      } catch(e) {
-        console.warn('Analytics tracking failed', e);
-      }
+      } catch(e) {}
     };
 
     function toggleFab() {
@@ -206,7 +203,6 @@
       }
     });
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz2CErSj-zj7aM2zVvJCSax0gOFaMwp1ZQbxoZtYenlszYFnCCgpVJI1mLaC0iemzJj/exec'; 
     const LINE_OFFICIAL_ID = '@616fwicf'; 
 
     const LOCATION_DATA = [
@@ -219,7 +215,6 @@
 
     const KNOWN_COUNTRIES = LOCATION_DATA.filter(loc => loc.country !== '其他').map(loc => loc.country);
     
-    // 更新大地區與近郊的智慧映射對應
     const CITY_ALIASES = [
       { standard: '首爾', aliases: ['首爾', '仁川', '金浦', 'ICN', 'GMP'] }, 
       { standard: '釜山', aliases: ['釜山', '金海', 'PUS'] }, 
@@ -301,14 +296,22 @@
       viewMode: 'calendar', searchQuery: '', listSortBy: 'price' 
     };
 
-    function safeUpdateURL(url) { try { window.history.pushState({}, '', url); } catch (e) { console.warn('URL 更新被環境限制忽略:', e); } }
+    function safeUpdateURL(url) { try { window.history.pushState({}, '', url); } catch (e) {} }
 
     function getCityFromText(text) {
       if (!text) return null;
       let earliestIndex = -1, foundCity = null;
       const checkMatch = (city, matchStr) => {
         let idx = text.indexOf(matchStr);
-        if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) { earliestIndex = idx; foundCity = city; }
+        if (idx !== -1) {
+            if (matchStr === '金海' && text.includes('黃金海岸')) return;
+            if (matchStr === '大分' && text.includes('大部分')) return;
+
+            if (earliestIndex === -1 || idx < earliestIndex) { 
+                earliestIndex = idx; 
+                foundCity = city; 
+            }
+        }
       };
       for (let mapping of CITY_ALIASES) { for (let alias of mapping.aliases) { checkMatch(mapping.standard, alias); } }
       for (let loc of LOCATION_DATA) { for (let tab of loc.tabs) { for (let c of tab.cities) { checkMatch(c, c); } } }
@@ -391,10 +394,8 @@
       today.setHours(0, 0, 0, 0);
       depDate.setHours(0, 0, 0, 0);
 
-      // 已經出發或今天，一律下架
       if (depDate <= today) return { isHidden: true, isWarning: false };
 
-      // 扣除六、日，計算剩餘工作天
       let workingDaysLeft = 0;
       let cur = new Date(today);
       while (cur < depDate) {
@@ -437,25 +438,12 @@
       return { isHidden, isWarning };
     }
 
-    function parseRawDetails(details, fallbackDate, fallbackPrice) {
+    function parseRawDetails(details) {
       const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
       const isGlobalBogo = details && details.includes('買一送一');
       const isGlobalTour = details && (details.includes('行程 👉') || details.includes('行程：') || details.includes('團體') || details.includes('旅行團'));
 
-      const normalizeDate = (d) => {
-          if (!d) return null;
-          let s = String(d).replace(/\//g, '-').trim();
-          let p = s.split('-');
-          if (p.length === 2) {
-              const y = new Date().getFullYear();
-              return `${y}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`;
-          }
-          if (p.length === 3) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
-          return s;
-      };
-      
-      let runningPrice = fallbackPrice ? String(fallbackPrice).replace(/[^\d]/g, '') : null;
-      if (!details) return [{ date: normalizeDate(fallbackDate), price: runningPrice, isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, isTour: isGlobalTour, cityContext: null, titleContext: null, link: null, blockText: '' }];
+      if (!details) return [];
       
       const items = [];
       const currentYear = new Date().getFullYear();
@@ -521,9 +509,10 @@
         let daysMatch = block.match(/(\d+)\s*(?:日|天)/);
         let blockDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
 
-        currentCityContext = null;
+        let blockCityContext = getCityFromText(block);
+        currentCityContext = blockCityContext;
         currentTitleContext = null;
-        let blockRunningPrice = runningPrice;
+        let blockRunningPrice = null;
 
         for (let line of lines) {
             let pm = null;
@@ -625,13 +614,12 @@
           }
         }
       }
-      if (items.length > 0) return items;
-      return [{ date: normalizeDate(fallbackDate), price: runningPrice || '', isFlightAndHotel: isGlobalPak, isBogo: isGlobalBogo, isTour: isGlobalTour, cityContext: currentCityContext, titleContext: currentTitleContext, link: null, blockText: details }];
+      return items;
     }
 
     async function fetchSheetData(force = false) {
-      // 升級至 v18：極致輕量化快訊膠囊 + 強化 localStorage 秒開體驗
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v18', CACHE_KEY_HOTELS = 'eddie_hotels_v18', CACHE_TIME = 'eddie_cache_time_v18', now = new Date().getTime();
+      // 🚀 v21：導入 Gviz API 試算表直連引擎，徹底解決 GAS 部署不穩定的問題
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v21', CACHE_KEY_HOTELS = 'eddie_hotels_v21', CACHE_TIME = 'eddie_cache_time_v21', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -639,15 +627,19 @@
 
       let hasCache = false;
       if (cachedTickets && cachedHotels && !force) {
-        state.tickets = JSON.parse(cachedTickets);
-        state.hotels = JSON.parse(cachedHotels);
-        state.isLoading = false;
-        hasCache = true;
-        renderMain(); // 秒開！瞬間渲染出舊資料
-        
-        // 快取如果在 60 秒內，連背景都不用更新
-        if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
-            return;
+        try {
+            state.tickets = JSON.parse(cachedTickets);
+            state.hotels = JSON.parse(cachedHotels);
+            state.isLoading = false;
+            hasCache = true;
+            renderMain(); 
+            
+            // 快取如果在 60 秒內，不需要背景更新
+            if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
+                return;
+            }
+        } catch(e) {
+            console.warn('Cache parsing failed', e);
         }
       }
 
@@ -656,138 +648,163 @@
           renderMain();
       }
 
-      // 背景靜默更新資料
       try {
-        const res = await fetch(`${API_URL}?cache=${now}`);
-        const data = await res.json();
-        const ticketMap = new Map(); 
-        
-        if (data && data.tickets) {
-          let allTickets = data.tickets.flatMap((row, index) => {
-            let rawText = row.details || row.city || row.country || ''; 
-            if (typeof rawText !== 'string') rawText = String(rawText);
-            if (rawText) rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
-            
-            const inferred = inferInfoFromText(rawText);
-            const parsedItems = parseRawDetails(rawText, row.date, row.price);
-            
-            return parsedItems.map((item, subIndex) => {
-              let finalCity = item.cityContext || row.city || inferred.city;
-              if (finalCity === '其他航點') finalCity = getCityFromText(inferred.title) || '其他航點';
-              let finalCountry = getCountryByCity(finalCity);
-              
-              if (finalCity === '其他航點' || finalCountry === '其他') {
-                  if (rawText.includes('泰國')) { finalCountry = '泰國'; finalCity = '曼谷'; }
-                  else if (rawText.includes('韓國')) { finalCountry = '韓國'; finalCity = '首爾'; }
-                  else if (rawText.includes('越南')) { finalCountry = '越南'; finalCity = '峴港'; }
-              }
-              if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
-              
-              let airlineTag = item.isTour ? '跟團行程' : inferAirlineFromCode(rawText);
-              let status = getTicketStatus(item.date, airlineTag || inferred.title, item.isTour);
-              
-              return { 
-                id: `ticket-${index}-${subIndex}`, 
-                uploadIndex: index, 
-                country: finalCountry, 
-                city: finalCity.trim(), 
-                date: item.date, 
-                airline: item.titleContext || inferred.title, 
-                airlineTag: airlineTag, 
-                price: item.price, 
-                details: item.blockText || rawText, 
-                link: item.link || row.link, 
-                isFlightAndHotel: item.isFlightAndHotel, 
-                isBogo: item.isBogo, 
-                isTour: item.isTour,
-                isHidden: status.isHidden,
-                isWarning: status.isWarning
-              };
-            });
-          }).filter(t => {
-            if (!t.date) return false;
-            return !t.isHidden;
-          }); 
-          
-          allTickets.forEach(t => { 
-            const airlineKey = t.airlineTag || normalizeForDedup(t.airline).replace(/\d+/g, '');
-            const key = `${t.date}_${t.city}_${airlineKey}_${t.isFlightAndHotel}_${t.isBogo}_${t.isTour}`;
-            
-            if (ticketMap.has(key)) {
-              const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
-              const newPrice = parseInt((t.price || '').replace(/\D/g, '')) || 999999;
-              if (newPrice < existingPrice) {
-                ticketMap.set(key, t);
-              }
-            } else {
-              ticketMap.set(key, t); 
-            }
-          }); 
-        }
-        
-        if (data && data.tours) {
-          let allTours = data.tours.flatMap((row, index) => {
-            let rawText = row.details || row.title || row.country || '';
-            if (typeof rawText !== 'string') rawText = String(rawText);
-            const inferred = inferInfoFromText(rawText);
-            const parsedItems = parseRawDetails(rawText, row.date, row.price);
-            
-            return parsedItems.map((item, subIndex) => {
-              let finalCity = item.cityContext || inferred.city;
-              if (finalCity === '其他航點') finalCity = getCityFromText(inferred.title) || '其他航點';
-              let finalCountry = getCountryByCity(finalCity);
-              
-              if (finalCity === '其他航點' || finalCountry === '其他') {
-                  if (rawText.includes('泰國')) { finalCountry = '泰國'; finalCity = '曼谷'; }
-                  else if (rawText.includes('韓國')) { finalCountry = '韓國'; finalCity = '首爾'; }
-                  else if (rawText.includes('越南')) { finalCountry = '越南'; finalCity = '峴港'; }
-              }
-              if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
-              
-              let status = getTicketStatus(item.date, '跟團行程', true);
+        const SHEET_ID = '11K6w4hIwjTdUz1nJo4nt6i0GMC7QujZD8Mky4yy0zZ8';
+        const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-              return { 
-                id: `tour-${index}-${subIndex}`, 
-                uploadIndex: index,
-                country: finalCountry, 
-                city: finalCity.trim(), 
-                date: item.date, 
-                airline: item.titleContext || inferred.title, 
-                airlineTag: '跟團行程', 
-                price: item.price, 
-                details: item.blockText || rawText, 
-                link: item.link || row.link, 
-                isFlightAndHotel: item.isFlightAndHotel, 
-                isBogo: item.isBogo, 
-                isTour: true,
-                isHidden: status.isHidden,
-                isWarning: status.isWarning
-              };
-            });
-          }).filter(t => {
-            if (!t.date) return false;
-            return !t.isHidden;
-          }); 
-          
-          allTours.forEach(t => { 
-            const normTitle = normalizeForDedup(t.airline).replace(/\d+/g, '');
-            const key = `${t.date}_${t.city}_跟團行程_${normTitle}_${t.price}`;
-            if (ticketMap.has(key)) {
-              const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
-              const newPrice = parseInt((t.price || '').replace(/\D/g, '')) || 999999;
-              if (newPrice < existingPrice) ticketMap.set(key, t);
-            } else {
-              ticketMap.set(key, t); 
+        // 專用拉取函式
+        const fetchGviz = async (sheetName) => {
+            try {
+                const url = sheetName ? `${BASE_URL}&sheet=${encodeURIComponent(sheetName)}` : BASE_URL;
+                const res = await fetch(url);
+                const text = await res.text();
+                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                return null;
             }
-          }); 
-        }
+        };
+
+        const [flightsData, toursData, hotelsData1, hotelsData2] = await Promise.all([
+            fetchGviz(),
+            fetchGviz('旅行團'),
+            fetchGviz('飯店推薦'),
+            fetchGviz('表單回應 1')
+        ]);
+        
+        let data = { tickets: [], tours: [], hotels: [] };
+        
+        // 抽取原始文案
+        const extractRows = (sourceData) => {
+            if (!sourceData || !sourceData.table || !sourceData.table.rows) return [];
+            return sourceData.table.rows.map(row => {
+                if (!row || !row.c) return {};
+                let detailsText = '';
+                if (row.c[1] && String(row.c[1].v).length > 10) detailsText = String(row.c[1].v);
+                else if (row.c[5]) detailsText = String(row.c[5].v);
+                else if (row.c[0]) detailsText = String(row.c[0].v);
+                return { details: detailsText };
+            }).filter(r => r.details);
+        };
+
+        data.tickets = extractRows(flightsData);
+        data.tours = extractRows(toursData);
+        
+        const ticketMap = new Map(); 
+
+        let combinedIndex = 0;
+        const processCombinedTickets = (rawArray, isTourFlag) => {
+            rawArray.forEach((row) => {
+                let rawText = row.details;
+                rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+                
+                const inferred = inferInfoFromText(rawText);
+                const parsedItems = parseRawDetails(rawText);
+                
+                parsedItems.forEach((item, subIndex) => {
+                    let safeRowCity = null; 
+                    let finalCity = item.cityContext || safeRowCity || inferred.city;
+                    if (finalCity === '其他航點' || !finalCity) finalCity = getCityFromText(inferred.title) || '其他航點';
+                    
+                    let finalCountry = getCountryByCity(finalCity);
+                    if (finalCity === '其他航點' || finalCountry === '其他') {
+                        if (rawText.includes('泰國')) { finalCountry = '泰國'; finalCity = '曼谷'; }
+                        else if (rawText.includes('韓國')) { finalCountry = '韓國'; finalCity = '首爾'; }
+                        else if (rawText.includes('越南')) { finalCountry = '越南'; finalCity = '峴港'; }
+                    }
+                    if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
+                    
+                    let airlineTag = isTourFlag ? '跟團行程' : inferAirlineFromCode(rawText);
+                    let status = getTicketStatus(item.date, airlineTag || inferred.title, isTourFlag);
+                    
+                    if (status.isHidden) {
+                        console.log(`[自動下架] ${finalCity} ${item.titleContext || inferred.title} (${item.date}) 已超過開票底線`);
+                        return; // 被下架就不加入
+                    }
+
+                    const ticketObj = { 
+                        id: `item-${combinedIndex}-${subIndex}`, 
+                        uploadIndex: combinedIndex, 
+                        country: finalCountry, 
+                        city: finalCity.trim(), 
+                        date: item.date, 
+                        airline: item.titleContext || inferred.title, 
+                        airlineTag: airlineTag, 
+                        price: item.price, 
+                        details: item.blockText || rawText, 
+                        isFlightAndHotel: item.isFlightAndHotel, 
+                        isBogo: item.isBogo, 
+                        isTour: isTourFlag,
+                        isHidden: status.isHidden,
+                        isWarning: status.isWarning
+                    };
+
+                    const airlineKey = airlineTag || normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
+                    const key = `${ticketObj.date}_${ticketObj.city}_${airlineKey}_${ticketObj.isFlightAndHotel}_${ticketObj.isBogo}_${ticketObj.isTour}`;
+                    
+                    if (ticketMap.has(key)) {
+                        const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
+                        const newPrice = parseInt((ticketObj.price || '').replace(/\D/g, '')) || 999999;
+                        if (newPrice < existingPrice) {
+                            ticketMap.set(key, ticketObj);
+                        }
+                    } else {
+                        ticketMap.set(key, ticketObj); 
+                    }
+                });
+                combinedIndex++;
+            });
+        };
+
+        processCombinedTickets(data.tickets, false);
+        processCombinedTickets(data.tours, true);
         
         state.tickets = Array.from(ticketMap.values());
         
-        state.hotels = (data.hotels || []).map((h, i) => {
+        // 抽取飯店
+        const extractHotels = (sourceData) => {
+            if (!sourceData || !sourceData.table || !sourceData.table.cols) return [];
+            let headers = sourceData.table.cols.map(c => c ? String(c.label || '').trim() : '');
+            let rowsToProcess = sourceData.table.rows || [];
+            
+            // 萬一表頭被擠到第一行
+            if (headers.filter(Boolean).length === 0 && rowsToProcess.length > 0) {
+                headers = rowsToProcess[0].c.map(cell => cell ? String(cell.v || '').trim() : '');
+                rowsToProcess = rowsToProcess.slice(1);
+            }
+            
+            const approvalIdx = headers.findIndex(h => h === '核准' || h === '審核' || h === '發佈');
+            
+            return rowsToProcess.filter(row => {
+                if (!row || !row.c) return false;
+                if (approvalIdx !== -1) {
+                    const val = row.c[approvalIdx] ? String(row.c[approvalIdx].v).trim().toUpperCase() : '';
+                    if (!['Y', 'V', 'OK', '是'].includes(val)) return false;
+                }
+                return true;
+            }).map((row, i) => {
+                let obj = { id: `hotel-${i}` };
+                headers.forEach((h, j) => {
+                    if (!h || !row.c[j]) return;
+                    const v = String(row.c[j].v).trim();
+                    if (h.includes('國家')) obj.country = v;
+                    if (h.includes('城市')) obj.city = v;
+                    if (h.includes('飯店') || h.includes('名稱')) obj.name = v;
+                    if (h.includes('心得') || h.includes('說明')) obj.description = v;
+                    if (h.includes('連結') || h.includes('網址')) obj.link = v;
+                    if (h.includes('署名') || h.includes('暱稱') || h.includes('名字') || h.includes('投稿')) obj.submitter = v;
+                });
+                return obj;
+            }).filter(h => h.name);
+        };
+
+        data.hotels = extractHotels(hotelsData1);
+        if (data.hotels.length === 0) data.hotels = extractHotels(hotelsData2);
+
+        state.hotels = data.hotels.map(h => {
             let rawCountry = (h.country || '').trim();
             let rawCity = (h.city || '').trim();
-            let rawName = (h.name || h.飯店名稱 || '').trim();
+            let rawName = (h.name || '').trim();
             
             let combinedText = rawCountry + " " + rawCity + " " + rawName;
             let inferredCity = getCityFromText(combinedText) || rawCity;
@@ -801,16 +818,12 @@
             }
 
             return { 
-                id: `hotel-${i}`, 
+                ...h,
                 country: rawCountry, 
                 city: rawCity || inferredCity || '未提供城市', 
-                normalizedCity: inferredCity,
-                name: rawName, 
-                description: h.description||h.心得||h.詳細說明||'', 
-                link: h.link||h.連結||'',
-                submitter: h.submitter||h.署名||h.暱稱||h.投稿者||'' 
+                normalizedCity: inferredCity
             };
-        }).filter(h => h.name).reverse(); 
+        }).reverse(); 
         
         localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
         localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
@@ -827,8 +840,8 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v18');
-        localStorage.removeItem('eddie_hotels_v18');
+        localStorage.removeItem('eddie_tickets_v21');
+        localStorage.removeItem('eddie_hotels_v21');
         fetchSheetData(true); 
     };
     
@@ -928,7 +941,6 @@
     };
     window.closeModal = () => { state.isModalOpen = false; renderModal(); };
 
-    // 更新：載入畫面加上友善提示
     function getLoadingHTML() { 
       return `
         <div class="animate-pulse fade-in text-center py-32">
@@ -1058,7 +1070,7 @@
         <div class="mt-16 w-full space-y-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-black text-gray-900 pl-3 border-l-4 border-gray-900 tracking-tight">旅遊必備推薦</h2>
-            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>背景同步中</div>' : ''}
+            ${state.isLoading ? '<div class="flex items-center gap-2 text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full"><i class="ph-bold ph-spinner animate-spin text-sm"></i>更新資料中</div>' : ''}
           </div>
 
           <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" onclick="window.trackEvent('click_affiliate', {target: 'LINE_Community'})" class="block group relative w-full h-32 sm:h-40 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
@@ -1112,7 +1124,6 @@
         </div>
       `;
 
-      // 更新：極致輕量化的膠囊型快訊
       let recentHTML = '';
       if (state.tickets.length > 0) {
           const tks = state.tickets.filter(t => !t.isTour).sort((a,b) => b.uploadIndex - a.uploadIndex).slice(0, 5);
@@ -1156,7 +1167,6 @@
     }
 
     function getFlightsHTML() {
-      // 1. 智慧過濾：只保留「目前有清艙機票或行程」的城市/區域 (Tabs)
       const availableTabs = state.selectedCountryObj.tabs.filter(tab => {
           return state.tickets.some(t => {
               const matchCountry = t.country === state.selectedCountryObj.country;
@@ -1165,7 +1175,6 @@
           });
       });
 
-      // 如果該國家完全沒有票，直接顯示友善提示
       if (availableTabs.length === 0) {
           return `
             <div class="fade-in">
@@ -1181,7 +1190,6 @@
           `;
       }
 
-      // 如果當前選中的 Tab 沒票被隱藏了，自動切換到第一個有票的 Tab
       if (!state.selectedTab || !availableTabs.find(t => t.label === state.selectedTab)) {
           state.selectedTab = availableTabs[0].label;
       }
@@ -1202,13 +1210,11 @@
         return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md ring-1 ring-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-600' : 'text-gray-400'}">${subText}</span></button>`; 
       }).join('');
 
-      // 2. 智慧日期跳轉：找出所有有票的月份
       const availableMonths = [...new Set(filteredTickets.map(t => t.date.substring(0, 7)))].sort();
       let year = state.currentDate.getFullYear();
       let month = state.currentDate.getMonth();
       let currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-      // 如果當前月份沒有票，自動快轉到第一個有票的月份
       if (availableMonths.length > 0 && !availableMonths.includes(currentMonthStr)) {
           const [y, m] = availableMonths[0].split('-');
           state.currentDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
@@ -1217,7 +1223,6 @@
           currentMonthStr = availableMonths[0];
       }
 
-      // 修正產生小月份按鈕，移除了錯誤的字串跳脫
       const monthButtonsHTML = availableMonths.length > 0 && state.viewMode === 'calendar' ? `
         <div class="flex flex-wrap gap-2 mb-4 fade-in">
           ${availableMonths.map(mStr => {
@@ -1322,7 +1327,6 @@
          
          contentHTML = upcoming.length === 0 ? `<div class="py-20 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-airplane-tilt text-4xl text-gray-300 mb-3"></i>目前暫無機票！</div>` : `${sortUI}<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">${listHTML}</div>`;
       } else {
-        // 月曆視圖
         const prefix = currentMonthStr;
         const monthTickets = filteredTickets.filter(t => t.date.startsWith(prefix));
         

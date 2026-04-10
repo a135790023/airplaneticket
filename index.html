@@ -618,8 +618,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 🚀 v21：導入 Gviz API 試算表直連引擎，徹底解決 GAS 部署不穩定的問題
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v21', CACHE_KEY_HOTELS = 'eddie_hotels_v21', CACHE_TIME = 'eddie_cache_time_v21', now = new Date().getTime();
+      // 🚀 v22：加入隱藏後端爬蟲失敗的備註文字
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v22', CACHE_KEY_HOTELS = 'eddie_hotels_v22', CACHE_TIME = 'eddie_cache_time_v22', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -696,7 +696,15 @@
         const processCombinedTickets = (rawArray, isTourFlag) => {
             rawArray.forEach((row) => {
                 let rawText = row.details;
-                rawText = rawText.replace(/台灣虎航/g, '🐯').replace(/虎航/g, '🐯');
+                
+                // 替換特定文字，並隱藏後端爬蟲產生的提示語
+                rawText = rawText
+                    .replace(/台灣虎航/g, '🐯')
+                    .replace(/虎航/g, '🐯')
+                    .replace(/\[系統連線超時，請手動確認網頁\]/g, '')
+                    .replace(/\[自動抓取失敗，請手動確認網頁\]/g, '')
+                    .replace(/\[系統自動補充\]/g, '')
+                    .trim();
                 
                 const inferred = inferInfoFromText(rawText);
                 const parsedItems = parseRawDetails(rawText);
@@ -840,8 +848,8 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v21');
-        localStorage.removeItem('eddie_hotels_v21');
+        localStorage.removeItem('eddie_tickets_v22');
+        localStorage.removeItem('eddie_hotels_v22');
         fetchSheetData(true); 
     };
     

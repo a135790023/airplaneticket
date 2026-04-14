@@ -618,8 +618,8 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 🚀 v22：加入隱藏後端爬蟲失敗的備註文字
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v22', CACHE_KEY_HOTELS = 'eddie_hotels_v22', CACHE_TIME = 'eddie_cache_time_v22', now = new Date().getTime();
+      // 🚀 v23：改為「最新資料強制覆蓋」引擎，不再只保留最低價，確保資訊絕對最新
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v23', CACHE_KEY_HOTELS = 'eddie_hotels_v23', CACHE_TIME = 'eddie_cache_time_v23', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
       const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
@@ -747,18 +747,19 @@
                         isWarning: status.isWarning
                     };
 
-                    const airlineKey = airlineTag || normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
+                    let airlineKey = airlineTag;
+                    if (isTourFlag) {
+                        // 旅行團需要加上標題名稱來做區分，避免同一天不同旅行團互相覆蓋
+                        airlineKey += '_' + normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
+                    } else if (!airlineKey) {
+                        airlineKey = normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
+                    }
+                    
                     const key = `${ticketObj.date}_${ticketObj.city}_${airlineKey}_${ticketObj.isFlightAndHotel}_${ticketObj.isBogo}_${ticketObj.isTour}`;
                     
-                    if (ticketMap.has(key)) {
-                        const existingPrice = parseInt((ticketMap.get(key).price || '').replace(/\D/g, '')) || 999999;
-                        const newPrice = parseInt((ticketObj.price || '').replace(/\D/g, '')) || 999999;
-                        if (newPrice < existingPrice) {
-                            ticketMap.set(key, ticketObj);
-                        }
-                    } else {
-                        ticketMap.set(key, ticketObj); 
-                    }
+                    // 【最新覆蓋引擎】
+                    // 試算表資料是從舊讀到新，我們直接無條件覆蓋，就能確保留下的是最新上傳的！
+                    ticketMap.set(key, ticketObj);
                 });
                 combinedIndex++;
             });
@@ -848,8 +849,8 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v22');
-        localStorage.removeItem('eddie_hotels_v22');
+        localStorage.removeItem('eddie_tickets_v23');
+        localStorage.removeItem('eddie_hotels_v23');
         fetchSheetData(true); 
     };
     

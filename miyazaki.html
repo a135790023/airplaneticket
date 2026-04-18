@@ -91,7 +91,7 @@
         </div>
 
         <!-- Day Content -->
-        <div id="day-content" class="bg-white rounded-2xl md:rounded-3xl p-5 md:p-10 shadow-sm border border-slate-100 relative mt-6">
+        <div id="day-content" class="bg-white rounded-2xl md:rounded-3xl p-5 md:p-10 shadow-sm border border-slate-100 relative mt-6 text-left">
             <!-- Content will be injected here -->
         </div>
 
@@ -133,7 +133,9 @@
     <!-- JavaScript Data and Logic -->
     <script>
         window.trackEvent = window.trackEvent || function() {};
-        const apiKey = ""; 
+        
+        // 💡 API Key 已填入
+        const apiKey = "AIzaSyD5lcv921NMJ0Dq5r3i03-MIw-_x_qa9Vw"; 
 
         const itineraryData = [
             {
@@ -184,7 +186,7 @@
                         desc: "擁有 1900 年歷史，為高千穗鄉 88 社的總社。殿內的夫婦杉傳說手牽手繞行三圈能保佑姻緣與家庭圓滿。",
                         images: [{ url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1032/responsive_images/m4KxsI93pClDGq3f0RflMzN5mdQfShRS6tH24pkf__1729_1148.jpg", credit: "作者艾迪王Eddie", title: "高千穗神社" }]
                     },
-                    { time: "18:00 - 19:30", type: "food", title: "【晚餐】高千穂 鶏の炭火焼 吾平店", desc: "這家是當地隱藏版的名店，提供地道的炭火燒鳥料理。炭香濃郁，是觀賞夜神樂前的最佳能量補給。" },
+                    { time: "18:00 - 19:30", type: "food", title: "【晚餐】高千穂 鶏の炭火燒 吾平店", desc: "這家是當地隱藏版的名店，提供地道的炭火燒鳥料理。炭香濃郁，是觀賞夜神樂前的最佳能量補給。" },
                     { 
                         time: "20:00 - 21:00", 
                         type: "spot", 
@@ -234,7 +236,7 @@
                         time: "11:30 - 14:00", 
                         type: "spot", 
                         title: "深入秘境：椎葉村深度體驗", 
-                        desc: "位於宮崎縣西北部，為<strong>「日本三大秘境」</strong>之一。保存了平家落人傳說。<br><br><strong>路途資訊：</strong>今日駕駛極具挑戰性。從<strong>熊本市區開往椎葉村約需 2 小時</strong>；探訪完畢後，從<strong>椎葉村返回宮崎市區則約需 3 小時</strong>長程駕駛。<br><br><strong>仙人的梯田：</strong>因其地勢險峻宛如仙境，有『椎葉的 Machu Picchu』美譽。<br><br><strong>備註：</strong>今日路途遙遠，午餐建議於趕路途中利用超商快速解決，以便有更多時間遊覽秘境。",
+                        desc: "位於宮崎縣西北部，為<strong>「日本三大秘境」</strong>之一。保存了平家落人傳說。<br><br><strong>路途資訊：</strong>今日駕駛極具挑戰性。從<strong>熊本市區開往椎葉村約需 2 小時</strong>；探訪完畢後，從<strong>椎葉村返回宮崎市區則約需 3 小時</strong>長程駕駛。<br><br><strong>仙人的梯田：</strong>因其地勢險峻宛如仙境，有『椎葉的 Machu Picchu』美譽。當地的『椎葉神樂』更是傳承數百年的古代祭典。<br><br><strong>備註：</strong>今日路途遙遠，午餐建議於趕路途中利用超商快速解決，以便有更多時間遊覽秘境。",
                         images: [
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/Q5G9znewM19Hi5DNslhPM2YoPsnxQ7mNBm7VX95i__1639_1229.jpg", credit: "宮崎官方網站照片", title: "椎葉村風景" },
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/vSrYlh3V05ej7at310MudugirKkSruNvxXSH5Hqp__1597_1065.jpg", credit: "宮崎官方網站照片", title: "椎葉村仙人的梯田" },
@@ -260,6 +262,7 @@
         // --- Gemini API Logic ---
         async function fetchGeminiWithRetry(prompt, retries = 5) {
             const delays = [1000, 2000, 4000, 8000, 16000];
+            // 💡 使用填入的 apiKey
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             for (let i = 0; i < retries; i++) {
@@ -277,11 +280,16 @@
             const modal = document.getElementById('packing-modal');
             const content = document.getElementById('packing-content');
             modal.classList.remove('hidden');
-            content.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-emerald-600 gap-3"><i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i><p class="text-sm font-bold text-center">正在整理清單...</p></div>`;
+            content.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-emerald-600 gap-3 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto"></i><p class="text-sm font-bold">正在根據行程深度整理清單...</p></div>`;
             lucide.createIcons();
             const tripSummary = itineraryData.map(d => `Day ${d.day}: ${d.title}`).join('、');
-            const prompt = `你是專業旅遊管家。行程包含：${tripSummary}。請整理一份專屬行李清單。包含：自駕必備文件、山區與海邊衣物建議。HTML 格式。繁體中文。`;
-            try { const responseHtml = await fetchGeminiWithRetry(prompt); content.innerHTML = responseHtml; } catch (err) { content.innerHTML = `<p class="text-red-500 text-center py-10">產出失敗，請稍後再試。</p>`; }
+            const prompt = `你是專業旅遊管家。行程包含：${tripSummary}。請整理一份專屬行李清單。包含：自駕必備文件、山區與海邊衣物建議。HTML 格式輸出。繁體中文。`;
+            try { 
+                const responseHtml = await fetchGeminiWithRetry(prompt); 
+                content.innerHTML = responseHtml; 
+            } catch (err) { 
+                content.innerHTML = `<p class="text-red-500 text-center py-10">產出失敗，請確保您的 API Key 有效且已開啟 Gemini API 權限。</p>`; 
+            }
         }
 
         function closePackingModal() { document.getElementById('packing-modal').classList.add('hidden'); }
@@ -321,7 +329,7 @@
                 if (event.images && event.images.length > 0) {
                     imgSection = event.images.map(img => `
                         <div class="mt-4 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white">
-                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover">
+                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover hover:scale-105 transition-transform duration-700">
                             ${img.credit ? `<p class="px-3 py-1.5 text-[9px] md:text-[10px] text-slate-400 text-right italic border-t border-slate-50">${img.credit}</p>` : ''}
                         </div>
                     `).join('');
@@ -329,10 +337,10 @@
                 return `
                     <div class="relative flex flex-col md:flex-row gap-5 md:gap-8 items-start mb-10 text-left">
                         <div class="md:w-[80px] flex-shrink-0 pt-1 md:text-right flex md:block items-center gap-2">
-                            <div class="md:hidden absolute -left-[27px] w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10"></div>
-                            <div class="text-slate-400 font-bold text-[10px] md:text-xs">${event.time}</div>
+                            <div class="md:hidden absolute -left-[27px] w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10 shadow-sm"></div>
+                            <div class="text-slate-400 font-bold text-[10px] md:text-xs tracking-wider">${event.time}</div>
                         </div>
-                        <div class="hidden md:block absolute left-[89px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10"></div>
+                        <div class="hidden md:block absolute left-[89px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10 shadow-sm"></div>
                         <div class="flex-1 bg-white border border-slate-50 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all w-full">
                             <div class="flex items-start gap-4">
                                 <div class="p-2.5 rounded-lg flex-shrink-0 ${styles.color}"><i data-lucide="${styles.icon}" class="w-4 h-4 md:w-5 md:h-5"></i></div>

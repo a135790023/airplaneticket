@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九州五天四夜：大自然與爆膽美食之旅</title>
+    <title>日本宮崎五天四夜：大自然與火山秘境之旅</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 Lucide Icons -->
@@ -17,23 +17,44 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        
+        /* 給 AI 產生內容的基礎排版樣式 */
+        .ai-response ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 1rem; color: #475569; }
+        .ai-response li { margin-bottom: 0.5rem; line-height: 1.6; }
+        .ai-response h3, .ai-response h4 { font-weight: 700; color: #065f46; margin-top: 1.25rem; margin-bottom: 0.5rem; font-size: 1.1rem;}
+        .ai-response strong { color: #047857; background-color: #d1fae5; padding: 0 0.25rem; border-radius: 0.25rem;}
+        .ai-response p { margin-bottom: 0.75rem; color: #475569; line-height: 1.6;}
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-900 min-h-screen">
 
+    <!-- 懸浮返回按鈕 -->
+    <a href="https://eddietour.tw" 
+       class="fixed top-4 left-4 md:top-6 md:left-6 z-40 flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-white/20 hover:bg-white/90 backdrop-blur-md border border-white/30 shadow-lg rounded-full text-white hover:text-emerald-800 font-medium hover:-translate-x-1 transition-all duration-300 group">
+        <i data-lucide="arrow-left" class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:-translate-x-1"></i>
+        <span class="text-sm md:text-base tracking-wide">返回首頁</span>
+    </a>
+
     <!-- Hero Section -->
-    <header class="relative bg-gradient-to-br from-emerald-800 to-teal-900 text-white pt-20 pb-16 px-6 overflow-hidden">
+    <header class="relative bg-gradient-to-br from-emerald-800 to-teal-900 text-white pt-24 pb-16 px-6 overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
         <div class="max-w-4xl mx-auto relative z-10">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-700/50 border border-emerald-500/30 text-sm font-medium mb-6">
-                <i data-lucide="map-pin" class="w-4 h-4"></i> 日本九州
+                <i data-lucide="map-pin" class="w-4 h-4"></i> 日本宮崎
             </div>
             <h1 class="text-4xl md:text-5xl font-bold mb-4 leading-tight tracking-tight">
-                五天四夜大自然與<br class="md:hidden" /><span class="text-orange-400">爆膽美食</span>之旅
+                五天四夜大自然與<br class="md:hidden" /><span class="text-orange-400">火山秘境</span>之旅
             </h1>
-            <p class="text-emerald-100 text-lg md:text-xl max-w-2xl opacity-90">
-                從宮崎的南蠻雞到高千穗的神話秘境，再到阿蘇的壯闊火山與赤牛丼。這是一趟結合自駕樂趣、絕美風景與在地美食的極致體驗。
+            <p class="text-emerald-100 text-lg md:text-xl max-w-2xl opacity-90 mb-6">
+                從宮崎的南蠻雞到椎葉村的神話秘境，再到阿蘇的壯闊火山與赤牛丼。這是一趟結合自駕樂趣、絕美風景與在地美食的極致體驗。
             </p>
+            
+            <!-- ✨ Gemini API：行李管家按鈕 -->
+            <div class="mt-8 flex flex-wrap gap-4">
+                <button onclick="openPackingModal()" class="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 shadow-lg rounded-xl text-white font-bold transition-all flex items-center gap-2 hover:-translate-y-1">
+                    <i data-lucide="luggage" class="w-5 h-5"></i> ✨ AI 行李準備清單
+                </button>
+            </div>
         </div>
     </header>
 
@@ -87,13 +108,55 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-slate-800 text-slate-400 py-8 text-center text-sm">
-        <p>九州五天四夜自駕遊行程規劃</p>
-        <p class="mt-2 text-slate-500">Have a safe and wonderful trip!</p>
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+                <div class="text-center md:text-left">
+                    <h3 class="text-2xl font-bold text-white mb-2 tracking-wider flex items-center justify-center md:justify-start gap-2">
+                        艾迪王 <span class="text-emerald-500 text-lg">Eddie Tour</span>
+                    </h3>
+                    <p class="text-slate-400 text-sm">為您精選各大旅行社超值機票、eSIM 與專屬旅遊優惠</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all hover:-translate-y-1" title="Instagram">
+                        <i data-lucide="instagram" class="w-5 h-5"></i>
+                    </a>
+                    <a href="https://eddietour.tw" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all hover:-translate-y-1" title="官方網站">
+                        <i data-lucide="globe" class="w-5 h-5"></i>
+                    </a>
+                    <a href="mailto:eddiewang0707.tw@gmail.com" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all hover:-translate-y-1" title="聯絡信箱">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+                <p>&copy; 2026 艾迪王 Eddie Tour. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a href="https://eddietour.tw" class="hover:text-emerald-400 transition-colors">返回主站</a>
+                </div>
+            </div>
+        </div>
     </footer>
+
+    <!-- AI Packing List Modal -->
+    <div id="packing-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closePackingModal()"></div>
+        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col relative z-10 shadow-2xl">
+            <div class="p-6 border-b border-emerald-100 flex justify-between items-center bg-emerald-50 rounded-t-3xl">
+                <h3 class="text-xl font-bold text-emerald-800 flex items-center gap-2">✨ AI 專屬行李管家</h3>
+                <button onclick="closePackingModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="packing-content" class="p-6 overflow-y-auto ai-response flex-1">
+                <!-- Content injected via Gemini API -->
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript Data and Logic -->
     <script>
+        // Gemini API Configuration
+        const apiKey = ""; // API Key 運行時由環境提供
+
         const itineraryData = [
             {
                 day: 1,
@@ -105,11 +168,7 @@
                     { time: "18:00 - 20:00", type: "food", title: "【晚餐】宮崎牛焼肉 KUROUSHI 黒牛", desc: "回到宮崎市區，享用高品質的精肉卸直営店宮崎牛直營燒肉，大口吃肉超級過癮。" },
                     { time: "21:00", type: "food", title: "【宵夜】炭烤地雞 丸萬燒鳥 本店", desc: "如果胃還有空間，點一份帶有炭香、充滿嚼勁的帶骨地雞腿，配上一杯生啤酒，完美結束第一天。" },
                 ],
-                hotel: {
-                    name: "宮崎縣第一酒店 (Miyazaki Daiichi Hotel)",
-                    location: "宮崎市區",
-                    link: "https://www.agoda.com/zh-hk/miyazaki-daiichi-hotel/hotel/miyazaki-jp.html?countryId=3&finalPriceView=1&isShowMobileAppPrice=false&cid=1922895&numberOfBedrooms=&familyMode=false&adults=2&children=0&rooms=1&maxRooms=0&checkIn=2026-04-13&isCalendarCallout=false&childAges=&numberOfGuest=0&missingChildAges=false&travellerType=1&showReviewSubmissionEntry=false&currencyCode=TWD&isFreeOccSearch=false&tag=979f082d-06a4-4f5d-9b81-0d1bbf132dd2&flightSearchCriteria=%5Bobject+Object%5D&tspTypes=3&los=1&searchrequestid=facbbc05-da4b-4334-843a-ac44885c5da9&ds=fgEAdNrDBshSkZIE"
-                }
+                hotel: { name: "宮崎縣第一酒店 (Miyazaki Daiichi Hotel)", location: "宮崎市區", link: "https://www.agoda.com/zh-hk/miyazaki-daiichi-hotel/hotel/miyazaki-jp.html?countryId=3&finalPriceView=1&isShowMobileAppPrice=false&cid=1922895&numberOfBedrooms=&familyMode=false&adults=2&children=0&rooms=1&maxRooms=0&checkIn=2026-04-13&isCalendarCallout=false&childAges=&numberOfGuest=0&missingChildAges=false&travellerType=1&showReviewSubmissionEntry=false&currencyCode=TWD&isFreeOccSearch=false&tag=979f082d-06a4-4f5d-9b81-0d1bbf132dd2&flightSearchCriteria=%5Bobject+Object%5D&tspTypes=3&los=1&searchrequestid=facbbc05-da4b-4334-843a-ac44885c5da9&ds=fgEAdNrDBshSkZIE" }
             },
             {
                 day: 2,
@@ -123,11 +182,7 @@
                     { time: "18:00 - 19:30", type: "food", title: "【晚餐】高千穂 鶏の炭火焼 吾平店", desc: "在高千穗町內品嚐極品「高千穗牛」燒烤或鐵板燒。" },
                     { time: "20:00 - 21:00", type: "spot", title: "高千穗神社 夜神樂表演", desc: "飯後前往高千穗神社神樂殿，欣賞被指定為國家重要無形民俗文化財的「夜神樂」，為神話之鄉畫下完美句點。" },
                 ],
-                hotel: {
-                    name: "岩戶民宿 (Guesthouse Iwato)",
-                    location: "高千穗町",
-                    link: "https://www.booking.com/hotel/jp/gesutohausuiwato.zh-tw.html?aid=399012&label=takachiho-LKYK%2A76eFB%2AVlmN_9Wi%2AfAS393054275486%3Apl%3Ata%3Ap1%3Ap2%3Aac%3Aap%3Aneg%3Afi%3Atikwd-356890142158%3Alp9222031%3Ali%3Adec%3Adm%3Appccp%3DUmFuZG9tSVYkc2RlIyh9YR10fBTovuitswFzoSdli7I&sid=84d81706289a2b51e1751c483355269b&all_sr_blocks=277388104_270925082_2_0_0&checkin=2026-04-14&checkout=2026-04-15&dest_id=900051135&dest_type=city&dist=0&group_adults=2&group_children=0&hapos=1&highlighted_blocks=277388104_270925082_2_0_0&hpos=1&matching_block_id=277388104_270925082_2_0_0&no_rooms=1&req_adults=2&req_children=0&room1=A%2CA&sb_price_type=total&sr_order=popularity&sr_pri_blocks=277388104_270925082_2_0_0__734627&srepoch=1774015133&srpvid=f2a6622d5b2403af&type=total&ucfs=1&"
-                }
+                hotel: { name: "岩戶民宿 (Guesthouse Iwato)", location: "高千穗町", link: "https://www.booking.com/hotel/jp/gesutohausuiwato.zh-tw.html?aid=399012&label=takachiho-LKYK%2A76eFB%2AVlmN_9Wi%2AfAS393054275486%3Apl%3Ata%3Ap1%3Ap2%3Aac%3Aap%3Aneg%3Afi%3Atikwd-356890142158%3Alp9222031%3Ali%3Adec%3Adm%3Appccp%3DUmFuZG9tSVYkc2RlIyh9YR10fBTovuitswFzoSdli7I&sid=84d81706289a2b51e1751c483355269b&all_sr_blocks=277388104_270925082_2_0_0&checkin=2026-04-14&checkout=2026-04-15&dest_id=900051135&dest_type=city&dist=0&group_adults=2&group_children=0&hapos=1&highlighted_blocks=277388104_270925082_2_0_0&hpos=1&matching_block_id=277388104_270925082_2_0_0&no_rooms=1&req_adults=2&req_children=0&room1=A%2CA&sb_price_type=total&sr_order=popularity&sr_pri_blocks=277388104_270925082_2_0_0__734627&srepoch=1774015133&srpvid=f2a6622d5b2403af&type=total&ucfs=1&" }
             },
             {
                 day: 3,
@@ -140,11 +195,7 @@
                     { time: "16:30 - 18:00", type: "car", title: "牛奶之路前往熊本市區", desc: "馳騁在風景如畫的牛奶之路（大觀峰附近），伴隨著夕陽餘暉下山，開往熊本市區。" },
                     { time: "18:30", type: "food", title: "【晚餐】勝烈亭 新市街本店", desc: "推薦市區的超人氣炸豬排，肉質軟嫩且份量十足，滿足味蕾。" },
                 ],
-                hotel: {
-                    name: "Dormy Inn飯店-熊本天然溫泉",
-                    location: "熊本市區",
-                    link: "https://www.trip.com/t/Dv0HivJhLU2"
-                }
+                hotel: { name: "Dormy Inn飯店-熊本天然溫泉", location: "熊本市區", link: "https://www.trip.com/t/Dv0HivJhLU2" }
             },
             {
                 day: 4,
@@ -157,11 +208,7 @@
                     { time: "17:00 - 19:30", type: "spot", title: "宮崎市區悠閒採買", desc: "在永旺夢樂城 AEON MALL 或車站周邊悠閒逛街，採買伴手禮。" },
                     { time: "20:00", type: "food", title: "【晚餐】辛麺屋 桝元 宮崎本店", desc: "用宮崎特有的靈魂美食「辛麵」做收尾！辣度可自由選擇，舒緩一整天開車的疲勞。" },
                 ],
-                hotel: {
-                    name: "宮崎市區飯店",
-                    location: "宮崎市區",
-                    link: null
-                }
+                hotel: { name: "PRINCE SMART INN", location: "宮崎市區", link: "https://www.trip.com/t/zt7FIIsnLU2" }
             },
             {
                 day: 5,
@@ -175,23 +222,128 @@
             }
         ];
 
-        // 輔助函式：根據事件類型取得對應的圖示與顏色
+        // --- Gemini API 封裝 ---
+        async function fetchGeminiWithRetry(prompt, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，AI 暫時無法回應。";
+                    // 移除潛在的 markdown 標籤以確保 HTML 乾淨
+                    return text.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        // --- 行李清單 Modal 邏輯 ---
+        async function openPackingModal() {
+            const modal = document.getElementById('packing-modal');
+            const content = document.getElementById('packing-content');
+            modal.classList.remove('hidden');
+            
+            content.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 text-emerald-600 gap-4">
+                    <i data-lucide="loader-2" class="w-12 h-12 animate-spin"></i>
+                    <p class="font-medium text-lg">✨ AI 正在為您分析九州地形與氣候，整理專屬清單...</p>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // 將整個行程精華轉成文字提供給 AI
+            const tripSummary = itineraryData.map(d => `Day ${d.day}: ${d.title}`).join('、');
+            const prompt = `你是專業的旅遊管家。使用者即將前往日本九州進行五天四夜的自駕遊。行程路線包含：${tripSummary}。
+            
+請根據這個自駕、山區(高千穗、阿蘇火山)、海線(宮崎海岸)的綜合特性，幫他整理一份貼心實用的「專屬行李準備清單」（需包含自駕必備文件、山區建議衣物等）。
+請直接輸出 HTML 格式，使用 <h3> 標題分類，並用 <ul> <li> 列出項目。文字可以使用 <strong> 標示重點。請用繁體中文回答，語氣專業且溫暖。`;
+
+            try {
+                const responseHtml = await fetchGeminiWithRetry(prompt);
+                content.innerHTML = responseHtml;
+            } catch (err) {
+                content.innerHTML = `<div class="text-red-500 py-10 text-center"><i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2"></i> 產出失敗，請稍後再試。</div>`;
+                lucide.createIcons();
+            }
+        }
+
+        function closePackingModal() {
+            document.getElementById('packing-modal').classList.add('hidden');
+        }
+
+        // --- 每日 AI 小秘訣邏輯 ---
+        async function generateAITips(dayIndex) {
+            const container = document.getElementById(`ai-tips-container-${dayIndex}`);
+            const button = document.getElementById(`ai-tips-button-${dayIndex}`);
+            
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="flex items-center justify-center gap-3 text-emerald-600 py-4">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> 
+                    <span class="font-medium">✨ AI 導遊正在為您整理今日的隱藏版小秘訣...</span>
+                </div>
+            `;
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            lucide.createIcons();
+
+            const dayData = itineraryData.find(d => d.day === dayIndex);
+            const itineraryText = dayData.events.map(e => `${e.time}: ${e.title} - ${e.desc}`).join('\n');
+
+            const prompt = `你是專業的日本九州在地導遊。遊客今天（第 ${dayData.day} 天：${dayData.title}）的行程如下：\n${itineraryText}\n
+請針對今天的這幾個特定景點或餐廳，給予 3 點簡短、實用的「在地人小秘訣」（例如：停車動線建議、沿途推薦順手買的在地小吃、或是哪個景點的隱藏拍照角度）。
+請用繁體中文回答，語氣要熱情專業。請直接輸出 HTML 格式（不需要外層容器，直接給 <ul><li>...</li></ul> 等標籤，文字可以使用 <strong> 標示重點）。`;
+
+            try {
+                const responseHtml = await fetchGeminiWithRetry(prompt);
+                container.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <div class="bg-emerald-100 p-2.5 rounded-full flex-shrink-0 mt-1">
+                            <i data-lucide="sparkles" class="w-6 h-6 text-emerald-600"></i>
+                        </div>
+                        <div class="text-slate-700 w-full ai-response">
+                            <h4 class="font-bold text-lg text-emerald-800 mb-2">✨ AI 導遊的在地小秘訣</h4>
+                            ${responseHtml}
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (error) {
+                container.innerHTML = `<div class="text-red-500 flex items-center gap-2"><i data-lucide="alert-circle" class="w-5 h-5"></i> 無法取得建議，請稍後再試。</div>`;
+                lucide.createIcons();
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+                button.innerHTML = `✨ 重新詢問 AI 導遊 ✨`;
+            }
+        }
+
+
+        // --- UI 渲染邏輯 ---
         const getEventStyles = (type) => {
             switch (type) {
-                case 'food':
-                    return { icon: 'utensils', color: 'bg-orange-100 text-orange-600', dot: 'bg-orange-500' };
-                case 'spot':
-                    return { icon: 'camera', color: 'bg-emerald-100 text-emerald-600', dot: 'bg-emerald-500' };
-                case 'car':
-                    return { icon: 'car', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-500' };
-                default:
-                    return { icon: 'map-pin', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500' };
+                case 'food': return { icon: 'utensils', color: 'bg-orange-100 text-orange-600', dot: 'bg-orange-500' };
+                case 'spot': return { icon: 'camera', color: 'bg-emerald-100 text-emerald-600', dot: 'bg-emerald-500' };
+                case 'car': return { icon: 'car', color: 'bg-blue-100 text-blue-600', dot: 'bg-blue-500' };
+                default: return { icon: 'map-pin', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500' };
             }
         };
 
         let activeDay = 1;
 
-        // 渲染上方的天數頁籤
         function renderTabs() {
             const tabsContainer = document.getElementById('tabs-container');
             tabsContainer.innerHTML = '';
@@ -201,27 +353,20 @@
                 const isActive = activeDay === day.day;
                 
                 btn.className = `flex-shrink-0 px-6 py-3 rounded-xl font-bold text-base transition-all duration-300 flex items-center gap-2 ${
-                    isActive 
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' 
-                    : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
+                    isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
                 }`;
                 
                 btn.onclick = () => {
                     activeDay = day.day;
-                    renderTabs(); // 重新渲染頁籤以更新樣式
-                    renderContent(); // 重新渲染內容
+                    renderTabs(); 
+                    renderContent();
                 };
                 
-                btn.innerHTML = `
-                    <i data-lucide="calendar" class="w-[18px] h-[18px] ${isActive ? 'opacity-100' : 'opacity-50'}"></i>
-                    Day ${day.day}
-                `;
-                
+                btn.innerHTML = `<i data-lucide="calendar" class="w-[18px] h-[18px] ${isActive ? 'opacity-100' : 'opacity-50'}"></i> Day ${day.day}`;
                 tabsContainer.appendChild(btn);
             });
         }
 
-        // 渲染下方的行程內容
         function renderContent() {
             const contentContainer = document.getElementById('day-content');
             const dayData = itineraryData.find(d => d.day === activeDay);
@@ -230,23 +375,14 @@
                 const styles = getEventStyles(event.type);
                 return `
                     <div class="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start group">
-                        <!-- Time -->
                         <div class="md:w-[100px] flex-shrink-0 pt-1 md:text-right flex md:block items-center gap-3">
                             <div class="md:hidden absolute -left-[29px] w-4 h-4 rounded-full border-4 border-white ${styles.dot} shadow-sm z-10"></div>
-                            <div class="text-slate-500 font-bold bg-slate-100 md:bg-transparent px-3 py-1 md:p-0 rounded-md text-sm md:text-base">
-                                ${event.time}
-                            </div>
+                            <div class="text-slate-500 font-bold bg-slate-100 md:bg-transparent px-3 py-1 md:p-0 rounded-md text-sm md:text-base">${event.time}</div>
                         </div>
-
-                        <!-- Desktop dot indicator -->
                         <div class="hidden md:block absolute left-[111px] top-2 w-4 h-4 rounded-full border-4 border-white ${styles.dot} shadow-sm z-10 transition-transform group-hover:scale-125"></div>
-
-                        <!-- Content Card -->
                         <div class="flex-1 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
                             <div class="flex items-start gap-4">
-                                <div class="p-3 rounded-xl flex-shrink-0 ${styles.color}">
-                                    <i data-lucide="${styles.icon}" class="w-5 h-5"></i>
-                                </div>
+                                <div class="p-3 rounded-xl flex-shrink-0 ${styles.color}"><i data-lucide="${styles.icon}" class="w-5 h-5"></i></div>
                                 <div>
                                     <h3 class="text-lg font-bold text-slate-800 mb-2 leading-snug">${event.title}</h3>
                                     <p class="text-slate-600 leading-relaxed text-sm md:text-base">${event.desc}</p>
@@ -257,30 +393,33 @@
                 `;
             }).join('');
 
+            // ✨ AI 導遊互動區塊
+            const aiSectionHtml = `
+                <div class="mt-12 pt-8 border-t border-slate-100">
+                    <button id="ai-tips-button-${dayData.day}" onclick="generateAITips(${dayData.day})" 
+                            class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2 text-lg">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i> ✨ 詢問 AI 導遊：今日在地小秘訣 ✨
+                    </button>
+                    <div id="ai-tips-container-${dayData.day}" class="hidden mt-6 p-6 bg-emerald-50/80 border border-emerald-100 rounded-2xl transition-all"></div>
+                </div>
+            `;
+
             let hotelHtml = '';
             if (dayData.hotel) {
                 let linkHtml = dayData.hotel.link ? `
                     <a href="${dayData.hotel.link}" target="_blank" rel="noopener noreferrer" class="w-full md:w-auto text-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
                         查看住宿資訊 <i data-lucide="external-link" class="w-4 h-4"></i>
-                    </a>
-                ` : '';
-
+                    </a>` : '';
                 hotelHtml = `
                     <div class="mt-12 pt-8 border-t border-slate-100">
                         <div class="bg-purple-50 rounded-2xl p-6 border border-purple-100">
                             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                                 <div class="flex items-center gap-4 w-full md:w-auto">
-                                    <div class="bg-purple-100 text-purple-600 p-3 rounded-xl flex-shrink-0">
-                                        <i data-lucide="bed" class="w-6 h-6"></i>
-                                    </div>
+                                    <div class="bg-purple-100 text-purple-600 p-3 rounded-xl flex-shrink-0"><i data-lucide="bed" class="w-6 h-6"></i></div>
                                     <div>
-                                        <div class="text-sm font-bold text-purple-600 mb-1 flex items-center gap-1">
-                                            <i data-lucide="moon" class="w-3.5 h-3.5"></i> 今晚住宿
-                                        </div>
+                                        <div class="text-sm font-bold text-purple-600 mb-1 flex items-center gap-1"><i data-lucide="moon" class="w-3.5 h-3.5"></i> 今晚住宿</div>
                                         <div class="text-lg font-bold text-slate-800">${dayData.hotel.name}</div>
-                                        <div class="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${dayData.hotel.location}
-                                        </div>
+                                        <div class="text-sm text-slate-500 mt-1 flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${dayData.hotel.location}</div>
                                     </div>
                                 </div>
                                 ${linkHtml}
@@ -293,8 +432,7 @@
             contentContainer.innerHTML = `
                 <div class="mb-10 text-center md:text-left">
                     <h2 class="text-2xl md:text-3xl font-bold text-slate-800">
-                        <span class="text-emerald-600 mr-3">Day ${dayData.day}</span> 
-                        ${dayData.title}
+                        <span class="text-emerald-600 mr-3">Day ${dayData.day}</span> ${dayData.title}
                     </h2>
                 </div>
                 <div class="relative pl-4 md:pl-0">
@@ -303,21 +441,17 @@
                         ${eventsHtml}
                     </div>
                 </div>
+                ${aiSectionHtml}
                 ${hotelHtml}
             `;
-
-            // 每次渲染完 HTML 後，呼叫 Lucide 將 <i> 標籤轉換為 SVG 圖標
             lucide.createIcons();
         }
 
-        // 初始化網站
         document.addEventListener('DOMContentLoaded', () => {
             renderTabs();
             renderContent();
-            // 初始化固定不變的圖標（像是 header 裡的）
             lucide.createIcons();
         });
-
     </script>
 </body>
 </html>

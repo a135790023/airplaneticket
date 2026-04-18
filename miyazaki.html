@@ -51,7 +51,7 @@
                 五天四夜大自然與<br class="md:hidden" /><span class="text-orange-400">火山秘境</span>之旅
             </h1>
             <p class="text-emerald-100 text-sm md:text-lg max-w-2xl opacity-90 mb-6 leading-relaxed">
-                深入九州靈魂之鄉，從日南海岸的復活島摩艾像，穿越時空進入椎葉村與高千穗的神話紀元。這是一場結合自駕、秘境探索與極致和牛的多重感官饗宴。
+                深入九州靈魂之鄉，探索椎葉村與高千穗的神話地景。這是一場結合自駕冒險、極致和牛與秘境絕景的深度感官體驗。
             </p>
             
             <!-- 行李準備清單按鈕 -->
@@ -97,7 +97,7 @@
 
     </main>
 
-    <!-- Footer -->
+    <!-- 頁尾設計 -->
     <footer class="mt-12 py-10 px-4 border-t border-gray-200 bg-white/50 text-center text-sm text-gray-500 pb-24 sm:pb-10">
         <div class="max-w-3xl mx-auto flex flex-col items-center">
             <p class="font-bold text-gray-700 mb-4">艾迪王旅遊秘笈｜清艙機票．團旅．出國必備</p>
@@ -124,7 +124,7 @@
                 <h3 class="text-lg font-bold text-emerald-800 flex items-center gap-2"><i data-lucide="luggage" class="w-5 h-5"></i> 行李準備清單</h3>
                 <button onclick="closePackingModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div id="packing-content" class="p-6 overflow-y-auto ai-response flex-1 text-sm">
+            <div id="packing-content" class="p-6 overflow-y-auto ai-response flex-1 text-sm text-left">
                 <!-- Content injected via Gemini API -->
             </div>
         </div>
@@ -134,68 +134,67 @@
     <script>
         window.trackEvent = window.trackEvent || function() {};
         
-        // 💡 API Key 已填入
-        const apiKey = "AIzaSyD5lcv921NMJ0Dq5r3i03-MIw-_x_qa9Vw"; 
+        // 💡 更新後的 API Key
+        const apiKey = "AIzaSyABw2NuN4O70lczx6cZH-LJdUMNZXr41E0"; 
 
         const itineraryData = [
             {
                 day: 1,
                 title: "宮崎南部海岸與巨無霸烏龍麵、燒肉雙重奏",
                 events: [
-                    { time: "09:20 - 10:30", type: "car", title: "抵達宮崎機場，辦理租車", desc: "班機 IT742 準時降落宮崎機場。取車後建議先在機場附近的超商買瓶日向夏果汁，開啟道地的宮崎旅程。" },
+                    { time: "09:20 - 10:30", type: "car", title: "抵達宮崎機場，辦理租車", desc: "班機 IT742 準時降落宮崎機場。取車後正式展開五天四夜之旅，建議先在機場附近超商買瓶道地的日向夏果汁解渴。" },
                     { 
                         time: "11:00 - 12:30", 
                         type: "food", 
                         title: "【午餐】百姓うどん (百姓烏龍麵)", 
-                        desc: "這家店簡直是宮崎人的熱情縮影！這裡最出名的除了<strong>堆成塔的烏龍麵</strong>，還有那座<strong>海拔最高（約 30 公分高）的震撼刨冰</strong>。最精彩的是老闆本人，個性超級「浮誇」且充滿喜感，經常與客人搞笑互動，讓用餐氣氛極度歡樂。麵條口感柔軟順滑，是宮崎道地的靈魂風味。",
-                        images: [{ url: "https://www.yomiuri.co.jp/media/2025/08/20250805-OYTNI50073-1.jpg?type=ogp", credit: "圖片來源：讀賣新聞 (yomiuri.co.jp)", title: "百姓烏龍麵：老闆超浮誇刨冰" }]
+                        desc: "體驗宮崎熱情！這家店的靈魂除了<strong>全日本最高（約 30 公分）的震撼刨冰</strong>外，還有個性<strong>超浮誇且幽默搞笑的老闆</strong>，他常與客人的搞笑互動是這裡的活招牌。麵條柔軟順滑，是經典南九州風味。",
+                        images: [{ url: "https://www.yomiuri.co.jp/media/2025/08/20250805-OYTNI50073-1.jpg?type=ogp", credit: "圖片來源：讀賣新聞 (yomiuri.co.jp)", title: "百姓烏龍麵：日本第一高刨冰" }]
                     },
                     { 
                         time: "13:30 - 17:00", 
                         type: "spot", 
-                        title: "日南海岸深度遊覽", 
-                        desc: "<strong>日南太陽花園：</strong>全世界唯一獲得復活島授權，100% 比例複製的摩艾像。<br><br><strong>鵜戶神宮：</strong>鑲嵌在斷崖洞穴內的朱紅社殿。記得買一組『運玉』投入礁石上的繩圈內。<br><br><strong>都井岬：</strong>江戶時代留下來的戰馬後裔『御崎馬』棲息地，是日本少數能近距離觀察野馬的地方。",
+                        title: "日南海岸深度探索", 
+                        desc: "走訪唯一獲授權的<strong>日南太陽花園</strong>摩艾像、鑲嵌在海蝕洞中的朱紅<strong>鵜戶神宮</strong>。此外，前往都井岬觀察江戶時代流傳至今的野生<strong>御崎馬</strong>。",
                         images: [
                             { url: "https://www.miyazaki-city.tourism.or.jp/storage/tourism_attractions/10057/responsive_images/GNmxPyTgl9Tsryvfrtjs4KsIWmosTE3BDolhLBl2__1649_1237.jpeg", credit: "宮崎官方網站照片", title: "日南太陽花園" },
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1002/responsive_images/pGoc9mpbU92jN8N3ujLv8qwqyKjgFLdSDXFCjK7D__1787_1340.jpg", credit: "宮崎官方網站照片", title: "都井岬" }
                         ]
                     },
-                    { time: "18:00 - 20:00", type: "food", title: "【晚餐】宮崎牛焼肉 KUROUSHI 黒牛", desc: "<strong>宮崎牛：</strong>曾連續四屆獲得『日本和牛奧林匹克』冠軍。入口即化的脂香絕對會讓您對牛肉的認知重新定義。" },
-                    { time: "21:00", type: "food", title: "【宵夜】炭烤地雞 丸萬燒鳥 本店", desc: "這裡的雞肉以<strong>強火炭烤</strong>，外皮黝黑但肉質充滿咬勁。搭配當地清酒『霧島』，是最高等級的享受。" },
+                    { time: "18:00 - 20:00", type: "food", title: "【晚餐】宮崎牛焼肉 KUROUSHI 黒牛", desc: "享用曾蟬聯和牛奧林匹克冠軍的『宮崎牛』。精肉卸直營店提供最划算的價格品嚐頂級 A5 霜降肉。" },
+                    { time: "21:00", type: "food", title: "【宵夜】炭烤地雞 丸萬燒鳥 本店", desc: "以強火炭烤出黝黑外皮，肉質充滿嚼勁且炭香味十足，是宮崎夜晚的最佳標誌。" },
                 ],
-                hotel: { name: "宮崎縣第一酒店 (Miyazaki Daiichi Hotel)", location: "宮崎市區", link: "https://www.agoda.com/zh-hk/miyazaki-daiichi-hotel/hotel/miyazaki-jp.html?countryId=3&finalPriceView=1&isShowMobileAppPrice=false&cid=1922895&numberOfBedrooms=&familyMode=false&adults=2&children=0&rooms=1&maxRooms=0&checkIn=2026-04-13&isCalendarCallout=false&childAges=&numberOfGuest=0&missingChildAges=false&travellerType=1&showReviewSubmissionEntry=false&currencyCode=TWD&isFreeOccSearch=false&tag=979f082d-06a4-4f5d-9b81-0d1bbf132dd2&flightSearchCriteria=%5Bobject+Object%5D&tspTypes=3&los=1&searchrequestid=facbbc05-da4b-4334-843a-ac44885c5da9&ds=fgEAdNrDBshSkZIE" }
+                hotel: { name: "宮崎縣第一酒店", location: "宮崎市區", link: "https://www.agoda.com/zh-hk/miyazaki-daiichi-hotel/hotel/miyazaki-jp.html?cid=1922895" }
             },
             {
                 day: 2,
                 title: "高千穗峽谷與夜神樂神話之夜",
                 events: [
-                    { time: "08:00 - 08:30", type: "food", title: "【早餐】住宿周圍超商解決", desc: "推薦購買全家限定的明太子御飯糰，簡單美味。" },
-                    { time: "08:30 - 11:30", type: "car", title: "北上前往神話之鄉", desc: "行經延岡市區時可遠眺當地工業港的壯麗，隨後駛入充滿靈氣的峽谷山路。" },
-                    { time: "11:30 - 13:00", type: "food", title: "【午餐】高千穗牛燒肉專賣店", desc: "來到高千穗必嚐的在地品牌『高千穗牛』。這是在純淨山區放牧成長的頂級和牛，肉質細膩且帶有獨特的甘甜味。" },
+                    { time: "08:00 - 11:30", type: "car", title: "前往神話之鄉高千穗", desc: "穿越山區道路，感受空氣逐漸變得靈動清新。" },
+                    { time: "11:30 - 13:00", type: "food", title: "【午餐】高千穗牛燒肉專賣店", desc: "在高千穗純淨山水中長大的頂級和牛，肉質細嫩且甜味顯著，是來此必吃的味蕾饗宴。" },
                     { 
                         time: "13:30 - 16:00", 
                         type: "spot", 
-                        title: "高千穗峽：阿蘇噴發的藝術品", 
-                        desc: "由阿蘇火山噴發形成的柱狀節理斷崖。划船近距離接觸真名井瀑布是經典行程。建議<strong>務必提前 30 天線上預約船位</strong>。",
+                        title: "高千穗峽：划船穿梭神話瀑布", 
+                        desc: "近距離仰望真名井瀑布與玄武岩斷崖。<strong>強烈建議務必於 30 天前預約船位</strong>，以免現場久候或完售。",
                         images: [{ url: "https://lh3.googleusercontent.com/d/1OZU-Zqs0eyZuqV7_MSBmndTg1EWAM26P", title: "高千穗峽", credit: "作者艾迪王Eddie" }]
                     },
                     { 
                         time: "16:30 - 17:30", 
                         type: "spot", 
-                        title: "高千穗神社：古老的守護者", 
-                        desc: "擁有 1900 年歷史，為高千穗鄉 88 社的總社。殿內的夫婦杉傳說手牽手繞行三圈能保佑姻緣與家庭圓滿。",
+                        title: "高千穗神社：古老的護法", 
+                        desc: "具有 1900 年歷史。神社內的『夫婦杉』傳說手牽手繞行三圈能保佑姻緣美滿。",
                         images: [{ url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1032/responsive_images/m4KxsI93pClDGq3f0RflMzN5mdQfShRS6tH24pkf__1729_1148.jpg", credit: "作者艾迪王Eddie", title: "高千穗神社" }]
                     },
-                    { time: "18:00 - 19:30", type: "food", title: "【晚餐】高千穂 鶏の炭火燒 吾平店", desc: "這家是當地隱藏版的名店，提供地道的炭火燒鳥料理。炭香濃郁，是觀賞夜神樂前的最佳能量補給。" },
+                    { time: "18:00 - 19:15", type: "food", title: "【晚餐】高千穂 鶏の炭火燒 吾平店", desc: "在高千穗當地非常有名的炭火料理店，濃郁炭香為今晚的高潮做熱身。" },
                     { 
                         time: "20:00 - 21:00", 
                         type: "spot", 
-                        title: "夜神樂：國家級無形文化財", 
-                        desc: "表演於 <strong>20:00 正式開始</strong>，長度約 1 小時。這是一項神聖的傳統祭典，強烈建議 <strong>19:30 提早抵達現場</strong>。表演採<strong>先到先入座制</strong>，早點到可以佔到更好的觀賞角度。",
+                        title: "夜神樂：神聖傳統祭典", 
+                        desc: "表演於 <strong>20:00 準時開始</strong>。這是一項國家級無形文化財，呈現諸神引誘天照大神的傳說。<strong>建議 19:30 抵達現場</strong>，採先到先入座制，以便佔據前排觀賞區。",
                         images: [{ url: "https://lh3.googleusercontent.com/d/10URLAw9OtVkw0qX9MsbSXxbCJH1duB1t", title: "高千穗神社夜神樂表演" }]
                     },
                 ],
-                hotel: { name: "岩戶民宿 (Guesthouse Iwato)", location: "高千穗町", link: "https://www.booking.com/hotel/jp/gesutohausuiwato.zh-tw.html?aid=399012&label=takachiho-LKYK%2A76eFB%2AVlmN_9Wi%2AfAS393054275486%3Apl%3Ata%3Ap1%3Ap2%3Aac%3Aap%3Aneg%3Afi%3Atikwd-356890142158%3Alp9222031%3Ali%3Adec%3Adm%3Appccp%3DUmFuZG9tSVYkc2RlIyh9YR10fBTovuitswFzoSdli7I&sid=84d81706289a2b51e1751c483355269b&all_sr_blocks=277388104_270925082_2_0_0&checkin=2026-04-14&checkout=2026-04-15&dest_id=900051135&dest_type=city&dist=0&group_adults=2&group_children=0&hapos=1&highlighted_blocks=277388104_270925082_2_0_0&hpos=1&matching_block_id=277388104_270925082_2_0_0&no_rooms=1&req_adults=2&req_children=0&room1=A%2CA&sb_price_type=total&sr_order=popularity&sr_pri_blocks=277388104_270925082_2_0_0__734627&srepoch=1774015133&srpvid=f2a6622d5b2403af&type=total&ucfs=1&" }
+                hotel: { name: "岩戶民宿 (Guesthouse Iwato)", location: "高千穗町", link: "https://www.booking.com/hotel/jp/gesutohausuiwato.zh-tw.html" }
             },
             {
                 day: 3,
@@ -204,26 +203,26 @@
                     { 
                         time: "08:30 - 11:00", 
                         type: "spot", 
-                        title: "上色見熊野座神社：異世界入口", 
-                        desc: "隱沒在杉木林中的能量景點。數百座石燈籠佈滿青苔。後方的『穿戶岩』巨大山洞象徵著<strong>突破逆境</strong>。由於氣氛極其神祕，這裡也是動漫《螢火之森》的取景地。",
+                        title: "上色見熊野座神社：異世界漫步", 
+                        desc: "因《螢火之森》聞名，是充滿神祕靈氣的杉林神社。階梯兩旁佈滿青苔的石燈籠引領您進入安靜的異世界感。",
                         images: [{ url: "https://kumamoto.guide/files/8d1bb804-26a2-43f5-bcbb-f5fc1feda197_l.jpg?1603691770", title: "上色見熊野座神社", credit: "熊本縣觀光官方網站" }]
                     },
-                    { time: "11:30 - 13:30", type: "food", title: "【午餐】いまきん食堂 (Imakin食堂)", desc: "創立超過百年的赤牛丼專賣店。滿滿的半熟牛肉片淋上店家秘製醬汁，是夢幻美食。建議提早抵達抽號碼牌。" },
+                    { time: "11:30 - 13:30", type: "food", title: "【午餐】いまきん食堂 (Imakin食堂)", desc: "創立於明治時代的老字號。滿滿的赤牛 (Akaushi) 牛肉片淋上特製甜鹹醬汁，是熊本最具代表性的排隊美食。" },
                     { 
                         time: "14:00 - 16:30", 
                         type: "spot", 
-                        title: "阿蘇火山口與草千里", 
-                        desc: "<strong>米塚：</strong>傳說神明將收割的稻穀堆積在此而形成。完美錐形景觀極為療癒。<br><br><strong>草千里之濱：</strong>廣大高山草原。可以看見放牧的牛馬，背景是冒著白煙的中岳火山口。",
+                        title: "阿蘇火山口與米塚、草千里", 
+                        desc: "遠觀形狀完美的<strong>米塚</strong>，漫步在如綠色地毯般的<strong>草千里之濱</strong>。若當日無管制，可前往中岳火山口感受地球的呼吸。",
                         images: [{ url: "https://images.pexels.com/photos/69457/aso-komezuka-sea-of-clouds-cloud-69457.jpeg", title: "米塚" }]
                     },
                     { 
                         time: "16:30 - 18:00", 
                         type: "car", 
-                        title: "牛奶之路前往熊本市區", 
-                        desc: "馳騁在阿蘇外輪山上的觀景大道。兩側是一望無際的綠色盆地，彷彿行走在雲端。",
+                        title: "牛奶之路 (Milk Road) 自駕", 
+                        desc: "沿著阿蘇外輪山的景觀公路。兩側綠草如茵，視野極其遼闊，彷彿行駛在雲霧環繞的山巔。",
                         images: [{ url: "https://tc.tabirai.net/car/kumamoto/drive/images/course001/pic380x253_point2.jpg", credit: "tabirai的照片", title: "牛奶之路" }]
                     },
-                    { time: "18:30", type: "food", title: "【晚餐】勝烈亭炸豬排", desc: "熊本最具代表性的炸豬排名店。選用頂級豬肉，外皮金黃酥脆內裡肉質軟嫩，搭配自磨芝麻醬汁，絕對值得一排。" },
+                    { time: "18:30", type: "food", title: "【晚餐】勝烈亭炸豬排", desc: "熊本必吃！外皮極其酥脆，肉質厚實多汁。推薦選用頂級『鹿兒島黑豚』套餐。" },
                 ],
                 hotel: { name: "Dormy Inn飯店-熊本天然溫泉", location: "熊本市區", link: "https://www.trip.com/t/Dv0HivJhLU2" }
             },
@@ -231,20 +230,20 @@
                 day: 4,
                 title: "長途跋涉深入秘境與宮崎最終補給",
                 events: [
-                    { time: "08:00 - 08:30", type: "food", title: "【早餐】超商快速解決", desc: "今日自駕里程較長，建議在熊本市區超商簡單解決早餐後出發。" },
+                    { time: "08:00 - 08:30", type: "food", title: "【早餐】超商解決", desc: "今日路程極長，建議在熊本市區超商簡單進食後，帶著補給物資出發。" },
                     { 
                         time: "11:30 - 14:00", 
                         type: "spot", 
-                        title: "深入秘境：椎葉村深度體驗", 
-                        desc: "位於宮崎縣西北部，為<strong>「日本三大秘境」</strong>之一。保存了平家落人傳說。<br><br><strong>路途資訊：</strong>今日駕駛極具挑戰性。從<strong>熊本市區開往椎葉村約需 2 小時</strong>；探訪完畢後，從<strong>椎葉村返回宮崎市區則約需 3 小時</strong>長程駕駛。<br><br><strong>仙人的梯田：</strong>因其地勢險峻宛如仙境，有『椎葉的 Machu Picchu』美譽。當地的『椎葉神樂』更是傳承數百年的古代祭典。<br><br><strong>備註：</strong>今日路途遙遠，午餐建議於趕路途中利用超商快速解決，以便有更多時間遊覽秘境。",
+                        title: "日本三大秘境：椎葉村深度遊", 
+                        desc: "<strong>路途提醒：</strong>從<strong>熊本市區開往椎葉村約需 2 小時</strong>。此村隱於深山，傳說為平家武士隱居之處。必看被譽為『椎葉馬丘比丘』的<strong>仙人的梯田</strong>。<strong>午餐建議在趕路途中於超商快速解決</strong>以節省時間。",
                         images: [
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/Q5G9znewM19Hi5DNslhPM2YoPsnxQ7mNBm7VX95i__1639_1229.jpg", credit: "宮崎官方網站照片", title: "椎葉村風景" },
-                            { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/vSrYlh3V05ej7at310MudugirKkSruNvxXSH5Hqp__1597_1065.jpg", credit: "宮崎官方網站照片", title: "椎葉村仙人的梯田" },
-                            { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/m2LStEid9A7b1jyThwMrmFvBR5dE1zYMvhc2SAjP__1800_1200.jpg", credit: "宮崎官方網站照片", title: "椎葉村傳統建築" }
+                            { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/vSrYlh3V05ej7at310MudugirKkSruNvxXSH5Hqp__1597_1065.jpg", credit: "宮崎官方網站照片", title: "椎葉村仙人的梯田" }
                         ]
                     },
-                    { time: "17:00 - 19:30", type: "spot", title: "宮崎市區悠閒採買", desc: "前往 AEON MALL 購買芒果相關伴手禮。" },
-                    { time: "20:00", type: "food", title: "【晚餐】辛麺屋 桝元 宮崎本店", desc: "著名的『宮崎拉麵』！使用的富有彈性的蒟蒻麵，辣度可自選。" },
+                    { time: "14:00 - 17:00", type: "car", title: "長途駕駛返回宮崎市區", desc: "從<strong>椎葉村駛往宮崎市區約需 3 小時</strong>，建議中途多加休息，安全第一。" },
+                    { time: "17:00 - 19:30", type: "spot", title: "宮崎市區悠閒採買", desc: "前往 AEON MALL 採買芒果伴手禮或日系服飾。" },
+                    { time: "20:00", type: "food", title: "【晚餐】辛麺屋 桝元 宮崎本店", desc: "宮崎代表拉麵。選用彈牙蒟蒻麵，蒜香十足且辣度可選，洗去一整天駕駛的疲勞。" },
                 ],
                 hotel: { name: "PRINCE SMART INN", location: "宮崎市區", link: "https://www.trip.com/t/zt7FIIsnLU2" }
             },
@@ -252,8 +251,8 @@
                 day: 5,
                 title: "滿載而歸",
                 events: [
-                    { time: "07:00", type: "car", title: "前往機場", desc: "自駕建議在機場附近將油加滿。" },
-                    { time: "09:00", type: "car", title: "搭機返家", desc: "告別神話之鄉，期待下一次探索。" }
+                    { time: "07:00", type: "car", title: "前往機場", desc: "最後確認租車物品，並於機場附近加油站將油加滿。" },
+                    { time: "09:00", type: "car", title: "搭機返家", desc: "帶著滿滿的回憶告別宮崎，期待下次旅程。" }
                 ],
                 hotel: null
             }
@@ -262,7 +261,6 @@
         // --- Gemini API Logic ---
         async function fetchGeminiWithRetry(prompt, retries = 5) {
             const delays = [1000, 2000, 4000, 8000, 16000];
-            // 💡 使用填入的 apiKey
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
             for (let i = 0; i < retries; i++) {
@@ -283,18 +281,13 @@
             content.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-emerald-600 gap-3 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto"></i><p class="text-sm font-bold">正在根據行程深度整理清單...</p></div>`;
             lucide.createIcons();
             const tripSummary = itineraryData.map(d => `Day ${d.day}: ${d.title}`).join('、');
-            const prompt = `你是專業旅遊管家。行程包含：${tripSummary}。請整理一份專屬行李清單。包含：自駕必備文件、山區與海邊衣物建議。HTML 格式輸出。繁體中文。`;
-            try { 
-                const responseHtml = await fetchGeminiWithRetry(prompt); 
-                content.innerHTML = responseHtml; 
-            } catch (err) { 
-                content.innerHTML = `<p class="text-red-500 text-center py-10">產出失敗，請確保您的 API Key 有效且已開啟 Gemini API 權限。</p>`; 
-            }
+            const prompt = `你是專業旅遊管家。行程包含：${tripSummary}。請整理一份專屬行李清單。包含：自駕必備文件（譯本）、山區與海邊衣物建議、秘境駕駛建議物品。HTML 格式。繁體中文。`;
+            try { const responseHtml = await fetchGeminiWithRetry(prompt); content.innerHTML = responseHtml; } catch (err) { content.innerHTML = `<p class="text-red-500 text-center py-10">產出失敗，請確保金鑰有效。</p>`; }
         }
 
         function closePackingModal() { document.getElementById('packing-modal').classList.add('hidden'); }
 
-        // --- Rendering Logic ---
+        // --- UI Rendering ---
         const getEventStyles = (type) => {
             switch (type) {
                 case 'food': return { icon: 'utensils', color: 'bg-orange-50 text-orange-600', dot: 'bg-orange-500' };
@@ -329,7 +322,7 @@
                 if (event.images && event.images.length > 0) {
                     imgSection = event.images.map(img => `
                         <div class="mt-4 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white">
-                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover hover:scale-105 transition-transform duration-700">
+                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover">
                             ${img.credit ? `<p class="px-3 py-1.5 text-[9px] md:text-[10px] text-slate-400 text-right italic border-t border-slate-50">${img.credit}</p>` : ''}
                         </div>
                     `).join('');
@@ -338,9 +331,9 @@
                     <div class="relative flex flex-col md:flex-row gap-5 md:gap-8 items-start mb-10 text-left">
                         <div class="md:w-[80px] flex-shrink-0 pt-1 md:text-right flex md:block items-center gap-2">
                             <div class="md:hidden absolute -left-[27px] w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10 shadow-sm"></div>
-                            <div class="text-slate-400 font-bold text-[10px] md:text-xs tracking-wider">${event.time}</div>
+                            <div class="text-slate-400 font-bold text-[10px] md:text-xs">${event.time}</div>
                         </div>
-                        <div class="hidden md:block absolute left-[89px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10 shadow-sm"></div>
+                        <div class="hidden md:block absolute left-[89px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ${styles.dot} z-10"></div>
                         <div class="flex-1 bg-white border border-slate-50 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all w-full">
                             <div class="flex items-start gap-4">
                                 <div class="p-2.5 rounded-lg flex-shrink-0 ${styles.color}"><i data-lucide="${styles.icon}" class="w-4 h-4 md:w-5 md:h-5"></i></div>

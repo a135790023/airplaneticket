@@ -20,12 +20,11 @@
             scrollbar-width: none;
         }
         
-        /* 給 AI 產生內容的基礎排版樣式 */
-        .ai-response ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 1rem; color: #475569; }
-        .ai-response li { margin-bottom: 0.5rem; line-height: 1.6; }
-        .ai-response h3, .ai-response h4 { font-weight: 700; color: #065f46; margin-top: 1.25rem; margin-bottom: 0.5rem; font-size: 1.1rem;}
-        .ai-response strong { color: #047857; background-color: #d1fae5; padding: 0 0.25rem; border-radius: 0.25rem;}
-        .ai-response p { margin-bottom: 0.75rem; color: #475569; line-height: 1.6;}
+        /* 基礎排版樣式修正：移除綠色底色 */
+        .content-body ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 1rem; color: #475569; }
+        .content-body li { margin-bottom: 0.5rem; line-height: 1.6; }
+        .content-body strong { color: #065f46; font-weight: 700; } /* 僅加粗變色，無底色 */
+        .content-body p { margin-bottom: 0.75rem; color: #475569; line-height: 1.6;}
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-900 min-h-screen">
@@ -43,7 +42,7 @@
     <!-- Hero Section -->
     <header class="relative bg-gradient-to-br from-emerald-800 to-teal-900 text-white pt-16 pb-12 px-6 overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-        <div class="max-w-4xl mx-auto relative z-10">
+        <div class="max-w-4xl mx-auto relative z-10 text-left">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-700/50 border border-emerald-500/30 text-xs font-medium mb-4">
                 <i data-lucide="map-pin" class="w-3 h-3"></i> 日本宮崎
             </div>
@@ -53,11 +52,6 @@
             <p class="text-emerald-100 text-sm md:text-lg max-w-2xl opacity-90 mb-6 leading-relaxed">
                 深入九州靈魂之鄉，探索椎葉村與高千穗的神話地景。這是一場結合自駕冒險、極致和牛與秘境絕景的深度感官體驗。
             </p>
-            
-            <!-- 行李準備清單按鈕 -->
-            <button onclick="openPackingModal()" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white text-sm font-bold transition-all flex items-center gap-2">
-                <i data-lucide="luggage" class="w-4 h-4"></i> 行李準備清單
-            </button>
         </div>
     </header>
 
@@ -102,13 +96,13 @@
         <div class="max-w-3xl mx-auto flex flex-col items-center">
             <p class="font-bold text-gray-700 mb-4">艾迪王旅遊秘笈｜清艙機票．團旅．出國必備</p>
             <div class="flex items-center gap-6 mb-6">
-                <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" onclick="if(window.trackEvent) window.trackEvent('click_social', {platform: 'Facebook'})" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110">
+                <a href="https://www.facebook.com/profile.php?id=61579148033952" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-blue-600 transition-all transform hover:scale-110">
                     <i class="ph-fill ph-facebook-logo text-4xl"></i>
                 </a>
-                <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" onclick="if(window.trackEvent) window.trackEvent('click_social', {platform: 'Instagram'})" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110">
+                <a href="https://www.instagram.com/eddie.tour/" target="_blank" rel="noreferrer" class="text-gray-400 hover:text-pink-600 transition-all transform hover:scale-110">
                     <i class="ph-fill ph-instagram-logo text-4xl"></i>
                 </a>
-                <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noreferrer" onclick="if(window.trackEvent) window.trackEvent('click_social', {platform: 'LINE_Community'})" class="transition-all transform hover:scale-110 flex items-center justify-center" title="加入 LINE 社群">
+                <a href="https://line.me/ti/g2/o9nGL-WLgvJbVdeXDwcnQhOiNhPzt-rxycgEHg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noreferrer" class="transition-all transform hover:scale-110 flex items-center justify-center" title="加入 LINE 社群">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE 社群" class="w-7 h-7 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300" />
                 </a>
             </div>
@@ -116,38 +110,19 @@
         </div>
     </footer>
 
-    <!-- Packing List Modal -->
-    <div id="packing-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closePackingModal()"></div>
-        <div class="bg-white rounded-2xl w-full max-w-xl max-h-[80vh] flex flex-col relative z-10 shadow-2xl">
-            <div class="p-5 border-b border-emerald-100 flex justify-between items-center bg-emerald-50 rounded-t-2xl">
-                <h3 class="text-lg font-bold text-emerald-800 flex items-center gap-2"><i data-lucide="luggage" class="w-5 h-5"></i> 行李準備清單</h3>
-                <button onclick="closePackingModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div id="packing-content" class="p-6 overflow-y-auto ai-response flex-1 text-sm text-left">
-                <!-- Content injected via Gemini API -->
-            </div>
-        </div>
-    </div>
-
     <!-- JavaScript Data and Logic -->
     <script>
-        window.trackEvent = window.trackEvent || function() {};
-        
-        // 💡 更新後的 API Key
-        const apiKey = "AIzaSyABw2NuN4O70lczx6cZH-LJdUMNZXr41E0"; 
-
         const itineraryData = [
             {
                 day: 1,
                 title: "宮崎南部海岸與巨無霸烏龍麵、燒肉雙重奏",
                 events: [
-                    { time: "09:20 - 10:30", type: "car", title: "抵達宮崎機場，辦理租車", desc: "班機 IT742 準時降落宮崎機場。取車後正式展開五天四夜之旅，建議先在機場附近超商買瓶道地的日向夏果汁解渴。" },
+                    { time: "09:20 - 10:30", type: "car", title: "抵達宮崎機場，辦理租車", desc: "班機 IT742 準時降落。取車後建議先在機場附近超商買瓶道地的日向夏果汁解渴。" },
                     { 
                         time: "11:00 - 12:30", 
                         type: "food", 
                         title: "【午餐】百姓うどん (百姓烏龍麵)", 
-                        desc: "體驗宮崎熱情！這家店的靈魂除了<strong>全日本最高（約 30 公分）的震撼刨冰</strong>外，還有個性<strong>超浮誇且幽默搞笑的老闆</strong>，他常與客人的搞笑互動是這裡的活招牌。麵條柔軟順滑，是經典南九州風味。",
+                        desc: "體驗宮崎熱情！這家店除了<strong>全日本最高（約 30 公分）的震撼刨冰</strong>外，還有個性<strong>超浮誇且幽默搞笑的老闆</strong>，他與客人的互動是這裡的活招牌。麵條柔軟順滑，是經典南九州風味。",
                         images: [{ url: "https://www.yomiuri.co.jp/media/2025/08/20250805-OYTNI50073-1.jpg?type=ogp", credit: "圖片來源：讀賣新聞 (yomiuri.co.jp)", title: "百姓烏龍麵：日本第一高刨冰" }]
                     },
                     { 
@@ -167,10 +142,17 @@
             },
             {
                 day: 2,
-                title: "高千穗峽谷與夜神樂神話之夜",
+                title: "高千穗神話紀元：天岩戶與夜神樂",
                 events: [
-                    { time: "08:00 - 11:30", type: "car", title: "前往神話之鄉高千穗", desc: "穿越山區道路，感受空氣逐漸變得靈動清新。" },
-                    { time: "11:30 - 13:00", type: "food", title: "【午餐】高千穗牛燒肉專賣店", desc: "在高千穗純淨山水中長大的頂級和牛，肉質細嫩且甜味顯著，是來此必吃的味蕾饗宴。" },
+                    { time: "08:00 - 10:00", type: "car", title: "宮崎市區出發前往高千穗", desc: "早晨 8 點出發，車程約 2 小時。沿途窗外景色會從海岸線轉變為深邃的綠意峽谷。" },
+                    { 
+                        time: "10:00 - 11:30", 
+                        type: "spot", 
+                        title: "天岩戶神社：眾神群聚之所", 
+                        desc: "這裡是日本神話中天照大神躲藏的『天岩戶』所在地。特別推薦前往後方的<strong>天安河原</strong>，這是一個巨大的洞穴，傳說眾神曾在此共商大計。洞穴周圍疊滿了參拜者祈願的疊石，氛圍神祕且莊嚴。",
+                        images: [{ url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1033/responsive_images/md63yw9kc65nCP5fPp44rTl0MIVatlGMDyVD9uE8__1800_1200.jpg", title: "天岩戶神社 天安河原", credit: "宮崎官方網站照片" }]
+                    },
+                    { time: "11:30 - 13:00", type: "food", title: "【午餐】高千穗牛燒肉專賣店", desc: "來到高千穗必嚐的在地品牌『高千穗牛』。這是在純淨山區放牧成長的頂級和牛，肉質細嫩且甜味顯著。" },
                     { 
                         time: "13:30 - 16:00", 
                         type: "spot", 
@@ -181,17 +163,17 @@
                     { 
                         time: "16:30 - 17:30", 
                         type: "spot", 
-                        title: "高千穗神社：古老的護法", 
+                        title: "高千穗神社：古老的守護者", 
                         desc: "具有 1900 年歷史。神社內的『夫婦杉』傳說手牽手繞行三圈能保佑姻緣美滿。",
-                        images: [{ url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1032/responsive_images/m4KxsI93pClDGq3f0RflMzN5mdQfShRS6tH24pkf__1729_1148.jpg", credit: "作者艾迪王Eddie", title: "高千穗神社" }]
+                        images: [{ url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1032/responsive_images/m4KxsI93pClDGq3f0RflMzN5mdQfShRS6tH24pkf__1729_1148.jpg", credit: "宮崎官方網站照片", title: "高千穗神社" }]
                     },
-                    { time: "18:00 - 19:15", type: "food", title: "【晚餐】高千穂 鶏の炭火燒 吾平店", desc: "在高千穗當地非常有名的炭火料理店，濃郁炭香為今晚的高潮做熱身。" },
+                    { time: "18:00 - 19:15", type: "food", title: "【晚餐】高千穂 鶏の炭火燒 吾平店", desc: "在地超人氣炭火料理店，炭香味濃郁，是觀賞表演前最佳的補給。" },
                     { 
                         time: "20:00 - 21:00", 
                         type: "spot", 
                         title: "夜神樂：神聖傳統祭典", 
-                        desc: "表演於 <strong>20:00 準時開始</strong>。這是一項國家級無形文化財，呈現諸神引誘天照大神的傳說。<strong>建議 19:30 抵達現場</strong>，採先到先入座制，以便佔據前排觀賞區。",
-                        images: [{ url: "https://lh3.googleusercontent.com/d/10URLAw9OtVkw0qX9MsbSXxbCJH1duB1t", title: "高千穗神社夜神樂表演" }]
+                        desc: "表演於 <strong>20:00 準時開始</strong>。這是一項國家級無形文化財，<strong>建議 19:30 提早抵達現場</strong>，採先到先入座制，以便佔據較佳的觀賞視角。",
+                        images: [{ url: "https://lh3.googleusercontent.com/d/10URLAw9OtVkw0qX9MsbSXxbCJH1duB1t", title: "高千穗神社夜神樂表演", credit: "作者艾迪王Eddie" }]
                     },
                 ],
                 hotel: { name: "岩戶民宿 (Guesthouse Iwato)", location: "高千穗町", link: "https://www.booking.com/hotel/jp/gesutohausuiwato.zh-tw.html" }
@@ -204,46 +186,46 @@
                         time: "08:30 - 11:00", 
                         type: "spot", 
                         title: "上色見熊野座神社：異世界漫步", 
-                        desc: "因《螢火之森》聞名，是充滿神祕靈氣的杉林神社。階梯兩旁佈滿青苔的石燈籠引領您進入安靜的異世界感。",
+                        desc: "充滿神祕靈氣的杉林神社。階梯兩旁佈滿青苔的石燈籠引領您進入安靜的異世界感。後方的『穿戶岩』巨大山洞象徵著突破逆境。",
                         images: [{ url: "https://kumamoto.guide/files/8d1bb804-26a2-43f5-bcbb-f5fc1feda197_l.jpg?1603691770", title: "上色見熊野座神社", credit: "熊本縣觀光官方網站" }]
                     },
-                    { time: "11:30 - 13:30", type: "food", title: "【午餐】いまきん食堂 (Imakin食堂)", desc: "創立於明治時代的老字號。滿滿的赤牛 (Akaushi) 牛肉片淋上特製甜鹹醬汁，是熊本最具代表性的排隊美食。" },
+                    { time: "11:30 - 13:30", type: "food", title: "【午餐】いまきん食堂 (Imakin食堂)", desc: "創立於明治時代。滿滿的赤牛 (Akaushi) 牛肉片淋上特製醬汁，是熊本最具代表性的排隊美食。" },
                     { 
                         time: "14:00 - 16:30", 
                         type: "spot", 
                         title: "阿蘇火山口與米塚、草千里", 
-                        desc: "遠觀形狀完美的<strong>米塚</strong>，漫步在如綠色地毯般的<strong>草千里之濱</strong>。若當日無管制，可前往中岳火山口感受地球的呼吸。",
+                        desc: "遠觀形狀完美的<strong>米塚</strong>，漫步在<strong>草千里之濱</strong>高山草原。若當日無管制，可前往中岳火山口。",
                         images: [{ url: "https://images.pexels.com/photos/69457/aso-komezuka-sea-of-clouds-cloud-69457.jpeg", title: "米塚" }]
                     },
                     { 
                         time: "16:30 - 18:00", 
                         type: "car", 
                         title: "牛奶之路 (Milk Road) 自駕", 
-                        desc: "沿著阿蘇外輪山的景觀公路。兩側綠草如茵，視野極其遼闊，彷彿行駛在雲霧環繞的山巔。",
+                        desc: "行駛在外輪山的景觀公路上。兩側綠草如茵，視野極其遼闊。",
                         images: [{ url: "https://tc.tabirai.net/car/kumamoto/drive/images/course001/pic380x253_point2.jpg", credit: "tabirai的照片", title: "牛奶之路" }]
                     },
-                    { time: "18:30", type: "food", title: "【晚餐】勝烈亭炸豬排", desc: "熊本必吃！外皮極其酥脆，肉質厚實多汁。推薦選用頂級『鹿兒島黑豚』套餐。" },
+                    { time: "18:30", type: "food", title: "【晚餐】勝烈亭炸豬排", desc: "熊本必吃！外皮酥脆厚實多汁。推薦選用頂級『鹿兒島黑豚』套餐。" },
                 ],
                 hotel: { name: "Dormy Inn飯店-熊本天然溫泉", location: "熊本市區", link: "https://www.trip.com/t/Dv0HivJhLU2" }
             },
             {
                 day: 4,
-                title: "長途跋涉深入秘境與宮崎最終補給",
+                title: "日本三大秘境：椎葉村探索",
                 events: [
-                    { time: "08:00 - 08:30", type: "food", title: "【早餐】超商解決", desc: "今日路程極長，建議在熊本市區超商簡單進食後，帶著補給物資出發。" },
+                    { time: "08:00 - 08:30", type: "food", title: "【早餐】超商解決", desc: "今日路程長，建議在熊本市區超商簡單進食後，帶著補給物資出發。" },
                     { 
                         time: "11:30 - 14:00", 
                         type: "spot", 
-                        title: "日本三大秘境：椎葉村深度遊", 
-                        desc: "<strong>路途提醒：</strong>從<strong>熊本市區開往椎葉村約需 2 小時</strong>。此村隱於深山，傳說為平家武士隱居之處。必看被譽為『椎葉馬丘比丘』的<strong>仙人的梯田</strong>。<strong>午餐建議在趕路途中於超商快速解決</strong>以節省時間。",
+                        title: "三大秘境：椎葉村深度遊", 
+                        desc: "<strong>路途提醒：</strong>從<strong>熊本市區開往椎葉村約需 2 小時</strong>。此處為平家武士隱居之處。必看被譽為『椎葉馬丘比丘』的<strong>仙人的梯田</strong>。<strong>午餐建議在趕路途中於超商快速解決</strong>以節省時間。",
                         images: [
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/Q5G9znewM19Hi5DNslhPM2YoPsnxQ7mNBm7VX95i__1639_1229.jpg", credit: "宮崎官方網站照片", title: "椎葉村風景" },
                             { url: "https://www.kanko-miyazaki.jp/storage/tourism_attractions/1932/responsive_images/vSrYlh3V05ej7at310MudugirKkSruNvxXSH5Hqp__1597_1065.jpg", credit: "宮崎官方網站照片", title: "椎葉村仙人的梯田" }
                         ]
                     },
                     { time: "14:00 - 17:00", type: "car", title: "長途駕駛返回宮崎市區", desc: "從<strong>椎葉村駛往宮崎市區約需 3 小時</strong>，建議中途多加休息，安全第一。" },
-                    { time: "17:00 - 19:30", type: "spot", title: "宮崎市區悠閒採買", desc: "前往 AEON MALL 採買芒果伴手禮或日系服飾。" },
-                    { time: "20:00", type: "food", title: "【晚餐】辛麺屋 桝元 宮崎本店", desc: "宮崎代表拉麵。選用彈牙蒟蒻麵，蒜香十足且辣度可選，洗去一整天駕駛的疲勞。" },
+                    { time: "17:00 - 19:30", type: "spot", title: "宮崎市區悠閒採買", desc: "前往 AEON MALL 採買伴手禮。" },
+                    { time: "20:00", type: "food", title: "【晚餐】辛麺屋 桝元 宮崎本店", desc: "著名的『辛麵』！選用彈牙蒟蒻麵，蒜香十足且辣度可選。" },
                 ],
                 hotel: { name: "PRINCE SMART INN", location: "宮崎市區", link: "https://www.trip.com/t/zt7FIIsnLU2" }
             },
@@ -251,41 +233,12 @@
                 day: 5,
                 title: "滿載而歸",
                 events: [
-                    { time: "07:00", type: "car", title: "前往機場", desc: "最後確認租車物品，並於機場附近加油站將油加滿。" },
-                    { time: "09:00", type: "car", title: "搭機返家", desc: "帶著滿滿的回憶告別宮崎，期待下次旅程。" }
+                    { time: "07:00", type: "car", title: "前往機場", desc: "最後確認租車物品，加油並還車。" },
+                    { time: "09:00", type: "car", title: "搭機返家", desc: "帶著滿滿的回憶告別宮崎。" }
                 ],
                 hotel: null
             }
         ];
-
-        // --- Gemini API Logic ---
-        async function fetchGeminiWithRetry(prompt, retries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = { contents: [{ parts: [{ text: prompt }] }] };
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const result = await response.json();
-                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，無法回應。";
-                    return text.replace(/```html\n?/g, '').replace(/```\n?/g, '');
-                } catch (error) { if (i === retries - 1) throw error; await new Promise(resolve => setTimeout(resolve, delays[i])); }
-            }
-        }
-
-        async function openPackingModal() {
-            const modal = document.getElementById('packing-modal');
-            const content = document.getElementById('packing-content');
-            modal.classList.remove('hidden');
-            content.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-emerald-600 gap-3 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto"></i><p class="text-sm font-bold">正在根據行程深度整理清單...</p></div>`;
-            lucide.createIcons();
-            const tripSummary = itineraryData.map(d => `Day ${d.day}: ${d.title}`).join('、');
-            const prompt = `你是專業旅遊管家。行程包含：${tripSummary}。請整理一份專屬行李清單。包含：自駕必備文件（譯本）、山區與海邊衣物建議、秘境駕駛建議物品。HTML 格式。繁體中文。`;
-            try { const responseHtml = await fetchGeminiWithRetry(prompt); content.innerHTML = responseHtml; } catch (err) { content.innerHTML = `<p class="text-red-500 text-center py-10">產出失敗，請確保金鑰有效。</p>`; }
-        }
-
-        function closePackingModal() { document.getElementById('packing-modal').classList.add('hidden'); }
 
         // --- UI Rendering ---
         const getEventStyles = (type) => {
@@ -322,7 +275,7 @@
                 if (event.images && event.images.length > 0) {
                     imgSection = event.images.map(img => `
                         <div class="mt-4 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white">
-                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover">
+                            <img src="${img.url}" alt="${img.title}" class="w-full h-40 md:h-72 object-cover hover:scale-105 transition-transform duration-700">
                             ${img.credit ? `<p class="px-3 py-1.5 text-[9px] md:text-[10px] text-slate-400 text-right italic border-t border-slate-50">${img.credit}</p>` : ''}
                         </div>
                     `).join('');
@@ -337,7 +290,7 @@
                         <div class="flex-1 bg-white border border-slate-50 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all w-full">
                             <div class="flex items-start gap-4">
                                 <div class="p-2.5 rounded-lg flex-shrink-0 ${styles.color}"><i data-lucide="${styles.icon}" class="w-4 h-4 md:w-5 md:h-5"></i></div>
-                                <div class="w-full">
+                                <div class="w-full text-left content-body">
                                     <h3 class="text-base md:text-lg font-bold text-slate-800 mb-2 leading-snug">${event.title}</h3>
                                     <div class="text-slate-500 text-xs md:text-sm leading-relaxed">${event.desc}</div>
                                     ${imgSection}

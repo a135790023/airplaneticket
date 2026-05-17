@@ -79,7 +79,7 @@
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto px-4 md:px-6 py-6">
         
-        <!-- 吸頂精簡頁籤 -->
+        <!-- 吸頂精簡頁籤 (更薄、高度更低，方便手機閱讀) -->
         <div class="sticky top-[49px] z-40 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-slate-200/50">
             <div id="tabs-container" class="flex overflow-x-auto hide-scrollbar gap-2 max-w-4xl mx-auto">
                 <button onclick="switchTab('legend')" id="tab-legend" class="tab-btn flex-shrink-0 px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 flex items-center gap-1.5 bg-teal-700 text-white shadow-sm">
@@ -114,7 +114,7 @@
                         在公園池塘旁，您會先看到一隻落寞的綠色河童<strong>「河太郎」</strong>看著水面。原來，他的弟弟<strong>「河次郎」</strong>因為頑皮，不小心被困在池底深處！
                     </p>
                     <p>
-                        每隔 15 分鐘，平靜的池塘水面就會突然開始狂冒泡泡。伴隨著咆哮聲，一隻通體鮮紅、毛髮雜亂、眼神極度瘋狂的超擬真河童「河次郎」會<strong>渾身濕淋淋地從水底猛然竄出</strong>！他手裡還抓著代表靈魂精髓的<strong>「尻子玉」</strong>，逼真驚悚的造型，常讓現場的小play嚇到嚎啕大哭。
+                        每隔 15 分鐘，平靜的池塘水面就會突然開始狂冒泡泡。伴隨著咆哮聲，一隻通體鮮紅、毛髮雜亂、眼神極度瘋狂的超擬真河童「河次郎」會<strong>渾身濕淋淋地從水底猛然竄出</strong>！他手裡還抓著代表靈魂精髓的<strong>「尻子玉」</strong>，逼真驚悚的造型，常讓現場的小朋友嚇到嚎啕大哭。
                     </p>
                 </div>
 
@@ -129,7 +129,7 @@
                         在 JR 福崎站前，有一個巨大的圓柱形透明水槽。當時間一到，河次郎就會一邊舉著「歡迎來到福崎」的牌子，一邊優游地從水底浮上來，跟剛下火車的遊客熱情打招呼，這也是福崎町令人拍案叫絕的都市傳說！
                     </p>
                     
-                    <!-- 秘密隧道圖片 - 修正：不切圖，保留比例 -->
+                    <!-- 秘密隧道圖片 - 修正：不切圖，完美保留比例 -->
                     <div class="mt-4 max-w-md mx-auto overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-slate-50">
                         <img src="https://www.town.fukusaki.hyogo.jp/cmsfiles/contents/0000002/2183/gajirounohimitsu.jpg" alt="河次郎的秘密地下隧道" class="w-full h-auto object-contain hover:scale-105 transition-transform duration-700">
                         <p class="px-3 py-1.5 text-[9px] md:text-[10px] text-slate-400 text-right italic bg-white border-t border-slate-50">圖片來源：福崎町官方網站照片</p>
@@ -166,7 +166,7 @@
             </p>
 
             <div class="space-y-6">
-                <!-- Location 1 (池塘河童 - 橫向圖片) -->
+                <!-- Location 1 (池塘河童 - 橫向圖片比例優化) -->
                 <div class="border border-slate-150 rounded-xl bg-slate-50/50 p-4 md:p-6 flex flex-col md:flex-row gap-5 items-center">
                     <div class="flex-1 w-full">
                         <h3 class="text-sm md:text-base font-bold text-teal-800 flex items-center gap-2 mb-2">
@@ -179,18 +179,18 @@
                             </div>
                             <div class="bg-white p-2.5 rounded-lg border border-slate-100">
                                 <span class="text-slate-400 font-medium block mb-0.5">出沒頻率</span>
-                                <span class="text-slate-700 font-bold">每小時 00分,15分,30分,45分</span>
+                                <span class="text-slate-700 font-bold">每小時 00分、15分、30分、45分</span>
                             </div>
                         </div>
                     </div>
-                    <!-- 橫向照片限高排版 -->
+                    <!-- 橫向照片精緻限高：手機端 max-h-40，不裁切保留原比例 -->
                     <div class="w-full md:w-56 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white flex flex-col justify-center">
                         <img src="https://fukusakikankou.jp/wp-content/uploads/2024/04/gajiro2.jpg" alt="河 kappa" class="max-h-40 w-auto object-contain mx-auto">
                         <p class="px-2 py-1 text-[8px] text-slate-400 text-center bg-slate-50 border-t border-slate-100">圖片來源：福崎町觀光協會官網照片</p>
                     </div>
                 </div>
 
-                <!-- Location 2 (逆天狗 - 直立照片優化) -->
+                <!-- Location 2 (逆天狗 - 直拍照片比例優化) -->
                 <div class="border border-slate-150 rounded-xl bg-slate-50/50 p-4 md:p-6 flex flex-col md:flex-row gap-5 items-center">
                     <div class="flex-1 w-full">
                         <h3 class="text-sm md:text-base font-bold text-orange-800 flex items-center gap-2 mb-2">
@@ -207,14 +207,14 @@
                             </div>
                         </div>
                     </div>
-                    <!-- 直立照精緻限高：手機端 max-h-64，寬度自適應，左右保留白邊並維持完美比例 -->
+                    <!-- 直立照精緻限高：手機端 max-h-64，寬度自適應，不裁切保留原比例 -->
                     <div class="w-full md:w-48 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white flex flex-col justify-center">
                         <img src="https://fukusakikankou.jp/wp-content/uploads/2024/04/tengu.jpg" alt="逆天狗" class="max-h-64 md:max-h-52 w-auto object-contain mx-auto">
                         <p class="px-2 py-1 text-[8px] text-slate-400 text-center bg-slate-50 border-t border-slate-100">圖片來源：福崎町觀光協會官網照片</p>
                     </div>
                 </div>
 
-                <!-- Location 3 (秘密分身 - 直立照片優化) -->
+                <!-- Location 3 (JR福崎站前 - 直拍照片比例優化) -->
                 <div class="border border-slate-150 rounded-xl bg-slate-50/50 p-4 md:p-6 flex flex-col md:flex-row gap-5 items-center">
                     <div class="flex-1 w-full">
                         <h3 class="text-sm md:text-base font-bold text-blue-800 flex items-center gap-2 mb-2">
@@ -231,7 +231,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- 直立照精緻限高：手機端 max-h-64，寬度自適應，左右保留白邊並維持完美比例 -->
+                    <!-- 直立照精緻限高：手機端 max-h-64，寬度自適應，不裁切保留原比例 -->
                     <div class="w-full md:w-48 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white flex flex-col justify-center">
                         <img src="https://i.meee.com.tw/ozZs4JD.jpg" alt="福崎站前河次郎" class="max-h-64 md:max-h-52 w-auto object-contain mx-auto">
                         <p class="px-2 py-1 text-[8px] text-slate-400 text-center bg-slate-50 border-t border-slate-100">圖片來源：@艾迪王 Eddie</p>
@@ -255,18 +255,17 @@
                 </p>
             </div>
 
-            <!-- Map Image Wrapper -->
+            <!-- Map Image Wrapper (修正：取消隱藏/裁切/縮放功能，原汁原味整張顯示) -->
             <div class="overflow-hidden rounded-xl border border-slate-100 shadow-sm mb-8 bg-slate-50">
                 <div class="p-2.5 bg-white border-b border-slate-100 flex justify-between items-center text-xs text-slate-400">
                     <span>🗺️ 福崎町官方妖怪 bench 散策地圖</span>
-                    <span class="text-teal-600 font-semibold">點擊圖片可縮放</span>
                 </div>
-                <div class="cursor-zoom-in overflow-auto max-h-[400px] flex items-center justify-center p-1" onclick="toggleMapZoom(this)">
-                    <img id="yokai-map-img" src="https://www.town.fukusaki.hyogo.jp/cmsfiles/contents/0000002/2183/bench1.jpg" alt="妖怪長椅地圖" class="max-w-full h-auto transition-transform duration-300">
+                <div class="p-1 bg-white flex items-center justify-center">
+                    <img id="yokai-map-img" src="https://www.town.fukusaki.hyogo.jp/cmsfiles/contents/0000002/2183/bench1.jpg" alt="妖怪長椅地圖" class="w-full h-auto rounded-lg">
                 </div>
             </div>
 
-            <!-- 23尊妖怪長椅文字寶藏清單 (取代原本的圖片網格) -->
+            <!-- 23尊妖怪長椅文字寶藏清單 -->
             <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-1.5">
                 <i data-lucide="list" class="w-4.5 h-4.5 text-teal-600"></i> 23 尊特色妖怪長椅分布點一覽
             </h3>
@@ -365,6 +364,9 @@
                     <span class="text-slate-400 text-[11px]">📍 舊辻川郵便局</span>
                 </div>
             </div>
+            
+            <!-- 圖片來源標註 -->
+            <p class="text-[9px] text-slate-400 text-center mt-6 italic">※ 本網頁中地圖、出沒照片等實景圖之來源皆為日本兵庫縣福崎町官方網站與觀光協會提供。</p>
         </div>
 
         <!-- Tab 4: 交通指南 -->
@@ -400,8 +402,8 @@
                         * 公園附設<strong>免費停車場</strong>，停車位充足。
                     </p>
                     <!-- 自駕導航連結 -->
-                    <div class="mt-3">
-                        <a href="https://www.google.com/maps/search/?api=1&query=辻川山公園" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-teal-700 font-bold hover:text-teal-900 transition-colors">
+                    <div class="mt-4">
+                        <a href="https://www.google.com/maps/search/?api=1&query=辻川山公園" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm">
                             <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> 開啟 Google Maps 導航 <i data-lucide="external-link" class="w-3 h-3"></i>
                         </a>
                     </div>
@@ -460,20 +462,6 @@
             activeBtn.className = "tab-btn flex-shrink-0 px-4 py-2 rounded-lg font-bold text-xs transition-all duration-300 flex items-center gap-1.5 bg-teal-700 text-white shadow-sm";
         }
 
-        // 妖怪地圖縮放功能
-        function toggleMapZoom(container) {
-            const img = container.querySelector('img');
-            if (img.classList.contains('scale-150')) {
-                img.classList.remove('scale-150');
-                container.classList.add('cursor-zoom-in');
-                container.classList.remove('cursor-zoom-out');
-            } else {
-                img.classList.add('scale-150');
-                container.classList.remove('cursor-zoom-in');
-                container.classList.add('cursor-zoom-out');
-            }
-        }
-
         // 妖怪出沒即時倒數算法
         function startYokaiCountdowns() {
             setInterval(() => {
@@ -505,7 +493,7 @@
                     if (minutes < 5) nextMinutes = 5;
                     else if (minutes < 20) nextMinutes = 20;
                     else if (minutes < 35) nextMinutes = 35;
-                    else if (minutes < 50) textMinutes = 50; // wait, let's keep nextMinutes
+                    else if (minutes < 50) nextMinutes = 50;
                     else nextMinutes = 65;
 
                     const diffMin = nextMinutes - minutes - 1;

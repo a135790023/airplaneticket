@@ -183,7 +183,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- 橫向照片精緻限高：手機端 max-h-40，不裁切保留原比例 -->
+                    <!-- 直立照精緻限高：手機端 max-h-40，不裁切保留原比例 -->
                     <div class="w-full md:w-56 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white flex flex-col justify-center">
                         <img src="https://fukusakikankou.jp/wp-content/uploads/2024/04/gajiro2.jpg" alt="河 kappa" class="max-h-40 w-auto object-contain mx-auto">
                         <p class="px-2 py-1 text-[8px] text-slate-400 text-center bg-slate-50 border-t border-slate-100">圖片來源：福崎町觀光協會官網照片</p>
@@ -471,7 +471,7 @@
                 const seconds = now.getSeconds();
 
                 // 1. 河童「河次郎」池塘出沒倒數
-                if (hours >= 9 && hours < 21) {
+                if (hours >= 9 && hours < 18) {
                     let nextMinutes;
                     if (minutes < 15) nextMinutes = 15;
                     else if (minutes < 30) nextMinutes = 30;

@@ -618,7 +618,6 @@
     }
 
     async function fetchSheetData(force = false) {
-      // 🚀 v23：改為「最新資料強制覆蓋」引擎，不再只保留最低價，確保資訊絕對最新
       const CACHE_KEY_TICKETS = 'eddie_tickets_v23', CACHE_KEY_HOTELS = 'eddie_hotels_v23', CACHE_TIME = 'eddie_cache_time_v23', now = new Date().getTime();
       
       const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
@@ -634,7 +633,6 @@
             hasCache = true;
             renderMain(); 
             
-            // 快取如果在 60 秒內，不需要背景更新
             if (cacheTime && (now - parseInt(cacheTime)) < 60 * 1000) {
                 return;
             }
@@ -652,7 +650,6 @@
         const SHEET_ID = '11K6w4hIwjTdUz1nJo4nt6i0GMC7QujZD8Mky4yy0zZ8';
         const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-        // 專用拉取函式
         const fetchGviz = async (sheetName) => {
             try {
                 const url = sheetName ? `${BASE_URL}&sheet=${encodeURIComponent(sheetName)}` : BASE_URL;
@@ -674,7 +671,6 @@
         
         let data = { tickets: [], tours: [], hotels: [] };
         
-        // 抽取原始文案
         const extractRows = (sourceData) => {
             if (!sourceData || !sourceData.table || !sourceData.table.rows) return [];
             return sourceData.table.rows.map(row => {
@@ -697,7 +693,6 @@
             rawArray.forEach((row) => {
                 let rawText = row.details;
                 
-                // 替換特定文字，並隱藏後端爬蟲產生的提示語
                 rawText = rawText
                     .replace(/台灣虎航/g, '🐯')
                     .replace(/虎航/g, '🐯')
@@ -726,8 +721,7 @@
                     let status = getTicketStatus(item.date, airlineTag || inferred.title, isTourFlag);
                     
                     if (status.isHidden) {
-                        console.log(`[自動下架] ${finalCity} ${item.titleContext || inferred.title} (${item.date}) 已超過開票底線`);
-                        return; // 被下架就不加入
+                        return;
                     }
 
                     const ticketObj = { 
@@ -749,7 +743,6 @@
 
                     let airlineKey = airlineTag;
                     if (isTourFlag) {
-                        // 旅行團需要加上標題名稱來做區分，避免同一天不同旅行團互相覆蓋
                         airlineKey += '_' + normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
                     } else if (!airlineKey) {
                         airlineKey = normalizeForDedup(ticketObj.airline).replace(/\d+/g, '');
@@ -757,8 +750,6 @@
                     
                     const key = `${ticketObj.date}_${ticketObj.city}_${airlineKey}_${ticketObj.isFlightAndHotel}_${ticketObj.isBogo}_${ticketObj.isTour}`;
                     
-                    // 【最新覆蓋引擎】
-                    // 試算表資料是從舊讀到新，我們直接無條件覆蓋，就能確保留下的是最新上傳的！
                     ticketMap.set(key, ticketObj);
                 });
                 combinedIndex++;
@@ -770,13 +761,11 @@
         
         state.tickets = Array.from(ticketMap.values());
         
-        // 抽取飯店
         const extractHotels = (sourceData) => {
             if (!sourceData || !sourceData.table || !sourceData.table.cols) return [];
             let headers = sourceData.table.cols.map(c => c ? String(c.label || '').trim() : '');
             let rowsToProcess = sourceData.table.rows || [];
             
-            // 萬一表頭被擠到第一行
             if (headers.filter(Boolean).length === 0 && rowsToProcess.length > 0) {
                 headers = rowsToProcess[0].c.map(cell => cell ? String(cell.v || '').trim() : '');
                 rowsToProcess = rowsToProcess.slice(1);
@@ -960,35 +949,99 @@
     }
 
     function getSearchHTML() {
-       const q = state.searchQuery, matchedTickets = state.tickets.filter(t => (t.country && t.country.toLowerCase().includes(q)) || (t.city && t.city.toLowerCase().includes(q)) || (t.airline && t.airline.toLowerCase().includes(q)) || (t.details && t.details.toLowerCase().includes(q)));
-       const allMatches = [...matchedTickets].sort((a, b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
-       if (allMatches.length === 0) return `<div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i><h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3></div>`;
-       const listHTML = allMatches.map(t => { 
-         const encodedItem = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27"); 
-         const isTour = t.isTour;
-         const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
-         const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
-         const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
-         const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
-         
-         return `
-           <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
-             <div>
-               <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
-               <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title || t.airline}</div>
-               <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                 <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city || t.country}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
-                 ${airlineTagHtml}
-                 ${warningTagHtml}
-               </div>
-             </div>
-             <div class="text-right shrink-0 ml-4">
-               <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
-               <div class="text-xl font-black text-red-500">$${t.price || '--'}</div>
-             </div>
-           </div>`; 
-       }).join('');
-       return `<div class="fade-in"><div class="flex items-center gap-4 mb-8"><button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center"><i class="ph-bold ph-arrow-left text-xl"></i></button><h1 class="text-2xl font-bold">搜尋結果: "${state.searchQuery}"</h1></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${listHTML}</div></div>`;
+      const q = state.searchQuery;
+      // 過濾搜尋結果
+      const matchedTickets = state.tickets.filter(t => 
+        (t.country && t.country.toLowerCase().includes(q)) || 
+        (t.city && t.city.toLowerCase().includes(q)) || 
+        (t.airline && t.airline.toLowerCase().includes(q)) || 
+        (t.details && t.details.toLowerCase().includes(q))
+      );
+      
+      let allMatches = [...matchedTickets];
+      
+      // 依據 state.listSortBy 進行排序（金額或出發日期）
+      if (state.listSortBy === 'date') {
+        allMatches.sort((a,b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999);
+        });
+      } else {
+        allMatches.sort((a,b) => (parseInt((a.price||'').replace(/\D/g, '')) || 999999) - (parseInt((b.price||'').replace(/\D/g, '')) || 999999));
+      }
+
+      // 共用的排序 UI 介面
+      const sortUI = allMatches.length > 0 ? `
+        <div class="flex items-center justify-end gap-2 fade-in">
+          <span class="text-sm font-bold text-gray-500">排序：</span>
+          <div class="bg-gray-100 p-1 rounded-lg flex text-xs font-bold">
+            <button onclick="setListSortBy('price')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy !== 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">最低金額</button>
+            <button onclick="setListSortBy('date')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy === 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">出發日期</button>
+          </div>
+        </div>
+      ` : '';
+
+      if (allMatches.length === 0) {
+        return `
+          <div class="fade-in">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div class="flex items-center gap-4">
+                <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center">
+                  <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h1 class="text-xl sm:text-2xl font-bold">搜尋結果: "${state.searchQuery}"</h1>
+              </div>
+            </div>
+            <div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+              <i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i>
+              <h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3>
+            </div>
+          </div>
+        `;
+      }
+
+      const listHTML = allMatches.map(t => { 
+        const encodedItem = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27"); 
+        const isTour = t.isTour;
+        const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
+        const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
+        const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${t.airlineTag}</div>` : '';
+        const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
+        
+        return `
+          <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" onclick="window.openModalFromItem('${encodedItem}')">
+            <div>
+              <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${t.date}</div>
+              <div class="font-black text-gray-900 text-lg line-clamp-1">${t.title || t.airline}</div>
+              <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${t.city || t.country}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
+                ${airlineTagHtml}
+                ${warningTagHtml}
+              </div>
+            </div>
+            <div class="text-right shrink-0 ml-4">
+              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
+              <div class="text-xl font-black text-red-500">$${t.price || '--'}</div>
+            </div>
+          </div>`; 
+      }).join('');
+      
+      return `
+        <div class="fade-in">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-4">
+              <button onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center">
+                <i class="ph-bold ph-arrow-left text-xl"></i>
+              </button>
+              <h1 class="text-xl sm:text-2xl font-bold">搜尋結果: "${state.searchQuery}"</h1>
+            </div>
+            ${sortUI}
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${listHTML}
+          </div>
+        </div>
+      `;
     }
 
     function getGlobalHotelsHTML() {

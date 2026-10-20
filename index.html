@@ -290,7 +290,7 @@
 
     const state = { 
       tickets: [], tours: [], hotels: [], 
-      isLoading: true, selectedCountryObj: null, selectedTab: null, 
+      isLoading: true, loadError: false, selectedCountryObj: null, selectedTab: null, 
       currentDate: new Date(), selectedDateTickets: null, 
       isModalOpen: false, animateTransition: true, 
       viewMode: 'calendar', searchQuery: '', listSortBy: 'price' 
@@ -440,7 +440,6 @@
 
     function parseRawDetails(details) {
       const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
-      const isGlobalBogo = details && details.includes('買一送一');
       const isGlobalTour = details && (details.includes('行程 👉') || details.includes('行程：') || details.includes('團體') || details.includes('旅行團'));
 
       if (!details) return [];
@@ -513,8 +512,12 @@
         currentCityContext = blockCityContext;
         currentTitleContext = null;
         let blockRunningPrice = null;
+        let blockRunningBogo = false;
+        let pendingBogo = false;
+        let bogoLookaheadPriceIndex = -1;
 
         for (let line of lines) {
+            if (line.includes('買一送一')) blockRunningBogo = true;
             let pm = null;
             if (line.includes('→') || line.includes('->') || line.includes('=>')) {
                 const parts = line.split(/→|->|=>/);
@@ -526,6 +529,7 @@
 
         for (let i = 0; i < lines.length; i++) {
           let line = lines[i];
+          const lineHasBogo = line.includes('買一送一');
           let foundCityInLine = getCityFromText(line);
           if (foundCityInLine) {
               currentCityContext = foundCityInLine;
@@ -543,7 +547,15 @@
           if (!priceMatch) {
               for (let rx of priceRegexes) { priceMatch = line.match(rx); if (priceMatch) break; }
           }
-          if (priceMatch) blockRunningPrice = priceMatch[1].replace(/,/g, ''); 
+          // 促銷只屬於對應價格組；新的普通票價不能沿用上一組的標籤。
+          if (priceMatch) {
+              blockRunningPrice = priceMatch[1].replace(/,/g, '');
+              blockRunningBogo = lineHasBogo || pendingBogo || (i === bogoLookaheadPriceIndex && blockRunningBogo);
+              pendingBogo = false;
+              bogoLookaheadPriceIndex = -1;
+          } else if (lineHasBogo) {
+              pendingBogo = true;
+          }
           
           let urlMatch = line.match(/(https?:\/\/[^\s]+)/);
           let lineLink = urlMatch ? urlMatch[0] : null;
@@ -551,6 +563,7 @@
           let dates = extractDates(line);
           if (dates.length > 0) {
               let priceForTheseDates = blockRunningPrice;
+              let bogoForTheseDates = lineHasBogo || pendingBogo || blockRunningBogo;
               if (!priceMatch && i < lines.length - 1) {
                   const nextLine = lines[i+1];
                   let nextPriceMatch = null;
@@ -563,6 +576,9 @@
                   if (nextPriceMatch && extractDates(nextLine).length === 0) { 
                     priceForTheseDates = nextPriceMatch[1].replace(/,/g, ''); 
                     blockRunningPrice = priceForTheseDates; 
+                    bogoForTheseDates = lineHasBogo || pendingBogo || nextLine.includes('買一送一');
+                    blockRunningBogo = bogoForTheseDates;
+                    bogoLookaheadPriceIndex = i + 1;
                   }
               }
               if (!priceForTheseDates) { 
@@ -603,13 +619,17 @@
                     date: dateStr, 
                     price: priceForTheseDates || '', 
                     isFlightAndHotel: lineIsPak, 
-                    isBogo: isGlobalBogo || line.includes('買一送一'), 
+                    isBogo: bogoForTheseDates,
                     isTour: isGlobalTour,
                     cityContext: currentCityContext, 
                     titleContext: currentTitleContext,
                     link: lineLink || blockGlobalLink,
                     blockText: block.trim() + footerText
                   });
+              }
+              if (pendingBogo) {
+                  blockRunningBogo = bogoForTheseDates;
+                  pendingBogo = false;
               }
           }
         }
@@ -618,17 +638,24 @@
     }
 
     async function fetchSheetData(force = false) {
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v23', CACHE_KEY_HOTELS = 'eddie_hotels_v23', CACHE_TIME = 'eddie_cache_time_v23', now = new Date().getTime();
-      
-      const cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
-      const cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
-      const cacheTime = localStorage.getItem(CACHE_TIME);
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v24', CACHE_KEY_HOTELS = 'eddie_hotels_v24', CACHE_TIME = 'eddie_cache_time_v24', now = new Date().getTime();
+      state.loadError = false;
+      let cachedTickets = null, cachedHotels = null, cacheTime = null;
+      try {
+          cachedTickets = localStorage.getItem(CACHE_KEY_TICKETS);
+          cachedHotels = localStorage.getItem(CACHE_KEY_HOTELS);
+          cacheTime = localStorage.getItem(CACHE_TIME);
+      } catch (error) {
+          console.warn('Cache unavailable:', error);
+      }
 
       let hasCache = false;
       if (cachedTickets && cachedHotels && !force) {
         try {
-            state.tickets = JSON.parse(cachedTickets);
-            state.hotels = JSON.parse(cachedHotels);
+            const tickets = JSON.parse(cachedTickets), hotels = JSON.parse(cachedHotels);
+            if (!Array.isArray(tickets) || !Array.isArray(hotels)) throw new Error('Invalid cache');
+            state.tickets = tickets;
+            state.hotels = hotels;
             state.isLoading = false;
             hasCache = true;
             renderMain(); 
@@ -650,21 +677,31 @@
         const SHEET_ID = '11K6w4hIwjTdUz1nJo4nt6i0GMC7QujZD8Mky4yy0zZ8';
         const BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-        const fetchGviz = async (sheetName) => {
+        const fetchGviz = async (sheetName, required = false) => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 20000);
             try {
                 const url = sheetName ? `${BASE_URL}&sheet=${encodeURIComponent(sheetName)}` : BASE_URL;
-                const res = await fetch(url);
+                const res = await fetch(url, { signal: controller.signal });
+                if (!res.ok) throw new Error(`Sheet HTTP ${res.status}`);
                 const text = await res.text();
                 const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                return JSON.parse(jsonStr);
+                const result = JSON.parse(jsonStr);
+                if (result.status === 'error' || !Array.isArray(result.table?.rows)) {
+                    throw new Error('Invalid sheet response');
+                }
+                return result;
             } catch (e) {
+                if (required) throw e;
                 return null;
+            } finally {
+                clearTimeout(timeout);
             }
         };
 
         const [flightsData, toursData, hotelsData1, hotelsData2] = await Promise.all([
-            fetchGviz(),
-            fetchGviz('旅行團'),
+            fetchGviz(null, true),
+            fetchGviz('旅行團', true),
             fetchGviz('飯店推薦'),
             fetchGviz('表單回應 1')
         ]);
@@ -823,10 +860,15 @@
             };
         }).reverse(); 
         
-        localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets)); 
-        localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels)); 
-        localStorage.setItem(CACHE_TIME, now.toString());
+        try {
+            localStorage.setItem(CACHE_KEY_TICKETS, JSON.stringify(state.tickets));
+            localStorage.setItem(CACHE_KEY_HOTELS, JSON.stringify(state.hotels));
+            localStorage.setItem(CACHE_TIME, now.toString());
+        } catch (error) {
+            console.warn('Cache write failed:', error);
+        }
       } catch (error) { 
+        state.loadError = true;
         console.error('API Error:', error); 
       } finally { 
         state.isLoading = false; 
@@ -838,8 +880,6 @@
     window.forceRefresh = () => { 
         state.isLoading = true; 
         window.trackEvent('force_refresh', {}); 
-        localStorage.removeItem('eddie_tickets_v23');
-        localStorage.removeItem('eddie_hotels_v23');
         fetchSheetData(true); 
     };
     
@@ -1557,13 +1597,30 @@
       modalRoot.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col max-h-[85vh]"><div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0"><h3 class="text-xl font-bold text-gray-900 flex items-center gap-2"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${state.selectedDateTickets.date}</h3><button onclick="closeModal()" class="p-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center"><i class="ph-bold ph-x text-xl"></i></button></div><div class="p-6 overflow-y-auto bg-gray-50/50 flex-1 no-scrollbar">${contentHTML}</div></div></div>`;
     }
 
-    function renderMain() { 
-      const el = document.getElementById('main-content'); 
+    function getLoadErrorHTML(hasSavedData) {
+      return `<div role="alert" class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-amber-900">
+        <p class="font-bold mb-2">資料暫時無法載入</p>
+        <p class="text-sm mb-4">${hasSavedData ? '目前顯示上次載入的資料，最新機位與票價請向旅行社確認。' : '目前無法取得最新機票與行程，請確認網路連線後重新載入。'}</p>
+        <button onclick="forceRefresh()" class="bg-amber-900 text-white rounded-xl px-4 py-2 text-sm font-bold">重新載入資料</button>
+      </div>`;
+    }
+
+    function renderMain() {
+      const el = document.getElementById('main-content');
+      if (state.isLoading && state.loadError === false && !state.tickets.length && !state.hotels.length) {
+        el.innerHTML = getLoadingHTML();
+        return;
+      }
+      if (state.loadError && !state.tickets.length && !state.hotels.length) {
+        el.innerHTML = getLoadErrorHTML(false);
+        return;
+      }
       if (!state.selectedCountryObj && !state.searchQuery) el.innerHTML = getHomeHTML(); 
       else if (state.isLoading) el.innerHTML = getLoadingHTML(); 
       else if (state.searchQuery || state.selectedCountryObj?.isSearch) el.innerHTML = getSearchHTML(); 
       else if (state.selectedCountryObj?.isHotelsGlobal) el.innerHTML = getGlobalHotelsHTML(); 
       else el.innerHTML = getFlightsHTML(); 
+      if (state.loadError) el.innerHTML = getLoadErrorHTML(true) + el.innerHTML;
     }
 
     window.addEventListener('DOMContentLoaded', () => {

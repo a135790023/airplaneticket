@@ -377,9 +377,9 @@
         const regex = new RegExp(code + '\\d{2,4}');
         if (regex.test(normalized)) return codes[code];
       }
-      const names = ['酷航', '虎航', '台灣虎航', '星宇', '長榮', '華航', '中華航空', '越捷', '泰越捷', '樂桃', '捷星', '國泰', '釜山航空', '德威', '濟州航空', '真航空', '大灣區', '澳門航空', '亞航'];
+      const names = ['酷航', '虎航', '台灣虎航', '星宇', '長榮', '華航', '中華航空', '越捷', '泰越捷', '樂桃', '捷星', '國泰', '釜山航空', '德威', '濟州航空', '真航空', '大灣區', '澳門航空', '泰亞航', '全亞航', '亞洲航空', '亞航'].sort((a, b) => b.length - a.length);
       for (let name of names) {
-        if (text.includes(name)) return name.replace('虎航', '台灣虎航').replace('台灣台灣虎航', '台灣虎航'); 
+        if (text.includes(name)) return name.replace('虎航', '台灣虎航').replace('台灣台灣虎航', '台灣虎航').replace('中華航空', '華航').replace('亞洲航空', '亞航');
       }
       return '';
     }
@@ -439,7 +439,6 @@
     }
 
     function parseRawDetails(details) {
-      const isGlobalPak = details && (details.includes('機+酒') || details.includes('機加酒') || details.includes('機＋酒') || details.includes('自由行'));
       const isGlobalTour = details && (details.includes('行程 👉') || details.includes('行程：') || details.includes('團體') || details.includes('旅行團'));
 
       if (!details) return [];
@@ -476,6 +475,34 @@
       ];
 
       const blocks = details.split(/\n\s*[-=_]{3,}\s*\n?/);
+      const getPackageType = (text) => {
+        if (/純\s*(?:機票|票)|單\s*(?:機票|票)/.test(text)) return false;
+        if (/(?:不含|未含)(?:飯店|住宿|機票)/.test(text)) return false;
+        if (/(?:加購|另購).*(?:機\s*(?:[+＋]|加)\s*酒|機酒)/.test(text)) return null;
+        if (/機\s*(?:[+＋]|加)\s*酒|機酒|機票\s*[+＋]\s*(?:飯店|住宿)/.test(text)) return true;
+        return null;
+      };
+      const isProductHeading = (line) => {
+        if (!getCityFromText(line) || /去程|回程|出發日|參考航班|托運/.test(line)) return false;
+        return /\d+(?:\s*[+＋]\s*\d+)?\s*(?:日|天)/.test(line) ||
+          (!/[$＄]|\d{1,2}:\d{2}/.test(line) && !!inferAirlineFromCode(line));
+      };
+      const hasPrice = (line) => priceRegexes.some(rx => rx.test(line)) || /(?:→|->|=>).*\d[\d,]{3,}/.test(line);
+      const firstHeader = [];
+      for (const line of (blocks.find(block => block.trim()) || '').split('\n')) {
+        if (hasPrice(line) || extractDates(line).length) break;
+        firstHeader.push(line);
+      }
+      // 只有同一商品的共同標題可供飯店方案沿用；不同商品段落各自判斷。
+      const sharedPackage = firstHeader.some(line => getPackageType(line) === true) &&
+        !firstHeader.some(line => getPackageType(line) === false) &&
+        !blocks.slice(1).some(block => block.split('\n').some(isProductHeading));
+      const getSingleAirline = (text) => {
+        const airlines = new Set(text.split('\n').map(inferAirlineFromCode).filter(Boolean));
+        if (airlines.has('亞航') && (airlines.has('泰亞航') !== airlines.has('全亞航'))) airlines.delete('亞航');
+        return airlines.size === 1 ? [...airlines][0] : '';
+      };
+      const sharedAirline = getSingleAirline(details);
       let footerText = '';
       
       if (blocks.length > 1) {
@@ -496,6 +523,10 @@
         let blockGlobalLink = blockGlobalLinkMatch ? blockGlobalLinkMatch[0] : null;
 
         const lines = block.split('\n');
+        const blockAirline = getSingleAirline(block);
+        let packageSection = sharedPackage;
+        let blockRunningPackage = packageSection;
+        let initialPackageSection = packageSection;
         
         let allDatesInBlock = [];
         for (let line of lines) allDatesInBlock.push(...extractDates(line));
@@ -524,7 +555,14 @@
                 pm = parts[parts.length - 1].match(/([0-9,]{4,})/);
             }
             if (!pm) { for (let rx of priceRegexes) { pm = line.match(rx); if (pm) break; } }
-            if (pm) { blockRunningPrice = pm[1].replace(/,/g, ''); break; }
+            const packageType = getPackageType(line);
+            if (isProductHeading(line)) initialPackageSection = packageType ?? false;
+            if (packageType !== null && !pm) initialPackageSection = packageType;
+            if (pm) {
+                blockRunningPrice = pm[1].replace(/,/g, '');
+                blockRunningPackage = packageType ?? initialPackageSection;
+                break;
+            }
         }
 
         for (let i = 0; i < lines.length; i++) {
@@ -537,7 +575,7 @@
               cleanLine = cleanLine.replace(/^(?:202[4-9][\/\-])?\d{1,2}[\/\-]\d{1,2}\s*/, '');
               if (cleanLine.length > 2) currentTitleContext = cleanLine;
           }
-          let lineIsPak = (line.includes('機+酒') || line.includes('機加酒') || line.includes('機＋酒') || line.includes('自由行')) ? true : (line.includes('純機票') || line.includes('單機票')) ? false : isGlobalPak;
+          const linePackageType = getPackageType(line);
           
           let priceMatch = null;
           if (line.includes('→') || line.includes('->') || line.includes('=>')) {
@@ -547,6 +585,13 @@
           if (!priceMatch) {
               for (let rx of priceRegexes) { priceMatch = line.match(rx); if (priceMatch) break; }
           }
+          if (isProductHeading(line)) packageSection = !priceMatch ? (linePackageType ?? false) : false;
+          if (linePackageType !== null && !priceMatch) {
+              packageSection = linePackageType;
+              blockRunningPackage = linePackageType;
+          }
+          if (priceMatch) blockRunningPackage = linePackageType ?? packageSection;
+          let lineIsPak = blockRunningPackage;
           // 促銷只屬於對應價格組；新的普通票價不能沿用上一組的標籤。
           if (priceMatch) {
               blockRunningPrice = priceMatch[1].replace(/,/g, '');
@@ -579,6 +624,8 @@
                     bogoForTheseDates = lineHasBogo || pendingBogo || nextLine.includes('買一送一');
                     blockRunningBogo = bogoForTheseDates;
                     bogoLookaheadPriceIndex = i + 1;
+                    lineIsPak = linePackageType ?? getPackageType(nextLine) ?? packageSection;
+                    blockRunningPackage = lineIsPak;
                   }
               }
               if (!priceForTheseDates) { 
@@ -623,6 +670,11 @@
                     isTour: isGlobalTour,
                     cityContext: currentCityContext, 
                     titleContext: currentTitleContext,
+                    airlineContext: (() => {
+                      const titleAirline = inferAirlineFromCode(currentTitleContext);
+                      if (titleAirline === '亞航' && ['泰亞航', '全亞航'].includes(blockAirline)) return blockAirline;
+                      return titleAirline || blockAirline || sharedAirline;
+                    })(),
                     link: lineLink || blockGlobalLink,
                     blockText: block.trim() + footerText
                   });
@@ -638,7 +690,7 @@
     }
 
     async function fetchSheetData(force = false) {
-      const CACHE_KEY_TICKETS = 'eddie_tickets_v24', CACHE_KEY_HOTELS = 'eddie_hotels_v24', CACHE_TIME = 'eddie_cache_time_v24', now = new Date().getTime();
+      const CACHE_KEY_TICKETS = 'eddie_tickets_v25', CACHE_KEY_HOTELS = 'eddie_hotels_v25', CACHE_TIME = 'eddie_cache_time_v25', now = new Date().getTime();
       state.loadError = false;
       let cachedTickets = null, cachedHotels = null, cacheTime = null;
       try {
@@ -754,8 +806,8 @@
                     }
                     if (!KNOWN_COUNTRIES.includes(finalCountry)) finalCountry = '其他';
                     
-                    let airlineTag = isTourFlag ? '跟團行程' : inferAirlineFromCode(rawText);
-                    let status = getTicketStatus(item.date, airlineTag || inferred.title, isTourFlag);
+                    let airlineTag = isTourFlag ? '跟團行程' : item.airlineContext;
+                    let status = getTicketStatus(item.date, airlineTag || item.titleContext || '', isTourFlag);
                     
                     if (status.isHidden) {
                         return;

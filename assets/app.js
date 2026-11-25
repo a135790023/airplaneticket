@@ -24,14 +24,15 @@
       isLoading: true, loadError: false, selectedCountryObj: null, selectedTab: null, 
       currentDate: new Date(), selectedDateTickets: null, 
       isModalOpen: false, animateTransition: true, 
-      viewMode: 'calendar', searchQuery: '', listSortBy: 'price',
-      origin: '', productType: '', monthFilter: '', sources: {}, lastSync: 0, modalNotice: '', inquirySource: 'card', pendingOffer: '' 
+      viewMode: preferredView(), searchQuery: '', listSortBy: 'price', listLimit: 24,
+      origin: '', destination: '', productType: '', monthFilter: '', quickSearch: {origin:'',destination:'',monthFilter:''}, sources: {}, lastSync: 0, modalNotice: '', inquirySource: 'card', pendingOffer: '' 
     };
     window.executeSearch = (q) => { 
         q = q.trim().toLowerCase(); 
-        state.searchQuery = q; 
+        state.searchQuery = q; state.listLimit=24; 
         if (q) { 
             state.selectedCountryObj = { isSearch: true }; 
+            state.viewMode = 'list';
             syncURL(); 
             window.trackEvent('search', { search_term: q }); 
         } else { 
@@ -47,7 +48,7 @@
         state.selectedTab = null; 
         state.currentDate = new Date(); 
         state.animateTransition = true; 
-        state.origin=''; state.productType=''; state.monthFilter=''; state.viewMode='calendar'; state.listSortBy='price'; syncURL(); 
+        state.origin=''; state.destination=''; state.productType=''; state.monthFilter=''; state.quickSearch={origin:'',destination:'',monthFilter:''}; state.viewMode=preferredView(); state.listSortBy='price'; syncURL(); 
         window.trackEvent('navigate_home', {}); 
         renderMain(); 
         state.animateTransition = false; 
@@ -61,13 +62,13 @@
         window.trackEvent('select_category', { category: 'Hotels' }); 
       } else { 
         const countryObj = LOCATION_DATA[index]; 
-        state.selectedCountryObj = countryObj; 
+        state.selectedCountryObj = countryObj; state.listLimit=24; 
         state.selectedTab = countryObj.tabs[0].label; 
-        state.viewMode = 'calendar'; 
+        state.viewMode = preferredView(); 
          
         window.trackEvent('select_country', { country: countryObj.country }); 
       }
-      state.currentDate = new Date(); state.monthFilter=''; state.searchQuery=''; document.getElementById('searchInput').value=''; syncURL();
+      state.currentDate = new Date(); state.monthFilter=''; state.destination=''; state.searchQuery=''; document.getElementById('searchInput').value=''; syncURL();
       state.animateTransition = true; 
       renderMain(); 
       state.animateTransition = false; 
@@ -75,26 +76,27 @@
     };
 
     window.selectTab = (tabLabel) => { 
-      state.selectedTab = tabLabel; 
+      state.selectedTab = tabLabel; state.listLimit=24; 
       const countryObj = state.selectedCountryObj; 
       const tabObj = countryObj.tabs.find(t => t.label === tabLabel); 
        
       window.trackEvent('select_tab', { tab: tabLabel, country: countryObj.country }); 
-      state.currentDate = new Date(); state.monthFilter=''; state.searchQuery=''; document.getElementById('searchInput').value=''; syncURL();
+      state.currentDate = new Date(); state.monthFilter=''; state.destination=''; state.searchQuery=''; document.getElementById('searchInput').value=''; syncURL();
       state.animateTransition = false; 
       renderMain(); 
     };
     
     window.setViewMode = (mode) => { 
-        state.viewMode = mode; syncURL();
+        if(!['calendar','list','hotels'].includes(mode))return;
+        state.viewMode = mode; if(mode!=='hotels')try{localStorage.setItem('eddie_ticket_view',mode);}catch(_){} syncURL();
         window.trackEvent('change_view_mode', { mode: mode }); 
         renderMain(); 
     };
     
-    window.setListSortBy = (mode) => { state.listSortBy = mode; syncURL(); renderMain(); };
+    window.setListSortBy = (mode) => { state.listSortBy = mode; state.listLimit=24; syncURL(); renderMain(); };
     
     window.setMonth = (y, m) => { 
-        state.currentDate = new Date(y, m, 1); state.monthFilter = `${y}-${String(m+1).padStart(2,'0')}`; syncURL(); 
+        state.currentDate = new Date(y, m, 1); state.listLimit=24; state.monthFilter = `${y}-${String(m+1).padStart(2,'0')}`; syncURL(); 
         state.animateTransition = false; 
         renderMain(); 
     };
@@ -134,30 +136,111 @@
       return {origin,duration,outboundFlight:codes(out),inboundFlight:codes(back),outboundInfo:out,inboundInfo:back,returnDate:returnDate || ''};
     }
     function formatPrice(value) { return /^\d[\d,]*$/.test(String(value)) ? Number(String(value).replaceAll(',','')).toLocaleString('en-US') : escapeHTML(value); }
-    function travelSummary(item) { return [item.origin&&'出發地：'+item.origin,item.duration,item.outboundInfo,item.inboundInfo,item.returnDate&&'回程日期：'+item.returnDate].filter(Boolean).join(' ｜ ') || '航班及回程日期請參考廠商原文或詢問客服。'; }
-    function matchesFilters(item,includeMonth=true) {
-      const type=item.isTour?'tour':item.isFlightAndHotel?'package':'ticket';
-      return (!state.origin||item.origin===state.origin) && (!state.productType||type===state.productType) && (!includeMonth||!state.monthFilter||item.date.startsWith(state.monthFilter));
+    function travelSummary(item) {
+      const departure=[item.origin,item.duration].filter(Boolean).join('｜');
+      const flight=(label,value)=>value ? label+'｜'+value.replace(/^(?:去程|往程|回程|返程)\s*[｜|:：]?\s*/, '').trim() : '';
+      return [departure&&'出發｜'+departure,flight('去程',item.outboundInfo),flight('回程',item.inboundInfo),item.returnDate&&'回程日期｜'+item.returnDate].filter(Boolean).join('\n') || '航班及回程日期請參考廠商原文或詢問客服。';
+    }
+    function preferredView() {
+      try { const saved=localStorage.getItem('eddie_ticket_view');if(['calendar','list'].includes(saved))return saved; } catch(_) {}
+      return window.matchMedia?.('(max-width: 639px)').matches ? 'list' : 'calendar';
+    }
+    const TYPE_OPTIONS=[['ticket','純機票'],['package','機加酒'],['tour','旅行團']];
+    function filterValue(item,key) {
+      if(key==='productType')return item.isTour?'tour':item.isFlightAndHotel?'package':'ticket';
+      if(key==='destination')return item.city || '';
+      if(key==='monthFilter')return item.date.slice(0,7);
+      return item.origin || '';
+    }
+    function matchesSelection(item,selection,except='') {
+      return ['origin','destination','productType','monthFilter'].every(key=>key===except||!selection[key]||filterValue(item,key)===selection[key]);
+    }
+    function matchesFilters(item,includeMonth=true) { return matchesSelection(item,state,includeMonth?'':'monthFilter'); }
+    function scopeTickets() {
+      const q=state.searchQuery;
+      if(q)return state.tickets.filter(t=>[t.country,t.city,t.airline,t.details].some(value=>String(value||'').toLowerCase().includes(q)));
+      const country=state.selectedCountryObj, tab=country?.tabs?.find(t=>t.label===state.selectedTab);
+      if(country?.tabs)return state.tickets.filter(t=>t.country===country.country && (!tab||tab.cities.some(c=>c==='其他航點'||t.city.includes(c)||c.includes(t.city))));
+      return state.tickets;
+    }
+    function facetOptions(tickets,key,selection) {
+      const counts=new Map();
+      for(const item of tickets)if(matchesSelection(item,selection,key)) { const value=filterValue(item,key);if(value)counts.set(value,(counts.get(value)||0)+1); }
+      if(selection[key]&&!counts.has(selection[key]))counts.set(selection[key],0);
+      return [...counts].sort(([a],[b])=>a.localeCompare(b,'zh-TW')).map(([value,count])=>({value,count,label:key==='monthFilter'?value.replace('-','/'):key==='productType'?(TYPE_OPTIONS.find(x=>x[0]===value)?.[1]||value):value}));
+    }
+    function filterSelect(tickets,key,label,selection,quick=false) {
+      const options=facetOptions(tickets,key,selection);
+      return `<label class="block text-xs text-gray-500 font-bold min-w-0">${label}<select aria-label="${label}" name="${key}" data-filter="${key}" onchange="${quick?'updateQuickSearch(this.form)':`setFilter('${key}',this.value)`}" class="block mt-1 w-full min-h-[44px] bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800"><option value="">${key==='monthFilter'?'不限月份':'不限'}</option>${options.map(o=>`<option value="${escapeHTML(o.value)}" ${o.value===selection[key]?'selected':''} ${o.count===0?'disabled':''}>${escapeHTML(o.label)}（${o.count}）</option>`).join('')}</select></label>`;
     }
     function getFiltersHTML() {
-      const origins=[...new Set(state.tickets.map(t=>t.origin).filter(Boolean))].sort();
-      const months=[...new Set(state.tickets.map(t=>t.date.slice(0,7)))].sort();
-      const select=(name,label,options,current)=>`<label class="text-xs text-gray-500 font-bold">${label}<select aria-label="${label}" data-filter="${name}" onchange="setFilter('${name}',this.value)" class="ml-2 bg-white border border-gray-200 rounded-lg px-2 py-2 text-gray-700"><option value="">全部</option>${options.map(([value,text])=>`<option value="${escapeHTML(value)}" ${value===current?'selected':''}>${escapeHTML(text)}</option>`).join('')}</select></label>`;
-      return `<div class="flex flex-wrap gap-3 mb-5" aria-label="商品篩選">${select('origin','出發地',origins.map(x=>[x,x]),state.origin)}${select('monthFilter','出發月份',months.map(x=>[x,x.replace('-',' 年 ')+' 月']),state.monthFilter)}${select('productType','商品類型',[['ticket','純機票'],['package','機加酒'],['tour','旅行團']],state.productType)}${state.origin||state.productType||state.monthFilter?'<button class="text-xs underline text-gray-500" onclick="clearFilters()">清除篩選</button>':''}</div>`;
+      const tickets=scopeTickets(), labels={origin:'出發地',destination:'目的地',monthFilter:'出發月份',productType:'商品類型'};
+      const calendar=state.selectedCountryObj?.tabs && state.viewMode==='calendar';
+      const month=`${state.currentDate.getFullYear()}-${String(state.currentDate.getMonth()+1).padStart(2,'0')}`;
+      const count=tickets.filter(t=>matchesFilters(t)&&(!calendar||t.date.startsWith(month))).length;
+      const selected=Object.entries(labels).filter(([key])=>state[key]);
+      return `<section aria-label="商品篩選" class="bg-white border border-gray-100 rounded-2xl p-4 mb-5"><div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${Object.entries(labels).map(([key,label])=>filterSelect(tickets,key,label,state)).join('')}</div><div class="flex flex-wrap items-center gap-2 mt-3"><p role="status" class="text-sm font-bold text-gray-700 mr-auto">${calendar?month.replace('-',' 年 ')+' 月：':'符合條件：'}${count} 個方案</p>${selected.length?'<button onclick="clearFilters()" class="min-h-[44px] text-sm text-blue-600 underline px-2">清除篩選</button>':''}</div>${selected.length?`<div aria-label="已選條件" class="flex flex-wrap gap-2">${selected.map(([key,label])=>`<button onclick="setFilter('${key}','')" class="min-h-[36px] bg-blue-50 text-blue-800 rounded-lg px-3 py-1 text-xs" aria-label="移除${label}條件">${label}：${escapeHTML(key==='productType'?(TYPE_OPTIONS.find(x=>x[0]===state[key])?.[1]||state[key]):state[key])} ×</button>`).join('')}</div>`:''}</section>`;
     }
-    window.setFilter=(key,value)=>{ if(!['origin','productType','monthFilter'].includes(key))return;state[key]=value;if(key==='monthFilter'&&value){const[y,m]=value.split('-');state.currentDate=new Date(+y,+m-1,1);}syncURL();renderMain();document.querySelector(`[data-filter="${key}"]`)?.focus(); };
-    window.clearFilters=()=>{state.origin='';state.productType='';state.monthFilter='';syncURL();renderMain();};
+    window.setFilter=(key,value)=>{
+      if(!['origin','destination','productType','monthFilter'].includes(key))return;
+      state[key]=value; state.listLimit=24;
+      if(key==='monthFilter'&&value){const[y,m]=value.split('-');state.currentDate=new Date(+y,+m-1,1);}
+      syncURL();renderMain();document.querySelector(`[data-filter="${key}"]`)?.focus();
+    };
+    window.clearFilters=()=>{state.listLimit=24;state.origin='';state.destination='';state.productType='';state.monthFilter='';syncURL();renderMain();};
+    function getQuickSearchHTML() {
+      const selection=state.quickSearch,count=state.tickets.filter(t=>matchesSelection(t,selection)).length;
+      return `<section id="quick-search" aria-label="快速查票" class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-8 shadow-sm"><h2 class="font-black text-lg text-gray-900 mb-3">先找適合你的出發日期</h2><form onsubmit="submitQuickSearch(event,this)"><div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${[['origin','出發地'],['destination','目的地'],['monthFilter','出發月份']].map(([key,label])=>filterSelect(state.tickets,key,label,selection,true)).join('')}</div><div class="flex flex-wrap gap-3 items-center justify-between mt-4"><p role="status" class="text-xs text-gray-500">${count?'符合條件 '+count+' 個方案':'可選不限條件，查看其他出發日期'}</p><button type="submit" class="w-full sm:w-auto min-h-[44px] bg-gray-900 hover:bg-blue-600 text-white font-bold rounded-xl px-6 py-3">查看機票與行程</button></div></form></section>`;
+    }
+    function quickSelection(form) { return Object.fromEntries(['origin','destination','monthFilter'].map(key=>[key,form.elements.namedItem(key).value])); }
+    window.updateQuickSearch=form=>{
+      const focus=document.activeElement?.name;state.quickSearch=quickSelection(form);
+      const el=document.getElementById('quick-search');if(el)el.outerHTML=getQuickSearchHTML();
+      if(focus)document.querySelector(`#quick-search [name="${focus}"]`)?.focus();
+    };
+    window.submitQuickSearch=(event,form)=>{
+      event.preventDefault();state.listLimit=24;state.quickSearch=quickSelection(form);Object.assign(state,state.quickSearch);
+      state.searchQuery='';state.productType='';state.selectedCountryObj={isSearch:true};state.selectedTab=null;state.viewMode='list';
+      document.getElementById('searchInput').value='';syncURL();renderMain();
+      window.trackEvent('quick_search',{origin:state.origin,destination:state.destination,month:state.monthFilter});
+      document.getElementById('main-content')?.focus?.({preventScroll:true});window.scrollTo({top:0,behavior:'smooth'});
+    };
+    function offerCardHTML(t) {
+      const type=t.isTour?'旅行團':t.isFlightAndHotel?'機加酒':'純機票';
+      const flights=[t.outboundFlight,t.inboundFlight].filter(Boolean).join('／');
+      return `<button type="button" data-offer="${escapeHTML(t.id)}" onclick="openModalFromItem('${t.id}')" class="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md flex flex-col gap-3 ${t.isWarning?'ring-1 ring-red-400':''}"><div class="text-xs font-bold text-gray-500">${escapeHTML(t.date)} 出發${t.duration?' · '+escapeHTML(t.duration):''}</div><h3 class="font-black text-gray-900 text-base sm:text-lg leading-snug break-words">${escapeHTML(t.airline)}</h3><div class="flex flex-wrap gap-2 text-xs text-gray-600"><span class="rounded-md bg-gray-50 px-2 py-1">${escapeHTML(t.origin?t.origin+' → '+t.city:t.city)} · ${type}</span>${t.airlineTag?`<span class="rounded-md bg-blue-50 text-blue-700 px-2 py-1">${escapeHTML(t.airlineTag)}</span>`:''}${t.isWarning?'<span class="text-red-700 bg-red-50 rounded-md px-2 py-1">機位需確認</span>':''}</div>${flights?`<p class="text-xs text-gray-500">航班 ${escapeHTML(flights)}</p>`:''}<div class="flex justify-between items-end gap-3 border-t border-gray-100 pt-3 mt-auto"><div><p class="text-xs text-gray-500">${state.sources[t.source]?.error?'上次讀取報價':'參考報價'}</p><p class="text-xl font-black text-red-500">$${formatPrice(t.price||'--')}</p></div><span class="text-sm font-bold text-blue-600">查看詳情與詢價 →</span></div></button>`;
+    }
+    function moreResultsHTML(total) {
+      return total>state.listLimit?`<div class="text-center mt-6"><p class="text-sm text-gray-500 mb-3">已顯示 ${state.listLimit}／${total} 個方案</p><button onclick="showMoreOffers()" class="min-h-[44px] bg-white border border-gray-300 text-gray-800 rounded-xl px-6 py-3 font-bold text-sm">再看 ${Math.min(24,total-state.listLimit)} 個方案</button></div>`:'';
+    }
+    window.showMoreOffers=()=>{const previous=state.listLimit;state.listLimit+=24;renderMain();document.querySelectorAll('#main-content [data-offer]')[previous]?.focus({preventScroll:true});};
+    function emptyResultsHTML() {
+      return `<div class="py-12 px-5 text-center text-gray-500 bg-white rounded-2xl border border-gray-100"><h2 class="font-bold text-gray-800 mb-2">目前沒有符合條件的方案</h2><p class="text-sm mb-4">試試其他月份、出發地，或清除篩選查看更多選擇。</p><button onclick="clearFilters()" class="min-h-[44px] bg-gray-900 text-white rounded-xl px-4 py-2 text-sm font-bold">清除篩選</button><button onclick="goHome()" class="min-h-[44px] text-blue-600 px-4 py-2 text-sm font-bold">重新查票</button></div>`;
+    }
+    function generalContactHTML() {
+      const url=`https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?`+encodeURIComponent('您好，我從 eddietour.tw 前來，目前網站無法核對最新資料，想請您協助查詢機位與價格。');
+      return `<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer" onclick="trackEvent('contact_support',{source:'sync_error'})" class="min-h-[44px] inline-flex items-center justify-center px-4 py-3 rounded-xl bg-[#06C755] text-white font-bold text-sm">LINE 請客服協助查詢</a>`;
+    }
+    function inquiryButtonHTML(item) {
+      return `<a href="${escapeHTML(inquiryUrl(item))}" target="_blank" rel="noreferrer" data-inquiry="${escapeHTML(item.id)}" onclick="return prepareInquiry(event,'${item.id}')" class="w-full min-h-[44px] bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3 px-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="ph-bold ph-chat-circle-dots text-xl"></i>LINE 確認${item.isTour?'名額':'機位'}與價格</a>`;
+    }
+    function offerFactsHTML(item) {
+      const terms=[...new Set((item.details||'').split('\n').map(l=>l.trim()).filter(l=>/含稅|未稅|不含稅|行李|托運|手提|無餐|含餐/.test(l)&&!/(?:出發日|https?:\/\/)/.test(l)))];
+      return `<p class="text-xs text-gray-500 mb-2">出發日期｜${escapeHTML(item.date)}</p><p class="text-sm text-gray-800 whitespace-pre-line leading-7 break-words">${escapeHTML(travelSummary(item))}</p><div class="border-t border-gray-200 mt-3 pt-3"><p class="text-xs font-bold text-gray-500 mb-1">費用與行李${terms.length?'（廠商原文）':''}</p><p class="text-sm whitespace-pre-line break-words">${escapeHTML(terms.join('\n')||'稅費、行李與計價方式請向旅行社確認。')}</p></div>`;
+    }
     function safeUpdateURL(url,replace=false) {
       try { if(url !== location.pathname+location.search) history[replace?'replaceState':'pushState']({},'',url); } catch(_) {}
     }
     function viewParams() {
       const p=new URLSearchParams();
       if(state.searchQuery)p.set('q',state.searchQuery);
+      else if(state.selectedCountryObj?.isSearch)p.set('browse','1');
       else if(state.selectedCountryObj?.isHotelsGlobal)p.set('hotels','true');
       else if(state.selectedCountryObj?.slug){p.set('country',state.selectedCountryObj.slug);const tab=state.selectedCountryObj.tabs.find(t=>t.label===state.selectedTab);if(tab)p.set('tab',tab.slug);}
-      if(state.viewMode!=='calendar')p.set('view',state.viewMode);
+      if(state.selectedCountryObj?.tabs||state.viewMode!=='calendar')p.set('view',state.viewMode);
       if(state.listSortBy!=='price')p.set('sort',state.listSortBy);
       if(state.origin)p.set('origin',state.origin);
+      if(state.destination)p.set('city',state.destination);
       if(state.productType)p.set('type',state.productType);
       if(state.monthFilter)p.set('month',state.monthFilter);
       return p;
@@ -170,13 +253,13 @@
     };
     function restoreURL() {
       const p=new URLSearchParams(location.search), route=DESTINATION_ROUTES[location.pathname];
-      state.searchQuery=p.get('q') || '';state.selectedCountryObj=null;state.selectedTab=null;
-      state.viewMode=['calendar','list','hotels'].includes(p.get('view'))?p.get('view'):'calendar';
+      state.listLimit=24;state.searchQuery=p.get('q') || '';state.selectedCountryObj=null;state.selectedTab=null;
+      state.viewMode=['calendar','list','hotels'].includes(p.get('view'))?p.get('view'):preferredView();
       state.listSortBy=p.get('sort')==='date'?'date':'price';
-      state.origin=p.get('origin')||'';state.productType=['ticket','package','tour'].includes(p.get('type'))?p.get('type'):'';
+      state.origin=p.get('origin')||'';state.destination=p.get('city')||'';state.productType=['ticket','package','tour'].includes(p.get('type'))?p.get('type'):'';
       state.monthFilter=/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.get('month'))?p.get('month'):'';
       const date=state.monthFilter || taipeiToday().slice(0,7);state.currentDate=new Date(+date.slice(0,4),+date.slice(5)-1,1);
-      if(state.searchQuery)state.selectedCountryObj={isSearch:true};
+      if(state.searchQuery||p.get('browse')==='1'){state.selectedCountryObj={isSearch:true};state.viewMode='list';}
       else if(p.get('hotels')==='true')state.selectedCountryObj={isHotelsGlobal:true};
       else {const country=LOCATION_DATA.find(x=>x.slug===(p.get('country')||route?.country));if(country){state.selectedCountryObj=country;state.selectedTab=country.tabs.find(t=>t.slug===(p.get('tab')||route?.tab))?.label || country.tabs[0].label;}}
       document.getElementById('searchInput').value=state.searchQuery;
@@ -211,7 +294,8 @@
       });
       el.textContent=(loading?'同步中 · ':'上次同步 · ')+parts.join(' · ');
     }
-    let modalTrigger=null;
+    let modalTrigger=null, modalSyncState='';
+    function modalSourceState() { return JSON.stringify((state.selectedDateTickets?.tickets||[]).map(t=>!!state.sources[t.source]?.error)); }
     function shareUrl(id) { return 'https://www.eddietour.tw/?offer='+encodeURIComponent(id); }
     function showOffer(id,source='card',push=true) {
       const item=state.tickets.find(t=>t.id===id);
@@ -236,7 +320,7 @@
       if(latest.length!==old.length||latest.some((t,i)=>t.version!==old[i]?.version)) {
         state.modalNotice='商品資訊已更新或部分商品已下架，請確認最新內容。';
         state.selectedDateTickets.tickets=latest;renderModal();
-      }
+      } else if(modalSyncState!==modalSourceState())renderModal();
     }
     function inquiryUrl(item) {
       const title=item.isTour?'跟團行程訂購公版':'清艙機票訂購公版';
@@ -284,21 +368,16 @@
         <div class="animate-pulse fade-in text-center py-32">
           <i class="ph-bold ph-airplane-tilt text-5xl text-gray-300 mb-4 animate-bounce inline-block"></i>
           <p class="text-gray-600 font-bold mb-1">正在從試算表同步資料...</p>
-          <p class="text-xs text-gray-400 font-medium">首次載入約需 2~3 秒，請稍候</p>
+          <p class="text-xs text-gray-400 font-medium">正在取得最新日期與參考報價，請稍候</p>
         </div>`; 
     }
 
     function getSearchHTML() {
       const q = state.searchQuery;
       // 過濾搜尋結果
-      const matchedTickets = state.tickets.filter(t => 
-        (t.country && t.country.toLowerCase().includes(q)) || 
-        (t.city && t.city.toLowerCase().includes(q)) || 
-        (t.airline && t.airline.toLowerCase().includes(q)) || 
-        (t.details && t.details.toLowerCase().includes(q))
-      );
-      
-      let allMatches = matchedTickets.filter(matchesFilters);
+      const matchedTickets = scopeTickets();
+
+      let allMatches = matchedTickets.filter(t => matchesFilters(t));
       
       // 依據 state.listSortBy 進行排序（金額或出發日期）
       if (state.listSortBy === 'date') {
@@ -321,51 +400,8 @@
         </div>
       ` : '';
 
-      if (allMatches.length === 0) {
-        return `
-          <div class="fade-in">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div class="flex items-center gap-4">
-                <button aria-label="返回首頁" onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center">
-                  <i class="ph-bold ph-arrow-left text-xl"></i>
-                </button>
-                <h1 class="text-xl sm:text-2xl font-bold">搜尋結果: "${escapeHTML(state.searchQuery)}"</h1>
-              </div>
-            </div>
-            <div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-              <i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 mb-4"></i>
-              <h3 class="text-xl font-bold text-gray-800 mb-2">找不到相關資訊</h3>
-            </div>
-          </div>
-        `;
-      }
+      const listHTML = allMatches.slice(0,state.listLimit).map(offerCardHTML).join('');
 
-      const listHTML = allMatches.map(t => { 
-        const encodedItem = t.id; 
-        const isTour = t.isTour;
-        const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
-        const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
-        const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${escapeHTML(t.airlineTag)}</div>` : '';
-        const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
-        
-        return `
-          <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" role="button" tabindex="0" data-offer="${escapeHTML(encodedItem)}" onclick="window.openModalFromItem('${encodedItem}')">
-            <div>
-              <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${escapeHTML(t.date)}</div>
-              <div class="font-black text-gray-900 text-lg line-clamp-1">${escapeHTML(t.title || t.airline)}</div>
-              <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${escapeHTML(t.origin ? t.origin + ' → ' + (t.city || t.country) : t.city || t.country)}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
-                ${airlineTagHtml}
-                ${warningTagHtml}
-              </div>
-            </div>
-            <div class="text-right shrink-0 ml-4">
-              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
-              <div class="text-xl font-black text-red-500">$${formatPrice(t.price || '--')}</div>
-            </div>
-          </div>`; 
-      }).join('');
-      
       return `
         <div class="fade-in">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -373,13 +409,13 @@
               <button aria-label="返回首頁" onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center">
                 <i class="ph-bold ph-arrow-left text-xl"></i>
               </button>
-              <h1 class="text-xl sm:text-2xl font-bold">搜尋結果: "${escapeHTML(state.searchQuery)}"</h1>
+              <h1 class="text-xl sm:text-2xl font-bold">${state.searchQuery?'搜尋結果：'+escapeHTML(state.searchQuery):'符合條件的機票與行程'}</h1>
             </div>
             ${sortUI}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${listHTML}
-          </div>
+            ${listHTML || emptyResultsHTML()}
+          </div>${moreResultsHTML(allMatches.length)}
         </div>
       `;
     }
@@ -395,7 +431,7 @@
               </div>
               <a href="https://forms.gle/w9A4onjw4dmcLdDD8" target="_blank" onclick="window.trackEvent('click_outbound', {target: 'Submit_Hotel_Form'})" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105"><i class="ph-bold ph-pencil-simple text-lg"></i> 分享住宿</a>
             </div>
-            <div class="py-24 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-buildings text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">目前還沒有已核准的飯店資料唷！</p><p class="text-sm">如果有填寫表單，請記得至試算表的「核准」欄位填寫 Y 即可顯示。</p></div>
+            <div class="py-24 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-buildings text-5xl text-gray-300 mb-4"></i><p class="font-bold text-gray-700 text-lg mb-2">目前還沒有飯店推薦</p><p class="text-sm">歡迎分享住宿經驗，審核後會顯示在這裡。</p></div>
           </div>`;
       }
 
@@ -592,7 +628,7 @@
           }
       }
 
-      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-10"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500 mb-6">探索最新晚鳥清艙機票與飯店總覽</p><nav aria-label="熱門目的地" class="text-sm text-gray-500 mt-3"><a class="hover:text-blue-600" href="/destinations/osaka/">大阪</a> · <a class="hover:text-blue-600" href="/destinations/okinawa/">沖繩</a> · <a class="hover:text-blue-600" href="/destinations/seoul/">首爾</a></nav></div>${recentHTML}<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
+      return `<div class="${state.animateTransition ? 'slide-in-from-bottom-4' : ''}"><div class="text-center max-w-2xl mx-auto mb-10"><h1 class="text-3xl font-black text-gray-900 mb-4 tracking-tight">找尋您的下一個目的地</h1><p class="text-gray-500 mb-6">探索最新晚鳥清艙機票與飯店總覽</p></div>${getQuickSearchHTML()}${recentHTML}<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">${cardsHTML}</div>${bannersHTML}</div>`;
     }
 
     function getFlightsHTML() {
@@ -636,7 +672,7 @@
         if (displayCities.length === 0) displayCities = tab.cities; 
         const subText = displayCities.slice(0, 2).join(' · '); 
         const isSelected = state.selectedTab === tab.label; 
-        return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md ring-1 ring-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-600' : 'text-gray-400'}">${subText}</span></button>`; 
+        return `<button onclick="selectTab('${tab.label}')" class="flex flex-col items-center justify-center px-4 py-2 rounded-2xl border transition-all ${isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md ring-1 ring-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}"><span class="text-sm font-bold whitespace-nowrap">${tab.label}</span><span class="text-[10px] mt-0.5 font-medium whitespace-nowrap ${isSelected ? 'text-gray-300' : 'text-gray-400'}">${subText}</span></button>`; 
       }).join('');
 
       const availableMonths = [...new Set(filteredTickets.map(t => t.date.substring(0, 7)))].sort();
@@ -657,7 +693,7 @@
           ${availableMonths.map(mStr => {
               const [y, m] = mStr.split('-');
               const isSelected = mStr === currentMonthStr;
-              return `<button aria-label="${y}年${parseInt(m,10)}月" aria-pressed="${isSelected}" onclick="setMonth(${y}, ${m-1})" class="px-4 py-2 rounded-xl text-sm font-bold transition-all ${isSelected ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}">${parseInt(m, 10)}月</button>`;
+              return `<button aria-label="${y}年${parseInt(m,10)}月" aria-pressed="${isSelected}" onclick="setMonth(${y}, ${m-1})" class="px-4 py-2 rounded-xl text-sm font-bold transition-all ${isSelected ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}">${y}年 ${parseInt(m, 10)}月</button>`;
           }).join('')}
         </div>
       ` : '';
@@ -727,33 +763,8 @@
 
          const sortUI = upcoming.length > 0 ? `<div class="flex items-center justify-end gap-2 mb-4 fade-in"><span class="text-sm font-bold text-gray-500">排序：</span><div class="bg-gray-100 p-1 rounded-lg flex text-xs font-bold"><button onclick="setListSortBy('price')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy !== 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">最低金額</button><button onclick="setListSortBy('date')" class="px-3 py-1.5 rounded-md transition-all ${state.listSortBy === 'date' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">出發日期</button></div></div>` : '';
 
-         const listHTML = upcoming.map(t => {
-           const encodedItem = t.id; 
-           const isTour = t.isTour;
-           const iconClass = isTour ? 'ph-flag-pennant' : 'ph-airplane-tilt';
-           const tagClass = isTour ? 'text-orange-600 bg-orange-50 border-orange-100' : 'text-blue-600 bg-blue-50 border-blue-100';
-           const airlineTagHtml = t.airlineTag ? `<div class="text-[10px] sm:text-xs font-bold ${tagClass} inline-block px-2 py-1 rounded-md border"><i class="ph-bold ${iconClass}"></i> ${escapeHTML(t.airlineTag)}</div>` : '';
-           const warningTagHtml = t.isWarning ? `<div class="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 inline-block px-2 py-1 rounded-md border border-red-100"><i class="ph-fill ph-warning-circle"></i> 需確認機位</div>` : '';
-           
-           return `
-             <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md cursor-pointer flex justify-between items-center ${t.isWarning ? 'ring-1 ring-red-400' : ''}" role="button" tabindex="0" data-offer="${escapeHTML(encodedItem)}" onclick="window.openModalFromItem('${encodedItem}')">
-               <div>
-                 <div class="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${escapeHTML(t.date)}</div>
-                 <div class="font-black text-gray-900 text-lg line-clamp-1">${escapeHTML(t.title || t.airline)}</div>
-                 <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                   <div class="text-[10px] sm:text-xs font-medium text-gray-600 bg-gray-50 inline-block px-2 py-1 rounded-md border border-gray-100">${escapeHTML(t.origin ? t.origin + ' → ' + (t.city || t.country) : t.city || t.country)}${t.isFlightAndHotel ? ' · 機+酒' : ''}</div>
-                   ${airlineTagHtml}
-                   ${warningTagHtml}
-                 </div>
-               </div>
-               <div class="text-right shrink-0 ml-4">
-                 <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">優惠價</div>
-                 <div class="text-xl font-black text-red-500">$${formatPrice(t.price || '--')}</div>
-               </div>
-             </div>`; 
-         }).join('');
-         
-         contentHTML = upcoming.length === 0 ? `<div class="py-20 text-center text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm"><i class="ph-bold ph-airplane-tilt text-4xl text-gray-300 mb-3"></i>目前暫無機票！</div>` : `${sortUI}<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">${listHTML}</div>`;
+         const listHTML = upcoming.slice(0,state.listLimit).map(offerCardHTML).join('');
+         contentHTML = upcoming.length === 0 ? emptyResultsHTML() : `${sortUI}<div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">${listHTML}</div>${moreResultsHTML(upcoming.length)}`;
       } else {
         const prefix = currentMonthStr;
         const monthTickets = filteredTickets.filter(t => t.date.startsWith(prefix));
@@ -808,7 +819,6 @@
       }
       return `
         <div class="fade-in">
-          ${supportStationHTML}
           <div class="flex items-center justify-between mb-6 flex-wrap">
             <div class="flex items-center gap-4">
               <button aria-label="返回首頁" onclick="goHome()" class="p-2.5 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm"><i class="ph-bold ph-arrow-left text-xl"></i></button>
@@ -822,6 +832,7 @@
           </div>
           <div class="flex flex-wrap gap-2.5 mb-8">${pillsHTML}</div>
           ${contentHTML}
+          <div class="mt-8">${supportStationHTML}</div>
         </div>`;
     }
 
@@ -830,12 +841,10 @@
       const wasOpen=!!modalRoot.querySelector?.('[role=dialog]');
       const hadFocus=modalRoot.contains?.(document.activeElement);
       if (!state.isModalOpen || !state.selectedDateTickets) { modalRoot.innerHTML = ''; setModalBackground(false); return; }
+      modalSyncState=modalSourceState();
+      const single=state.selectedDateTickets.tickets.length===1 ? state.selectedDateTickets.tickets[0] : null;
       const contentHTML = state.selectedDateTickets.tickets.map((item, index) => {
         
-        const templateTitle = item.isTour ? '跟團行程訂購公版' : '清艙機票訂購公版';
-        const targetInfo = item.isTour ? ('行程名稱：' + item.airline) : ('航空航點：' + item.airline + ' ' + item.country + item.city);
-        const countLabel = item.isTour ? '報名人數' : '張數';
-        const lineOaUrl = inquiryUrl(item);
         
         const extraLabels = (item.isTour ? ' · 跟團行程' : (item.isFlightAndHotel ? ' · 機+酒' : '')) + (item.isBogo ? ' · 買一送一' : '');
         
@@ -867,18 +876,18 @@
                 </div>
                 <h4 class="text-lg font-black text-gray-900">${escapeHTML(item.airline)}</h4>
               </div>
-              ${item.price ? `<div class="text-right text-xl font-black text-red-500">$${formatPrice(item.price)}</div>` : ''}
+              ${item.price ? `<div class="text-right shrink-0 ml-2"><p class="text-xs text-gray-500">${state.sources[item.source]?.error?'上次讀取報價':'參考報價'}</p><p class="text-xl font-black text-red-500">$${formatPrice(item.price)}</p></div>` : ''}
             </div>
-            <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 leading-relaxed"><p class="font-bold">出發：${escapeHTML(item.date)} · $${formatPrice(item.price)}</p><p>${escapeHTML(travelSummary(item))}</p><p class="text-xs text-gray-400 mt-2">${state.sources[item.source]?.syncedAt ? '資料核對：'+escapeHTML(new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(state.sources[item.source].syncedAt))) : '實際票價請向旅行社確認'}</p></div>
+            <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 leading-relaxed">${offerFactsHTML(item)}<p class="text-xs text-gray-500 mt-3">${state.sources[item.source]?.error?'目前顯示上次資料，最新報價尚未核對。':'機位、計價方式與總額依旅行社確認。'}</p></div>
             <details class="mt-3 text-sm text-gray-600"><summary class="cursor-pointer font-bold py-2">查看完整廠商資訊</summary><div class="bg-gray-50 p-4 rounded-xl whitespace-pre-wrap leading-relaxed">${escapeHTML(item.details)}</div></details>
             <a href="${escapeHTML(shareUrl(item.id))}" class="inline-block mt-2 text-xs text-blue-600 underline">此商品分享連結</a>
             
             <div class="mt-3 flex items-start gap-1.5 text-[11px] text-gray-400 leading-tight">
               <i class="ph-bold ph-info text-xs mt-0.5 shrink-0"></i>
-              <span>機位與名額依旅行社即時查詢為準，點擊下方按鈕後請儘速聯絡確認。</span>
+              <span>機位與名額依旅行社即時查詢為準，點擊 LINE 可帶入商品資訊，尚未完成訂購。</span>
             </div>
 
-            <a href="${escapeHTML(lineOaUrl)}" target="_blank" rel="noreferrer" data-inquiry="${escapeHTML(item.id)}" onclick="return prepareInquiry(event,'${item.id}')" class="mt-3 w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-sm shadow-green-200/50"><i class="ph-bold ph-chat-circle-dots text-xl"></i> ${isTour ? '聯繫旅行社 LINE 報名' : '聯繫旅行社 LINE 搶購'}</a>
+            ${single?'':`<div class="mt-3">${state.sources[item.source]?.error?generalContactHTML():inquiryButtonHTML(item)}</div>`}
             <a href="https://esimconnect.com.tw/#/access/esimbuy?referencecode=eddiewang" target="_blank" rel="noreferrer" class="mt-5 p-3.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl flex items-center justify-between shadow-md cursor-pointer hover:scale-[1.02] transition-transform border border-gray-700" onclick="window.trackEvent('click_affiliate', {target: 'eSIM_Modal'})">
               <div class="flex flex-col">
                 <span class="text-yellow-400 text-[10px] font-bold mb-0.5 tracking-wider flex items-center gap-1">
@@ -897,7 +906,8 @@
           </div>
         `;
       }).join('');
-      modalRoot.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(event.target===this) closeModal()"><div role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" tabindex="-1" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col max-h-[85vh]"><div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0"><h3 id="ticket-dialog-title" class="text-xl font-bold text-gray-900 flex items-center gap-2"><i class="ph-bold ph-calendar-blank text-gray-400"></i> ${escapeHTML(state.selectedDateTickets.date)}</h3><button aria-label="關閉詳情" onclick="closeModal()" class="p-2 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center"><i class="ph-bold ph-x text-xl"></i></button></div><div class="p-6 overflow-y-auto bg-gray-50/50 flex-1 no-scrollbar">${state.modalNotice ? `<p role="status" class="bg-amber-50 text-amber-900 p-3 rounded-xl mb-3">${escapeHTML(state.modalNotice)}</p>` : ''}${contentHTML}</div></div></div>`;
+      const footer=single?`<div class="inquiry-footer px-4 py-3 border-t border-gray-200 bg-white shrink-0"><div class="flex items-center gap-3">${state.sources[single.source]?.error?`<div class="text-xs text-amber-800 flex-1">最新報價尚未核對<br>可請客服協助查詢</div>${generalContactHTML()}`:`<div class="shrink-0"><p class="text-xs text-gray-500">參考報價</p><p class="text-xl font-black text-red-500">$${formatPrice(single.price)}</p></div><div class="flex-1 min-w-0">${inquiryButtonHTML(single)}</div>`}</div></div>`:'';
+      modalRoot.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(event.target===this) closeModal()"><div role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" tabindex="-1" class="ticket-dialog bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col"><div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between shrink-0"><div><h3 id="ticket-dialog-title" class="text-lg font-bold text-gray-900">${escapeHTML(state.selectedDateTickets.date)}</h3><p class="text-xs text-gray-500 mt-1">選日期 → 旅行社確認 → 付款開票</p></div><button aria-label="關閉詳情" onclick="closeModal()" class="p-3 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center"><i class="ph-bold ph-x text-xl"></i></button></div><div class="p-4 overflow-y-auto bg-gray-50/50 flex-1 min-h-0">${state.modalNotice ? `<p role="status" class="bg-amber-50 text-amber-900 p-3 rounded-xl mb-3">${escapeHTML(state.modalNotice)}</p>` : ''}${contentHTML}</div>${footer}</div></div>`;
       setModalBackground(true);
       if(!wasOpen || hadFocus) modalRoot.querySelector?.('[role=dialog]')?.focus({preventScroll:true});
     }
@@ -906,7 +916,7 @@
       return `<div role="alert" class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-amber-900">
         <p class="font-bold mb-2">資料暫時無法載入</p>
         <p class="text-sm mb-4">${hasSavedData ? '目前顯示上次載入的資料，最新機位與票價請向旅行社確認。' : '目前無法取得最新機票與行程，請確認網路連線後重新載入。'}</p>
-        <button aria-label="重新同步資料" onclick="forceRefresh()" class="bg-amber-900 text-white rounded-xl px-4 py-2 text-sm font-bold">重新載入資料</button>
+        <div class="flex flex-wrap gap-3"><button aria-label="重新同步資料" onclick="forceRefresh()" class="bg-amber-900 text-white rounded-xl px-4 py-3 text-sm font-bold">重新載入資料</button>${generalContactHTML()}</div>
       </div>`;
     }
 
@@ -925,7 +935,7 @@
       else if (state.selectedCountryObj?.isHotelsGlobal) el.innerHTML = getGlobalHotelsHTML(); 
       else el.innerHTML = getFlightsHTML(); 
       if (state.loadError) el.innerHTML = getLoadErrorHTML(true) + el.innerHTML;
-      if((state.searchQuery || state.selectedCountryObj?.tabs) && state.viewMode !== 'hotels') el.insertAdjacentHTML('afterbegin',getFiltersHTML());
+      if((state.searchQuery || state.selectedCountryObj?.isSearch || state.selectedCountryObj?.tabs) && state.viewMode !== 'hotels') el.insertAdjacentHTML('afterbegin',getFiltersHTML());
       enhanceAccessibility(el);
       updateMetadata();
     }

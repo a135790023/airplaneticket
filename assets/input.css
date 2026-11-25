@@ -16,6 +16,12 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     body { touch-action: manipulation; }
+    .ticket-dialog { max-height: 90vh; max-height: 90dvh; }
+    .inquiry-footer { padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+    @media (max-width: 639px) {
+      #main-content { padding-top: 1.25rem; }
+      #quick-search { text-align: left; }
+    }
     :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
     

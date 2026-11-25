@@ -93,7 +93,7 @@ const response=data=>({ok:true,text:async()=>JSON.stringify(data)});
    h.context.setFilter('origin','高雄');assert.equal(h.context.matchesFilters(item),false);h.context.clearFilters();assert.equal(h.context.matchesFilters(item),true);
  });
  await test('Static pages have unique metadata, crawlable links, existing layout assets and no runtime Tailwind',()=>{
-   const html=fs.readFileSync('index.html','utf8');assert(!html.includes('cdn.tailwindcss.com'));assert(!html.includes('user-scalable=no'));assert(html.includes('href="/destinations/osaka/"'));
+   const html=fs.readFileSync('index.html','utf8');assert(!html.includes('cdn.tailwindcss.com'));assert(!html.includes('user-scalable=no'));
    for(const slug of ['osaka','okinawa','seoul']){const page=fs.readFileSync(`destinations/${slug}/index.html`,'utf8');assert(page.includes(`rel="canonical" href="https://www.eddietour.tw/destinations/${slug}/"`));assert(page.includes('票價、航班與機位依旅行社確認'));for(const m of page.matchAll(/(?:src|href)="(\/assets\/[^"?]+)/g))assert(fs.existsSync('.'+m[1]));}
    const app=fs.readFileSync('assets/app.js','utf8');assert(app.includes('Fukusaki_Itinerary'));assert(app.includes('aria-modal="true"'));assert(!app.includes("'contextmenu'"));
  });

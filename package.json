@@ -1,0 +1,12 @@
+{
+  "name": "eddietour-airplaneticket",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "test": "node tests-optimizations.cjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17",
+    "@phosphor-icons/web": "2.1.1"
+  }
+}

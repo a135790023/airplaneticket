@@ -39,7 +39,6 @@
         catch (_) { state.sources={};state.tickets=[];state.hotels=[];state.isLoading=true; }
       }
       if(state.isLoading) renderMain();
-      updateSyncStatus(true);
       try {
         const names=Object.keys(SOURCE_NAMES).filter(name => force || !sourceFresh(name));
         const results=await Promise.allSettled(names.map(name => fetchGviz(SOURCE_NAMES[name])));
@@ -63,7 +62,6 @@
         state.animateTransition = false;
         const nextContent=JSON.stringify([state.tickets.map(t=>[t.id,t.version,t.isWarning]),state.hotels,state.loadError]);
         if(previousContent !== nextContent || !state.tickets.length && !state.hotels.length) renderMain();
-        updateSyncStatus(false);
         reconcileModal();
         if(state.pendingOffer) { const id=state.pendingOffer; state.pendingOffer=''; showOffer(id,'shared_link',false); }
         window.scrollTo({top:scrollY,behavior:'instant'});

@@ -19,8 +19,8 @@ const fixture=[
  await test('Unavailable selected conditions remain visible until the visitor clears them',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();h.context.executeSearch('大阪');h.context.setFilter('origin','高雄');h.context.setFilter('monthFilter','2027-04');
   const o=h.context.facetOptions(h.context.scopeTickets(),'monthFilter',h.state()).find(o=>o.value==='2027-04');assert.equal(o.count,0);
-  const html=h.get('main-content').innerHTML;assert.match(html,/符合條件：0 個方案/);assert.match(html,/目前沒有符合條件/);assert.match(html,/移除出發月份條件/);
-  h.context.clearFilters();assert.match(h.get('main-content').innerHTML,/符合條件：3 個方案/);
+  const html=h.get('main-content').innerHTML;assert.match(html,/目前沒有符合條件/);assert.match(html,/移除出發月份條件/);
+  h.context.clearFilters();assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,3);
  });
  await test('Search month filters apply to the first result as well as later results',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();h.context.executeSearch('大阪');h.context.setFilter('monthFilter','2027-04');
@@ -31,7 +31,7 @@ const fixture=[
   const selection={origin:'桃園',destination:'大阪',monthFilter:'2027-04'};
   h.context.submitQuickSearch({preventDefault(){prevented=true;}},{elements:{namedItem:key=>({value:selection[key]})}});
   assert(prevented);assert.match(h.context.location.search,/browse=1/);assert.equal(h.state().viewMode,'list');
-  assert.match(h.get('main-content').innerHTML,/符合條件：1 個方案/);
+  assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,1);assert(!h.get('main-content').innerHTML.includes('<select'));
   const reload=harness(undefined,fixture);reload.context.location.search=h.context.location.search;reload.context.restoreURL();await reload.context.fetchSheetData();
   assert.equal(reload.state().destination,'大阪');assert.equal(reload.state().origin,'桃園');assert.match(reload.get('main-content').innerHTML,/2027-04-11/);assert(!reload.get('main-content').innerHTML.includes('2027-01-12'));
  });
@@ -53,10 +53,10 @@ const fixture=[
   assert.equal(h.context.scopeTickets().length,3);assert.equal(JSON.stringify(h.state().tickets),before);
   h.context.selectTab('關東');assert.equal(h.state().destination,'');
  });
- await test('Calendar result count describes the displayed month, list count describes all matching months',async()=>{
+ await test('Calendar and list omit the count line while selected conditions remain removable',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();h.context.selectCountry(0);h.context.selectTab('關西');
-  assert.match(h.context.getFiltersHTML(),/2027 年 01 月：1 個方案/);
-  h.context.setViewMode('list');assert.match(h.context.getFiltersHTML(),/符合條件：3 個方案/);
+  assert.equal(h.context.getFiltersHTML(),'');h.context.setFilter('origin','桃園');assert.match(h.context.getFiltersHTML(),/移除出發地條件/);
+  h.context.setViewMode('list');assert(!h.context.getFiltersHTML().includes('個方案'));assert.match(h.context.getFiltersHTML(),/清除篩選/);
  });
  await test('Inquiry text is a request to confirm; single offer has one CTA, calendar choices retain one each',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();const first=h.state().tickets[0];h.context.showOffer(first.id);
@@ -91,13 +91,13 @@ const fixture=[
  await test('Broad searches show 24 offers initially, reveal more on demand and reset when filters change',async()=>{
   const rows=Array.from({length:30},(_,i)=>({details:simple('樂桃大阪五日','MM024','MM027',`2027/4/${i+1}`)}));
   const h=harness(undefined,rows);await h.context.fetchSheetData();h.context.executeSearch('大阪');
-  assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,24);assert.match(h.get('main-content').innerHTML,/符合條件：30 個方案/);assert.match(h.get('main-content').innerHTML,/再看 6 個方案/);
+  assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,24);assert.match(h.get('main-content').innerHTML,/再看 6 個方案/);
   h.context.showMoreOffers();assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,30);
   h.context.setFilter('origin','桃園');assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,24);
  });
- await test('Searching from the hotel view restores ticket filters and result counts',async()=>{
+ await test('Searching from the hotel view retains results without repeating the home search form',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();h.context.selectCountry(0);h.context.setViewMode('hotels');h.context.executeSearch('大阪');
-  assert.equal(h.state().viewMode,'list');assert.match(h.get('main-content').innerHTML,/符合條件：3 個方案/);assert.match(h.get('main-content').innerHTML,/商品篩選/);
+  assert.equal(h.state().viewMode,'list');assert.equal((h.get('main-content').innerHTML.match(/data-offer=/g)||[]).length,3);assert(!h.get('main-content').innerHTML.includes('<select'));
  });
  await test('Quick search keeps the original controls and focus while updating counts and re-enabling options',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();

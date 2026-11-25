@@ -24,7 +24,7 @@ const response=data=>({ok:true,text:async()=>JSON.stringify(data)});
    await h.context.fetchSheetData(true);
    assert(h.state().tickets.some(t=>t.price==='12500'));assert(h.state().tickets.some(t=>t.id===tour.id));
    assert.equal(h.context.sourceFresh('tours'),false);assert.equal(h.context.sourceFresh('flights'),true);
-   assert(h.get('sync-status').textContent.includes('更新失敗'));
+   assert.equal(h.state().loadError,true);assert.match(h.get('main-content').innerHTML,/資料暫時無法載入/);
  });
  await test('Successful empty source removes withdrawn products and never falls back to unapproved hotel responses',async()=>{
    const h=harness(undefined,[{details:simple('樂桃大阪五日')}]);await h.context.fetchSheetData();const old=h.state().tickets[0];

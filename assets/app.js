@@ -136,6 +136,12 @@
       return {origin,duration,outboundFlight:codes(out),inboundFlight:codes(back),outboundInfo:out,inboundInfo:back,returnDate:returnDate || ''};
     }
     function formatPrice(value) { return /^\d[\d,]*$/.test(String(value)) ? Number(String(value).replaceAll(',','')).toLocaleString('en-US') : escapeHTML(value); }
+    function quoteLabel(item) {
+      const unit = item.priceUnit === 'pair' ? '兩人合計' : item.priceUnit === 'person' ? '每人' : '';
+      return (state.sources[item.source]?.error ? '上次讀取報價' : '參考報價') + (unit ? ' · ' + unit : '');
+    }
+    function compactPriceUnit(item) { return item.priceUnit === 'pair' ? '兩人合計' : ''; }
+
     function travelSummary(item) {
       const departure=[item.origin,item.duration].filter(Boolean).join('｜');
       const flight=(label,value)=>value ? label+'｜'+value.replace(/^(?:去程|往程|回程|返程)\s*[｜|:：]?\s*/, '').trim() : '';
@@ -170,7 +176,8 @@
       return [...counts].sort(([a],[b])=>a.localeCompare(b,'zh-TW')).map(([value,count])=>({value,count,label:key==='monthFilter'?value.replace('-','/'):key==='productType'?(TYPE_OPTIONS.find(x=>x[0]===value)?.[1]||value):value}));
     }
     function filterSelect(tickets,key,label,selection,quick=false) {
-      const options=facetOptions(tickets,key,selection);
+      const available=facetOptions(tickets,key,selection);
+      const options=quick?facetOptions(tickets,key,{}).map(o=>({...o,count:available.find(a=>a.value===o.value)?.count||0})):available;
       return `<label class="block text-xs text-gray-500 font-bold min-w-0">${label}<select aria-label="${label}" name="${key}" data-filter="${key}" onchange="${quick?'updateQuickSearch(this.form)':`setFilter('${key}',this.value)`}" class="block mt-1 w-full min-h-[44px] bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800"><option value="">${key==='monthFilter'?'不限月份':'不限'}</option>${options.map(o=>`<option value="${escapeHTML(o.value)}" ${o.value===selection[key]?'selected':''} ${o.count===0?'disabled':''}>${escapeHTML(o.label)}（${o.count}）</option>`).join('')}</select></label>`;
     }
     function getFiltersHTML() {
@@ -194,9 +201,24 @@
     }
     function quickSelection(form) { return Object.fromEntries(['origin','destination','monthFilter'].map(key=>[key,form.elements.namedItem(key).value])); }
     window.updateQuickSearch=form=>{
-      const focus=document.activeElement?.name;state.quickSearch=quickSelection(form);
-      const el=document.getElementById('quick-search');if(el)el.outerHTML=getQuickSearchHTML();
-      if(focus)document.querySelector(`#quick-search [name="${focus}"]`)?.focus();
+      state.quickSearch=quickSelection(form);
+      // Keep native selects mounted while the browser finishes closing its picker.
+      // Replacing the form and focusing a new select can reopen the mobile picker.
+      for(const key of ['origin','destination','monthFilter']) {
+        const select=form.elements.namedItem(key);
+        if(!select.options)continue;
+        const available=new Map(facetOptions(state.tickets,key,state.quickSearch).map(o=>[o.value,o]));
+        for(const option of select.options) {
+          if(!option.value)continue;
+          const choice=available.get(option.value);
+          option.disabled=!choice?.count;
+          const label=choice?.label || (key==='monthFilter'?option.value.replace('-','/'):option.value);
+          option.textContent=`${label}（${choice?.count || 0}）`;
+        }
+      }
+      const count=state.tickets.filter(t=>matchesSelection(t,state.quickSearch)).length;
+      const status=form.querySelector?.('[role="status"]');
+      if(status)status.textContent=count?'符合條件 '+count+' 個方案':'可選不限條件，查看其他出發日期';
     };
     window.submitQuickSearch=(event,form)=>{
       event.preventDefault();state.listLimit=24;state.quickSearch=quickSelection(form);Object.assign(state,state.quickSearch);
@@ -208,7 +230,7 @@
     function offerCardHTML(t) {
       const type=t.isTour?'旅行團':t.isFlightAndHotel?'機加酒':'純機票';
       const flights=[t.outboundFlight,t.inboundFlight].filter(Boolean).join('／');
-      return `<button type="button" data-offer="${escapeHTML(t.id)}" onclick="openModalFromItem('${t.id}')" class="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md flex flex-col gap-3 ${t.isWarning?'ring-1 ring-red-400':''}"><div class="text-xs font-bold text-gray-500">${escapeHTML(t.date)} 出發${t.duration?' · '+escapeHTML(t.duration):''}</div><h3 class="font-black text-gray-900 text-base sm:text-lg leading-snug break-words">${escapeHTML(t.airline)}</h3><div class="flex flex-wrap gap-2 text-xs text-gray-600"><span class="rounded-md bg-gray-50 px-2 py-1">${escapeHTML(t.origin?t.origin+' → '+t.city:t.city)} · ${type}</span>${t.airlineTag?`<span class="rounded-md bg-blue-50 text-blue-700 px-2 py-1">${escapeHTML(t.airlineTag)}</span>`:''}${t.isWarning?'<span class="text-red-700 bg-red-50 rounded-md px-2 py-1">機位需確認</span>':''}</div>${flights?`<p class="text-xs text-gray-500">航班 ${escapeHTML(flights)}</p>`:''}<div class="flex justify-between items-end gap-3 border-t border-gray-100 pt-3 mt-auto"><div><p class="text-xs text-gray-500">${state.sources[t.source]?.error?'上次讀取報價':'參考報價'}</p><p class="text-xl font-black text-red-500">$${formatPrice(t.price||'--')}</p></div><span class="text-sm font-bold text-blue-600">查看詳情與詢價 →</span></div></button>`;
+      return `<button type="button" data-offer="${escapeHTML(t.id)}" onclick="openModalFromItem('${t.id}')" class="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md flex flex-col gap-3 ${t.isWarning?'ring-1 ring-red-400':''}"><div class="text-xs font-bold text-gray-500">${escapeHTML(t.date)} 出發${t.duration?' · '+escapeHTML(t.duration):''}</div><h3 class="font-black text-gray-900 text-base sm:text-lg leading-snug break-words">${escapeHTML(t.airline)}</h3><div class="flex flex-wrap gap-2 text-xs text-gray-600"><span class="rounded-md bg-gray-50 px-2 py-1">${escapeHTML(t.origin?t.origin+' → '+t.city:t.city)} · ${type}</span>${t.airlineTag?`<span class="rounded-md bg-blue-50 text-blue-700 px-2 py-1">${escapeHTML(t.airlineTag)}</span>`:''}${t.isWarning?'<span class="text-red-700 bg-red-50 rounded-md px-2 py-1">機位需確認</span>':''}</div>${flights?`<p class="text-xs text-gray-500">航班 ${escapeHTML(flights)}</p>`:''}<div class="flex justify-between items-end gap-3 border-t border-gray-100 pt-3 mt-auto"><div><p class="text-xs text-gray-500">${quoteLabel(t)}</p><p class="text-xl font-black text-red-500">$${formatPrice(t.price||'--')}</p></div><span class="text-sm font-bold text-blue-600">查看詳情與詢價 →</span></div></button>`;
     }
     function moreResultsHTML(total) {
       return total>state.listLimit?`<div class="text-center mt-6"><p class="text-sm text-gray-500 mb-3">已顯示 ${state.listLimit}／${total} 個方案</p><button onclick="showMoreOffers()" class="min-h-[44px] bg-white border border-gray-300 text-gray-800 rounded-xl px-6 py-3 font-bold text-sm">再看 ${Math.min(24,total-state.listLimit)} 個方案</button></div>`:'';
@@ -297,6 +319,21 @@
     let modalTrigger=null, modalSyncState='';
     function modalSourceState() { return JSON.stringify((state.selectedDateTickets?.tickets||[]).map(t=>!!state.sources[t.source]?.error)); }
     function shareUrl(id) { return 'https://www.eddietour.tw/?offer='+encodeURIComponent(id); }
+    window.copyOfferLink=async(button,id)=>{
+      const area=button.closest('[data-share]');
+      const status=area.querySelector('[role="status"]');
+      const field=area.querySelector('input');
+      field.value=shareUrl(id);field.hidden=false;
+      button.disabled=true;status.textContent='正在複製連結…';
+      try {
+        if(!window.navigator?.clipboard?.writeText)throw new Error('Clipboard unavailable');
+        await window.navigator.clipboard.writeText(field.value);
+        status.textContent='已複製商品連結，可貼給親友。';
+      } catch {
+        status.textContent='無法自動複製，請長按或選取下方網址複製。';
+        field.focus();field.select();
+      } finally { button.disabled=false; }
+    };
     function showOffer(id,source='card',push=true) {
       const item=state.tickets.find(t=>t.id===id);
       state.selectedDateTickets={date:item?.date || '商品狀態',tickets:item?[item]:[]};
@@ -324,19 +361,16 @@
     }
     function inquiryUrl(item) {
       const title=item.isTour?'跟團行程訂購公版':'清艙機票訂購公版';
-      const fields=[title,'備註：eddie推薦(不可刪)',(item.isTour?'行程名稱：':'航空航點：')+item.airline+' '+item.country+item.city,'日期：'+item.date,'金額：$'+item.price,
+      const fields=[title,'備註：eddie推薦(不可刪)',(item.isTour?'行程名稱：':'航空航點：')+item.airline+' '+item.country+item.city,'日期：'+item.date,'金額：$'+item.price+(item.priceUnit==='pair'?'（兩人合計）':item.priceUnit==='person'?'（每人）':''),
         item.origin&&'出發地：'+item.origin,item.duration&&'天數：'+item.duration,item.outboundFlight&&'去程航班：'+item.outboundFlight,item.inboundFlight&&'回程航班：'+item.inboundFlight,item.returnDate&&'回程日期：'+item.returnDate,
-        item.id&&'商品：'+item.id,item.version&&'版本：'+item.version,'姓名：',(item.isTour?'報名人數':'張數')+'：','聯絡電話：','聯絡信箱：'];
+        '姓名：',(item.isTour?'報名人數':'張數')+'：','聯絡電話：','聯絡信箱：'];
       return `https://line.me/R/oaMessage/${LINE_OFFICIAL_ID}/?`+encodeURIComponent(fields.filter(Boolean).join('\n'));
     }
     function prepareInquiry(event,id) {
       const item=state.tickets.find(t=>t.id===id);
-      if(!item){event.preventDefault();showOffer(id,'inquiry',false);return false;}
-      if(!sourceFresh(item.source)){
-        event.preventDefault();state.modalNotice='正在核對最新資料，完成後請再次點擊 LINE 詢價。';renderModal();
-        fetchSheetData(true).then(()=>{state.modalNotice=sourceFresh(item.source)?'已核對最新資料，請確認價格後再次點擊 LINE 詢價。':'目前無法核對最新票價，請重新同步資料後再試。';reconcileModal();renderModal();});
-        return false;
-      }
+      // Follow the rendered LINE link immediately; background sync must not
+      // interrupt the visitor's click or require a second confirmation.
+      if(!item)return true;
       window.trackEvent('click_conversion',{target:'LINE_Booking',type:item.isTour?'Tour':'Ticket',offer_id:item.id,origin:item.origin,destination:item.city,departure_date:item.date,value:Number(item.price)||0,currency:'TWD',source:state.inquirySource});
       return true;
     }
@@ -608,7 +642,7 @@
                 <div class="bg-white border border-gray-100 rounded-full px-3 py-1.5 shadow-sm hover:shadow-md cursor-pointer shrink-0 snap-start transition-all flex items-center gap-2" role="button" tabindex="0" data-offer="${escapeHTML(encodedItem)}" onclick="window.openModalFromItem('${encodedItem}')">
                   <span class="${tagClass} text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-widest">${tagText}</span>
                   <span class="text-[11px] sm:text-xs font-bold text-gray-800 truncate max-w-[130px]">${escapeHTML(t.city)} ${escapeHTML(t.date.slice(5).replace('-','/'))}出發</span>
-                  <span class="text-[11px] sm:text-xs font-black text-red-500">$${formatPrice(t.price || '--')}</span>
+                  <span class="text-[11px] sm:text-xs font-black text-red-500">$${formatPrice(t.price || '--')} ${compactPriceUnit(t)}</span>
                 </div>
               `;
           }).join('');
@@ -807,6 +841,7 @@
                           <div class="relative text-[9px] px-0.5 py-0.5 ${boxClass} rounded font-black text-center flex flex-col items-center ${t.isWarning ? 'ring-1 ring-red-400 shadow-sm' : ''}">
                             ${warningIcon}
                             <span class="whitespace-nowrap">${formatPrice(t.price || '有票')}</span>
+                            ${compactPriceUnit(t)?'<span class="text-[9px] leading-tight">兩人合計</span>':''}
                             ${extraLabel}
                           </div>
                         `}).join('')}
@@ -876,11 +911,11 @@
                 </div>
                 <h4 class="text-lg font-black text-gray-900">${escapeHTML(item.airline)}</h4>
               </div>
-              ${item.price ? `<div class="text-right shrink-0 ml-2"><p class="text-xs text-gray-500">${state.sources[item.source]?.error?'上次讀取報價':'參考報價'}</p><p class="text-xl font-black text-red-500">$${formatPrice(item.price)}</p></div>` : ''}
+              ${item.price ? `<div class="text-right shrink-0 ml-2"><p class="text-xs text-gray-500">${quoteLabel(item)}</p><p class="text-xl font-black text-red-500">$${formatPrice(item.price)}</p></div>` : ''}
             </div>
             <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 leading-relaxed">${offerFactsHTML(item)}<p class="text-xs text-gray-500 mt-3">${state.sources[item.source]?.error?'目前顯示上次資料，最新報價尚未核對。':'機位、計價方式與總額依旅行社確認。'}</p></div>
             <details class="mt-3 text-sm text-gray-600"><summary class="cursor-pointer font-bold py-2">查看完整廠商資訊</summary><div class="bg-gray-50 p-4 rounded-xl whitespace-pre-wrap leading-relaxed">${escapeHTML(item.details)}</div></details>
-            <a href="${escapeHTML(shareUrl(item.id))}" class="inline-block mt-2 text-xs text-blue-600 underline">此商品分享連結</a>
+            <div data-share class="mt-2"><button type="button" onclick="copyOfferLink(this,'${escapeHTML(item.id)}')" class="min-h-[44px] text-xs text-blue-600 underline">複製此商品分享連結</button><p role="status" aria-live="polite" class="text-xs text-gray-600"></p><input hidden readonly aria-label="此商品分享網址" value="${escapeHTML(shareUrl(item.id))}" onclick="this.select()" class="mt-2 w-full min-w-0 rounded-lg border border-gray-200 p-2 text-xs bg-white text-gray-700"></div>
             
             <div class="mt-3 flex items-start gap-1.5 text-[11px] text-gray-400 leading-tight">
               <i class="ph-bold ph-info text-xs mt-0.5 shrink-0"></i>
@@ -906,7 +941,7 @@
           </div>
         `;
       }).join('');
-      const footer=single?`<div class="inquiry-footer px-4 py-3 border-t border-gray-200 bg-white shrink-0"><div class="flex items-center gap-3">${state.sources[single.source]?.error?`<div class="text-xs text-amber-800 flex-1">最新報價尚未核對<br>可請客服協助查詢</div>${generalContactHTML()}`:`<div class="shrink-0"><p class="text-xs text-gray-500">參考報價</p><p class="text-xl font-black text-red-500">$${formatPrice(single.price)}</p></div><div class="flex-1 min-w-0">${inquiryButtonHTML(single)}</div>`}</div></div>`:'';
+      const footer=single?`<div class="inquiry-footer px-4 py-3 border-t border-gray-200 bg-white shrink-0"><div class="flex items-center gap-3">${state.sources[single.source]?.error?`<div class="text-xs text-amber-800 flex-1">最新報價尚未核對<br>可請客服協助查詢</div>${generalContactHTML()}`:`<div class="shrink-0"><p class="text-xs text-gray-500">${quoteLabel(single)}</p><p class="text-xl font-black text-red-500">$${formatPrice(single.price)}</p></div><div class="flex-1 min-w-0">${inquiryButtonHTML(single)}</div>`}</div></div>`:'';
       modalRoot.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-gray-900/40 backdrop-blur-sm fade-in" onclick="if(event.target===this) closeModal()"><div role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" tabindex="-1" class="ticket-dialog bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden zoom-in-95 relative flex flex-col"><div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between shrink-0"><div><h3 id="ticket-dialog-title" class="text-lg font-bold text-gray-900">${escapeHTML(state.selectedDateTickets.date)}</h3><p class="text-xs text-gray-500 mt-1">選日期 → 旅行社確認 → 付款開票</p></div><button aria-label="關閉詳情" onclick="closeModal()" class="p-3 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center"><i class="ph-bold ph-x text-xl"></i></button></div><div class="p-4 overflow-y-auto bg-gray-50/50 flex-1 min-h-0">${state.modalNotice ? `<p role="status" class="bg-amber-50 text-amber-900 p-3 rounded-xl mb-3">${escapeHTML(state.modalNotice)}</p>` : ''}${contentHTML}</div>${footer}</div></div>`;
       setModalBackground(true);
       if(!wasOpen || hadFocus) modalRoot.querySelector?.('[role=dialog]')?.focus({preventScroll:true});

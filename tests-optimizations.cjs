@@ -64,12 +64,13 @@ const response=data=>({ok:true,text:async()=>JSON.stringify(data)});
    h.context.fetch=async url=>response(gviz(new URL(url).searchParams.get('sheet')==='清艙'?[simple('樂桃大阪五日',undefined,undefined,undefined,'13000')]:[]));
    await h.context.openOffer(old.id);
    assert.equal(h.state().selectedDateTickets.tickets[0].price,'13000');assert.match(h.state().modalNotice,/更新/);
-   const url=decodeURIComponent(h.context.inquiryUrl(h.state().tickets[0]));assert.match(url,/13000/);assert.match(url,/出發地：桃園/);assert.match(url,/MM024/);assert.match(url,/版本：/);
+   const url=decodeURIComponent(h.context.inquiryUrl(h.state().tickets[0]));assert.match(url,/13000/);assert.match(url,/出發地：桃園/);assert.match(url,/MM024/);assert(!url.includes('版本：'));assert(!url.includes('商品：'));assert.match(url,/姓名：/);assert.match(url,/聯絡電話：/);
  });
- await test('Offline inquiry is blocked; refreshed CTA tracks product information without personal fields',async()=>{
+ await test('LINE inquiry follows its link immediately even with stale data, without fetching or changing the dialog',async()=>{
    const h=harness(undefined,[{details:simple('樂桃大阪五日')}]);await h.context.fetchSheetData();const item=h.state().tickets[0];h.context.showOffer(item.id);
-   h.state().sources.flights.syncedAt-=120000;h.context.fetch=async()=>{throw Error('offline');};let prevented=false;
-   assert.equal(h.context.prepareInquiry({preventDefault(){prevented=true;}},item.id),false);assert(prevented);await h.context.fetchSheetData();
+   h.state().sources.flights.syncedAt-=120000;let requests=0;h.context.fetch=async()=>{requests++;throw Error('offline');};let prevented=false;
+   const before=h.get('modal-root').innerHTML;
+   assert.equal(h.context.prepareInquiry({preventDefault(){prevented=true;}},item.id),true);assert(!prevented);assert.equal(requests,0);assert.equal(h.get('modal-root').innerHTML,before);
    assert.equal(h.context.sourceFresh('flights'),false);
    h.state().sources.flights.error=false;h.state().sources.flights.syncedAt=h.context.Date.now();let tracked;
    h.context.trackEvent=(name,params)=>{tracked={name,params};};assert.equal(h.context.prepareInquiry({preventDefault(){}},item.id),true);

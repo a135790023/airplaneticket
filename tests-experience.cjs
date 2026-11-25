@@ -63,11 +63,11 @@ const fixture=[
   const html=h.get('modal-root').innerHTML;assert.match(html,/LINE 確認機位與價格/);assert.equal((html.match(/data-inquiry=/g)||[]).length,1);assert(!html.includes('LINE 搶購'));assert.match(html,/選日期 → 旅行社確認 → 付款開票/);
   h.state().selectedDateTickets.tickets=h.state().tickets.slice(0,2);h.context.renderModal();assert.equal((h.get('modal-root').innerHTML.match(/data-inquiry=/g)||[]).length,2);
  });
- await test('Offline contact contains no stale quote and cannot bypass product refresh checks',async()=>{
+ await test('Offline fallback contact contains no stale quote and remains immediately accessible',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();const item=h.state().tickets[0];h.context.showOffer(item.id);h.context.fetch=async()=>{throw Error('offline');};await h.context.fetchSheetData(true);
   const html=h.get('modal-root').innerHTML;assert.match(html,/最新報價尚未核對/);assert.match(html,/LINE 請客服協助查詢/);assert(!html.includes('data-inquiry='));
   const contact=decodeURIComponent(h.context.generalContactHTML());assert(!contact.includes(item.price));assert(!contact.includes(item.date));assert.match(contact,/contact_support/);assert(!contact.includes('click_conversion'));
-  let prevented=false;assert.equal(h.context.prepareInquiry({preventDefault(){prevented=true;}},item.id),false);assert(prevented);await h.context.fetchSheetData();
+  let prevented=false;assert.equal(h.context.prepareInquiry({preventDefault(){prevented=true;}},item.id),true);assert(!prevented);
  });
  await test('A recovered source restores the product CTA in an already-open dialog',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();const live=h.context.fetch;h.context.showOffer(h.state().tickets[0].id);
@@ -98,6 +98,34 @@ const fixture=[
  await test('Searching from the hotel view restores ticket filters and result counts',async()=>{
   const h=harness(undefined,fixture);await h.context.fetchSheetData();h.context.selectCountry(0);h.context.setViewMode('hotels');h.context.executeSearch('大阪');
   assert.equal(h.state().viewMode,'list');assert.match(h.get('main-content').innerHTML,/符合條件：3 個方案/);assert.match(h.get('main-content').innerHTML,/商品篩選/);
+ });
+ await test('Quick search keeps the original controls and focus while updating counts and re-enabling options',async()=>{
+  const h=harness(undefined,fixture);await h.context.fetchSheetData();
+  const controls=Object.fromEntries(['origin','destination','monthFilter'].map(key=>[key,{value:'',options:[{value:''},...h.context.facetOptions(h.state().tickets,key,{}).map(o=>({value:o.value,textContent:o.label,disabled:false}))]}]));
+  const status={textContent:''};const form={elements:{namedItem:key=>controls[key]},querySelector:()=>status};
+  Object.defineProperty(h.get('quick-search'),'outerHTML',{set(){throw Error('Must not replace the native controls');}});
+  h.context.document.querySelector=()=>{throw Error('Must not force focus after selection');};
+  controls.origin.value='桃園';controls.destination.value='大阪';controls.monthFilter.value='2027-04';
+  h.context.updateQuickSearch(form);assert.equal(status.textContent,'符合條件 1 個方案');
+  assert(controls.monthFilter.options.find(o=>o.value==='2027-02').disabled);
+  for(const control of Object.values(controls))control.value='';
+  h.context.updateQuickSearch(form);assert.equal(status.textContent,'符合條件 4 個方案');
+  assert(!controls.monthFilter.options.find(o=>o.value==='2027-02').disabled);
+  h.state().quickSearch={origin:'桃園',destination:'大阪',monthFilter:'2027-04'};
+  assert.match(h.context.getQuickSearchHTML(),/value="2027-02"/);
+ });
+ await test('Share copies the canonical URL without navigating or reopening the dialog; denied clipboard exposes a manual fallback',async()=>{
+  const h=harness(undefined,fixture);await h.context.fetchSheetData();const item=h.state().tickets[0];h.context.showOffer(item.id);
+  const initialHTML=h.get('modal-root').innerHTML,initialURL=h.context.location.search;
+  const status={textContent:''},field={hidden:true,focus(){this.focused=true;},select(){this.selected=true;}};
+  const area={querySelector:s=>s==='input'?field:status};const button={closest:()=>area};let copied;
+  h.context.navigator={clipboard:{writeText:async text=>{copied=text;}}};
+  await h.context.copyOfferLink(button,item.id);
+  assert.equal(copied,'https://www.eddietour.tw/?offer='+encodeURIComponent(item.id));assert.match(status.textContent,/已複製/);assert.equal(field.hidden,false);assert.equal(button.disabled,false);
+  assert.equal(h.get('modal-root').innerHTML,initialHTML);assert.equal(h.context.location.search,initialURL);
+  h.context.navigator.clipboard.writeText=async()=>{throw Error('denied');};
+  await h.context.copyOfferLink(button,item.id);assert.match(status.textContent,/無法自動複製/);assert(field.focused&&field.selected);assert.equal(field.value,copied);assert.equal(button.disabled,false);
+  h.context.navigator={};await h.context.copyOfferLink(button,item.id);assert.match(status.textContent,/無法自動複製/);
  });
  console.log(`RESULT ${passed} experience checks passed`);
 })().catch(e=>{console.error(e);process.exitCode=1;});
